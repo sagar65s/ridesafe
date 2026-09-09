@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="RideSafe">
+  <rect width="192" height="192" rx="42" fill="#08080A"/>
+  <g transform="translate(18 35) scale(3.25)" fill="none" stroke="#FFD60A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 28h38v8H5z" fill="#FFD60A"/>
+    <path d="M10 28l4-11h21l7 11M17 17v11M28 17v11M36 20v8"/>
+    <circle cx="14" cy="37" r="4" fill="#08080A"/>
+    <circle cx="35" cy="37" r="4" fill="#08080A"/>
+  </g>
+</svg>

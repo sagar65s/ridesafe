@@ -1,0 +1,121 @@
+import { NextRequest, NextResponse } from 'next/server'
+import prisma from '@/lib/prisma'
+import { getUserFromSession } from '@/lib/auth'
+import { writeAuditLog } from '@/lib/audit'
+
+export const dynamic = 'force-dynamic'
+
+const PHONE_RE = /^[+0-9\s()-]{7,20}$/
+
+function validateOrgFields(name: string | undefined, address: string | undefined, phone: string | undefined): string | null {
+  if (name !== undefined && (!name || name.trim().length < 2)) {
+    return 'Organization name must be at least 2 characters'
+  }
+  if (address !== undefined && address && !address.trim()) {
+    return 'Address cannot be only spaces'
+  }
+  if (phone !== undefined && phone) {
+    if (!phone.trim()) return 'Phone number cannot be only spaces'
+    if (!PHONE_RE.test(phone.trim())) return 'Enter a valid phone number'
+  }
+  return null
+}
+
+export async function GET() {
+  try {
+    const auth = await getUserFromSession()
+    if (!auth || auth.role !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const orgs = await prisma.organization.findMany({
+      include: {
+        _count: { select: { users: true, students: true, buses: true, routes: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+    return NextResponse.json({ organizations: orgs })
+  } catch (error) {
+    console.error('Org list error:', error)
+    return NextResponse.json({ error: 'Failed to fetch organizations' }, { status: 500 })
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const auth = await getUserFromSession()
+    if (!auth || auth.role !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const { name, address, phone } = await req.json()
+    const validationError = validateOrgFields(name, address, phone)
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 })
+    }
+    // Check for duplicate name
+    const existing = await prisma.organization.findFirst({ where: { name: { equals: name.trim(), mode: 'insensitive' } } })
+    if (existing) {
+      return NextResponse.json({ error: 'An organisation with this name already exists' }, { status: 409 })
+    }
+    const org = await prisma.organization.create({
+      data: { name: name.trim(), address: address?.trim() || null, phone: phone?.trim() || null },
+      include: { _count: { select: { users: true, students: true, buses: true, routes: true } } }
+    })
+    await writeAuditLog({ actorId: auth.id, organizationId: org.id, action: 'CREATE', entityType: 'SCHOOL', entityId: org.id, details: { name: org.name } })
+    return NextResponse.json({ organization: org })
+  } catch (error) {
+    console.error('Org create error:', error)
+    return NextResponse.json({ error: 'Failed to create organization' }, { status: 500 })
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const auth = await getUserFromSession()
+    if (!auth || auth.role !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const { id, name, address, phone, isActive } = await req.json()
+    if (!id) {
+      return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 })
+    }
+    const validationError = validateOrgFields(name, address, phone)
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 })
+    }
+    const updates: Record<string, unknown> = {}
+    if (name !== undefined) updates.name = name.trim()
+    if (address !== undefined) updates.address = address?.trim() || null
+    if (phone !== undefined) updates.phone = phone?.trim() || null
+    if (isActive !== undefined) updates.isActive = Boolean(isActive)
+
+    const org = await prisma.organization.update({
+      where: { id },
+      data: updates,
+      include: { _count: { select: { users: true, students: true, buses: true, routes: true } } }
+    })
+    await writeAuditLog({ actorId: auth.id, organizationId: org.id, action: isActive === false ? 'DEACTIVATE' : isActive === true ? 'ACTIVATE' : 'UPDATE', entityType: 'SCHOOL', entityId: org.id, details: { name: org.name, isActive: org.isActive } })
+    return NextResponse.json({ organization: org })
+  } catch (error) {
+    console.error('Org update error:', error)
+    return NextResponse.json({ error: 'Failed to update organization' }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const auth = await getUserFromSession()
+    if (!auth || auth.role !== 'SUPER_ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const { id } = await req.json()
+    if (!id) {
+      return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 })
+    }
+    const org = await prisma.organization.update({ where: { id }, data: { isActive: false } })
+    await writeAuditLog({ actorId: auth.id, organizationId: org.id, action: 'DEACTIVATE', entityType: 'SCHOOL', entityId: org.id, details: { name: org.name } })
+    return NextResponse.json({ success: true, deactivated: true })
+  } catch (error) {
+    console.error('Org delete error:', error)
+    return NextResponse.json({ error: 'Failed to delete organization' }, { status: 500 })
+  }
+}

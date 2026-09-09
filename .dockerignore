@@ -1,0 +1,10 @@
+.next
+node_modules
+.git
+*.log
+.env*
+!.env.example
+!.env.production.example
+docker-compose.yml
+Dockerfile
+deploy.sh
