@@ -11,7 +11,8 @@ try {
   if (!password || password.length < 12 || Buffer.byteLength(password, 'utf8') > 72) throw new Error('BOOTSTRAP_ADMIN_PASSWORD must be at least 12 characters and at most 72 UTF-8 bytes.')
   const hash = await bcrypt.hash(password, 12)
   await prisma.$transaction(async tx => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext('ridesafe:first-admin'))`
+
+await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('ridesafe:first-admin'))`    
     if (await tx.user.findFirst({ where: { role: 'SUPER_ADMIN' }, select: { id: true } })) throw new Error('A Super Admin already exists. Sign in with that account; bootstrap does not overwrite accounts.')
     if (await tx.user.findUnique({ where: { email }, select: { id: true } })) throw new Error('This email is already registered. Choose a different email.')
     await tx.user.create({ data: { name, email, password: hash, role: 'SUPER_ADMIN', isActive: true } })
