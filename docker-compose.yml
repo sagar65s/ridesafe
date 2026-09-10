@@ -26,6 +26,7 @@ services:
       - redis_data:/data
 
   ridesafe:
+    image: ridesafe-local:latest
     build:
       context: .
       args:
@@ -48,7 +49,19 @@ services:
       retries: 5
       start_period: 30s
 
-
+  # Optional hardware polling; enable with --profile tracking.
+  tracking-worker:
+    image: ridesafe-local:latest
+    profiles: [tracking]
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      APP_URL: http://ridesafe:3000
+    command: ["node", "scripts/tracking-worker.mjs"]
+    depends_on:
+      ridesafe:
+        condition: service_healthy
 
 volumes:
   postgres_data:

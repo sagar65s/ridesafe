@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client'
 
-if (!process.env.DATABASE_URL) {
+// Next.js imports route modules while building; no database is queried then.
+// Keep runtime configuration mandatory.
+if (!process.env.DATABASE_URL && process.env.NEXT_PHASE !== 'phase-production-build') {
   throw new Error('DATABASE_URL is required and must point to PostgreSQL')
 }
 

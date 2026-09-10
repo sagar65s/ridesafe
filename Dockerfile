@@ -8,8 +8,6 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1 \
     DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build \
     JWT_SECRET=build-only-secret-with-at-least-32-characters
-# Ensure prisma is generated
-RUN npx prisma generate
 ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
 ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY
 RUN npm run build
@@ -32,6 +30,9 @@ COPY --from=builder /app/node_modules ./node_modules
 # Prisma schema and migrations are required by the startup migration command.
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
+
+RUN chown -R node:node /app
+USER node
 
 EXPOSE 3000
 CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && exec node server.js"]
