@@ -64,7 +64,7 @@ async function main() {
     data: {
       name: 'School Admin',
       email: 'admin@ridesafe.com',
-      password: passwordHash,
+      password: 'password123',
       role: 'SUPER_ADMIN',
       phone: '+1 555-000-0001'
     }
