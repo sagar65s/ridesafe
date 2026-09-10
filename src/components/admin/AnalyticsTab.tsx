@@ -1,4 +1,5 @@
 'use client'
+import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { GraduationCap, Bus, CheckCircle, BarChart3 } from 'lucide-react'
@@ -34,7 +35,7 @@ export default function AnalyticsTab() {
     </div>
   )
 
-  if (!data) return <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>Failed to load analytics.</div>
+  if (!data) return <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}><TranslatedText text={"Failed to load analytics."}/></div>
 
   const { statusBreakdown, tripsBarData, trendData, notifBreakdown, kpis } = data
 
@@ -60,7 +61,7 @@ export default function AnalyticsTab() {
           <motion.div key={label} variants={cardAnim} className="bento-card" style={{ textAlign: 'center', padding: '1.75rem' }}>
             <div style={{ fontSize: '2rem', marginBottom: 8 }}>{icon}</div>
             <div style={{ fontSize: '2rem', fontWeight: 800, color }}>{val}</div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}><TranslatedText text={label}/></div>
           </motion.div>
         ))}
       </div>
@@ -70,7 +71,7 @@ export default function AnalyticsTab() {
 
         {/* Bar Chart: Trips Per Day */}
         <motion.div variants={cardAnim} className="bento-card" style={{ padding: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1.25rem', fontSize: '1rem' }}>Trips by Day of Week</h3>
+          <h3 style={{ marginBottom: '1.25rem', fontSize: '1rem' }}><TranslatedText text={"Trips by Day of Week"}/></h3>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={tripsBarData} barSize={28}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -90,7 +91,7 @@ export default function AnalyticsTab() {
 
         {/* Area Chart: Attendance Trend */}
         <motion.div variants={cardAnim} className="bento-card" style={{ padding: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1.25rem', fontSize: '1rem' }}>Attendance Trend (7 Days)</h3>
+          <h3 style={{ marginBottom: '1.25rem', fontSize: '1rem' }}><TranslatedText text={"Attendance Trend (7 Days)"}/></h3>
           <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={trendData}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -107,7 +108,7 @@ export default function AnalyticsTab() {
 
         {/* Pie Chart: Student Status */}
         <motion.div variants={cardAnim} className="bento-card" style={{ padding: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1.25rem', fontSize: '1rem' }}>Student Status Breakdown</h3>
+          <h3 style={{ marginBottom: '1.25rem', fontSize: '1rem' }}><TranslatedText text={"Student Status Breakdown"}/></h3>
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie data={statusBreakdown} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" paddingAngle={4} strokeWidth={0}>
@@ -123,7 +124,7 @@ export default function AnalyticsTab() {
 
         {/* Pie Chart: Notification Types */}
         <motion.div variants={cardAnim} className="bento-card" style={{ padding: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1.25rem', fontSize: '1rem' }}>Notification Breakdown</h3>
+          <h3 style={{ marginBottom: '1.25rem', fontSize: '1rem' }}><TranslatedText text={"Notification Breakdown"}/></h3>
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie data={notifBreakdown} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" paddingAngle={4} strokeWidth={0}>

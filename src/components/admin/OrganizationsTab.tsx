@@ -1,4 +1,6 @@
 'use client'
+import { useTranslation as useLocaleText } from '@/i18n/provider'
+import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Building2, Plus, Users2, GraduationCap, Bus, Route, X, CheckCircle, AlertCircle, Pencil, Trash2, ToggleLeft, ToggleRight } from 'lucide-react'
@@ -16,6 +18,8 @@ interface Org {
 const defaultForm = { name: '', address: '', phone: '' }
 
 export default function OrganizationsTab() {
+ const {tx:translateUi}=useLocaleText()
+
   const [orgs, setOrgs] = useState<Org[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -147,7 +151,7 @@ export default function OrganizationsTab() {
               borderRadius:12, color:'var(--text-main)', fontWeight:600, backdropFilter:'blur(12px)',
               display:'flex', alignItems:'center', gap:8 }}>
             {toastType === 'success' ? <CheckCircle size={16} color="var(--success)" /> : <AlertCircle size={16} color="var(--danger)" />}
-            {toast}
+            <TranslatedText text={toast}/>
           </motion.div>
         )}
       </AnimatePresence>
@@ -157,17 +161,14 @@ export default function OrganizationsTab() {
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:'1rem' }}>
           <div>
             <h3 style={{ margin:0, fontSize:'1.25rem', display:'flex', alignItems:'center', gap:8 }}>
-              <Building2 size={20} color="var(--primary)" /> Manage Organisations
-            </h3>
+              <Building2 size={20} color="var(--primary)" /><TranslatedText text={" Manage Organisations "}/></h3>
             <div style={{ fontSize:'0.83rem', color:'var(--text-muted)', marginTop:4 }}>
-              {orgs.length} organisation{orgs.length !== 1 ? 's' : ''} registered · Super Admin view
-            </div>
+              {orgs.length}<TranslatedText text={" organisation"}/><TranslatedText text={orgs.length !== 1 ? 's' : ''}/><TranslatedText text={" registered · Super Admin view "}/></div>
           </div>
           <motion.button whileHover={{ scale:1.04 }} whileTap={{ scale:0.96 }}
             className="btn btn-primary" onClick={openAddModal}
             style={{ display:'flex', alignItems:'center', gap:6 }}>
-            <Plus size={16} /> Add Organisation
-          </motion.button>
+            <Plus size={16} /><TranslatedText text={" Add Organisation "}/></motion.button>
         </div>
       </div>
 
@@ -175,8 +176,8 @@ export default function OrganizationsTab() {
       {orgs.length === 0 ? (
         <div className="glass-panel" style={{ padding:'3rem', textAlign:'center', color:'var(--text-muted)' }}>
           <Building2 size={40} style={{ opacity:0.25, marginBottom:'1rem' }} />
-          <div style={{ fontWeight:600, marginBottom:4 }}>No organisations yet</div>
-          <div style={{ fontSize:'0.85rem' }}>Click &quot;Add Organisation&quot; to create the first one.</div>
+          <div style={{ fontWeight:600, marginBottom:4 }}><TranslatedText text={"No organisations yet"}/></div>
+          <div style={{ fontSize:'0.85rem' }}><TranslatedText text={"Click \"Add Organisation\" to create the first one."}/></div>
         </div>
       ) : (
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(320px,1fr))', gap:'1.25rem' }}>
@@ -187,15 +188,15 @@ export default function OrganizationsTab() {
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'1rem' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight:700, fontSize:'1.05rem', color:'var(--text-main)', wordBreak:'break-word' }}>{org.name}</div>
-                  {org.address && <div style={{ fontSize:'0.8rem', color:'var(--text-muted)', marginTop:2 }}>{org.address}</div>}
+                  {org.address && <div style={{ fontSize:'0.8rem', color:'var(--text-muted)', marginTop:2 }}><TranslatedText text={org.address}/></div>}
                   {org.phone && <div style={{ fontSize:'0.8rem', color:'var(--text-muted)' }}>{org.phone}</div>}
                 </div>
                 <div style={{ display:'flex', gap:6, alignItems:'center', flexShrink:0, marginLeft:8 }}>
                   <span className={`badge ${org.isActive ? 'badge-success' : 'badge-pending'}`}>
-                    {org.isActive ? 'Active' : 'Inactive'}
+                    <TranslatedText text={org.isActive ? 'Active' : 'Inactive'}/>
                   </span>
                   <motion.button whileTap={{ scale:0.92 }} onClick={() => openEditModal(org)}
-                    title="Edit organisation"
+                    title={translateUi("Edit organisation")}
                     style={{ background:'none', border:'1px solid var(--surface-border)', borderRadius:8, padding:'4px 7px', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}>
                     <Pencil size={13} />
                   </motion.button>
@@ -205,7 +206,7 @@ export default function OrganizationsTab() {
                     {org.isActive ? <ToggleRight size={13} /> : <ToggleLeft size={13} />}
                   </motion.button>
                   <motion.button whileTap={{ scale:0.92 }} onClick={() => handleDelete(org)}
-                    title="Deactivate organisation"
+                    title={translateUi("Deactivate organisation")}
                     disabled={deleting === org.id}
                     style={{ background:'none', border:'1px solid rgba(255,69,58,0.3)', borderRadius:8, padding:'4px 7px', cursor:'pointer', color:'var(--danger)', display:'flex' }}>
                     <Trash2 size={13} />
@@ -224,14 +225,13 @@ export default function OrganizationsTab() {
                   <div key={label} style={{ textAlign:'center', padding:'0.5rem', borderRadius:8, background:'var(--surface-2)' }}>
                     <div style={{ color:'var(--text-muted)', display:'flex', justifyContent:'center', marginBottom:2 }}>{icon}</div>
                     <div style={{ fontWeight:800, fontSize:'1rem', color:'var(--text-main)' }}>{val}</div>
-                    <div style={{ fontSize:'0.62rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{label}</div>
+                    <div style={{ fontSize:'0.62rem', color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.05em' }}><TranslatedText text={label}/></div>
                   </div>
                 ))}
               </div>
 
-              <div style={{ marginTop:'0.75rem', fontSize:'0.73rem', color:'var(--text-muted)' }}>
-                Created {new Date(org.createdAt).toLocaleDateString('en-MY', { dateStyle:'medium' })}
-                {' · '}ID: <span style={{ fontFamily:'monospace', fontSize:'0.68rem' }}>{org.id.slice(0,12)}…</span>
+              <div style={{ marginTop:'0.75rem', fontSize:'0.73rem', color:'var(--text-muted)' }}><TranslatedText text={" Created "}/>{new Date(org.createdAt).toLocaleDateString('en-MY', { dateStyle:'medium' })}
+                <TranslatedText text={' · '}/><TranslatedText text={"ID: "}/><span style={{ fontFamily:'monospace', fontSize:'0.68rem' }}>{org.id.slice(0,12)}…</span>
               </div>
             </motion.div>
           ))}
@@ -246,7 +246,7 @@ export default function OrganizationsTab() {
             <motion.div className="modal-box" initial={{ opacity:0, scale:0.92, y:24 }} animate={{ opacity:1, scale:1, y:0 }} exit={{ opacity:0, scale:0.92 }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem' }}>
                 <h3 style={{ margin:0, display:'flex', alignItems:'center', gap:8 }}>
-                  <Building2 size={20} /> {editingOrg ? 'Edit Organisation' : 'Add Organisation'}
+                  <Building2 size={20} /> <TranslatedText text={editingOrg ? 'Edit Organisation' : 'Add Organisation'}/>
                 </h3>
                 <button onClick={() => { setShowModal(false); setEditingOrg(null) }} style={{ background:'none', border:'none', color:'var(--text-muted)', cursor:'pointer' }}>
                   <X size={20} />
@@ -254,27 +254,27 @@ export default function OrganizationsTab() {
               </div>
 
               <div className="input-group">
-                <label className="input-label">Organisation Name *</label>
-                <input className="input-field" placeholder="e.g. SK Taman Maju" value={form.name}
+                <label className="input-label"><TranslatedText text={"Organisation Name *"}/></label>
+                <input className="input-field" placeholder={translateUi("e.g. SK Taman Maju")} value={form.name}
                   onChange={e => setForm(p => ({...p, name: e.target.value}))} />
               </div>
               <div className="input-group">
-                <label className="input-label">Address</label>
-                <input className="input-field" placeholder="Full address" value={form.address}
+                <label className="input-label"><TranslatedText text={"Address"}/></label>
+                <input className="input-field" placeholder={translateUi("Full address")} value={form.address}
                   onChange={e => setForm(p => ({...p, address: e.target.value}))} />
               </div>
               <div className="input-group">
-                <label className="input-label">Phone Number</label>
+                <label className="input-label"><TranslatedText text={"Phone Number"}/></label>
                 <input type="tel" className="input-field" placeholder="+60 3-1234 5678" value={form.phone} maxLength={20}
                   onChange={e => setForm(p => ({...p, phone: e.target.value.replace(/[^0-9+\s()\-]/g, '')}))} />
               </div>
 
               <div style={{ display:'flex', gap:'1rem', marginTop:'1.5rem' }}>
                 <button className="btn" style={{ flex:1, background:'var(--surface-2)', border:'1px solid var(--surface-border)', color:'var(--text-main)' }}
-                  onClick={() => { setShowModal(false); setEditingOrg(null) }}>Cancel</button>
+                  onClick={() => { setShowModal(false); setEditingOrg(null) }}><TranslatedText text={"Cancel"}/></button>
                 <motion.button whileTap={{ scale:0.97 }} className="btn btn-primary" style={{ flex:2 }}
                   onClick={handleSave} disabled={saving}>
-                  {saving ? (editingOrg ? 'Saving…' : 'Creating…') : (editingOrg ? '✓ Save Changes' : 'Create Organisation')}
+                  <TranslatedText text={saving ? (editingOrg ? 'Saving…' : 'Creating…') : (editingOrg ? '✓ Save Changes' : 'Create Organisation')}/>
                 </motion.button>
               </div>
             </motion.div>

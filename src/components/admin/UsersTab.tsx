@@ -1,4 +1,6 @@
 'use client'
+import { useTranslation as useLocaleText } from '@/i18n/provider'
+import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, AlertTriangle, UserPlus, Bus, AlertCircle, Pencil, Trash2 } from 'lucide-react'
@@ -23,9 +25,9 @@ function validateForm(form: typeof defaultForm, isEdit = false): Record<string, 
   if (!form.name.trim() || form.name.trim().length < 2) errs.name = 'Name must be at least 2 characters'
   if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Enter a valid email address'
   if (isEdit) {
-    if (form.password && form.password.length < 6) errs.password = 'Password must be at least 6 characters'
-  } else if (!form.password || form.password.length < 6) {
-    errs.password = 'Password must be at least 6 characters'
+    if (form.password && form.password.length < 12) errs.password = 'Password must be at least 12 characters'
+  } else if (!form.password || form.password.length < 12) {
+    errs.password = 'Password must be at least 12 characters'
   }
   if (form.phone && !/^[+0-9\s()\-]{7,20}$/.test(form.phone)) errs.phone = 'Enter a valid phone number'
   return errs
@@ -37,14 +39,16 @@ function validateForm(form: typeof defaultForm, isEdit = false): Record<string, 
 function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
     <div className="input-group" style={{ marginBottom: 0 }}>
-      <label className="input-label">{label}</label>
+      <label className="input-label"><TranslatedText text={label}/></label>
       {children}
-      {error && <div style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}><AlertCircle size={12} />{error}</div>}
+      {error && <div style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}><AlertCircle size={12} /><TranslatedText text={error}/></div>}
     </div>
   )
 }
 
 export default function UsersTab({ superAdminView = false, searchQuery = '' }: { superAdminView?: boolean; searchQuery?: string }) {
+ const {tx:translateUi}=useLocaleText()
+
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [filterRole, setFilterRole] = useState('ALL')
@@ -200,7 +204,7 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
             style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, padding: '0.875rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: toastType === 'success' ? 'var(--success-bg)' : 'var(--danger-bg)', border: `1px solid ${toastType === 'success' ? 'var(--success)' : 'var(--danger)'}`, borderRadius: 12, color: 'var(--text-main)', fontWeight: 500 }}>
             {toastType === 'error' ? <AlertTriangle size={18} color="var(--danger)" /> : <CheckCircle size={18} color="var(--success)" />}
-            {toast}
+            <TranslatedText text={toast}/>
           </motion.div>
         )}
       </AnimatePresence>
@@ -209,25 +213,24 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h3 style={{ margin: 0 }}>{superAdminView ? 'All System Users (Global)' : 'System Users'}</h3>
-            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: 4 }}>{users.length} users registered</div>
+            <h3 style={{ margin: 0 }}><TranslatedText text={superAdminView ? 'All System Users (Global)' : 'System Users'}/></h3>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: 4 }}>{users.length}<TranslatedText text={" users registered"}/></div>
           </div>
           <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
             className="btn btn-primary" onClick={openAddModal}>
-            <UserPlus size={16} /> Add User
-          </motion.button>
+            <UserPlus size={16} /><TranslatedText text={" Add User "}/></motion.button>
         </div>
 
         {/* Role / organisation filters */}
         <div style={{ marginBottom: '1.25rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <select className="select-field" value={filterRole} onChange={e => setFilterRole(e.target.value)} style={{ width: 'auto', minWidth: 160 }}>
-            <option value="ALL">All Roles</option>
-            {['ADMIN', 'DRIVER', 'PARENT', 'SCHOOL_ADMIN'].map(r => <option key={r} value={r}>{r}</option>)}
+            <option value="ALL"><TranslatedText text={"All Roles"}/></option>
+            {['ADMIN', 'DRIVER', 'PARENT', 'SCHOOL_ADMIN'].map(r => <option key={r} value={r}><TranslatedText text={r}/></option>)}
           </select>
           {superAdminView && orgs.length > 0 && (
             <select className="select-field" value={filterOrg} onChange={e => setFilterOrg(e.target.value)} style={{ width: 'auto', minWidth: 180 }}>
-              <option value="ALL">All Organisations</option>
-              <option value="">No organisation (global)</option>
+              <option value="ALL"><TranslatedText text={"All Organisations"}/></option>
+              <option value=""><TranslatedText text={"No organisation (global)"}/></option>
               {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
             </select>
           )}
@@ -238,7 +241,7 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
           {[['Admins', 'ADMIN', 'var(--danger)'], ['Drivers', 'DRIVER', 'var(--info)'], ['Parents', 'PARENT', 'var(--success)']].map(([label, role, color]) => (
             <div key={label} className="glass-panel" style={{ padding: '0.75rem 1rem', textAlign: 'center', borderLeft: `3px solid ${color}` }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, color: color as string }}>{users.filter(u => u.role.includes(role as string)).length}</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2, textTransform: 'uppercase' }}>{label}</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2, textTransform: 'uppercase' }}><TranslatedText text={label}/></div>
             </div>
           ))}
         </div>
@@ -266,32 +269,30 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
                     className="btn"
                     style={{ padding: '0.35rem 0.8rem', fontSize: '0.75rem', background: 'var(--primary)', color: 'white', border: 'none' }}
                     disabled={invoicingId === u.id}
-                  >
-                    💰 Invoice
-                  </motion.button>
+                  ><TranslatedText text={" 💰 Invoice "}/></motion.button>
                 )}
                 {u.buses && u.buses.length > 0 && (
                   <span className="badge badge-warning" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <Bus size={11} /> {u.buses.map(b => b.plateNumber).join(', ')}
                   </span>
                 )}
-                {u.role === 'DRIVER' && <span className="badge badge-info">{u.personnelType || 'DRIVER'} · {u.employmentStatus || 'ACTIVE'}</span>}
-                {u.role === 'DRIVER' && u.assignmentHistory?.[0] && <span className="badge badge-pending" title={u.assignmentHistory[0].reason || ''}>Last: {u.assignmentHistory[0].action} · {new Date(u.assignmentHistory[0].effectiveAt).toLocaleDateString()}</span>}
-                <span className={`badge ${u.isActive ? (ROLE_COLORS[u.role] || 'badge-pending') : 'badge-pending'}`}>{u.role.replaceAll('_', ' ')} · {u.isActive ? 'ACTIVE' : 'INACTIVE'}</span>
+                {u.role === 'DRIVER' && <span className="badge badge-info"><TranslatedText text={u.personnelType || 'DRIVER'}/> · <TranslatedText text={u.employmentStatus || 'ACTIVE'}/></span>}
+                {u.role === 'DRIVER' && u.assignmentHistory?.[0] && <span className="badge badge-pending" title={u.assignmentHistory[0].reason || ''}><TranslatedText text={"Last: "}/><TranslatedText text={u.assignmentHistory[0].action}/> · {new Date(u.assignmentHistory[0].effectiveAt).toLocaleDateString()}</span>}
+                <span className={`badge ${u.isActive ? (ROLE_COLORS[u.role] || 'badge-pending') : 'badge-pending'}`}><TranslatedText text={u.role.replaceAll('_', ' ')}/> · <TranslatedText text={u.isActive ? 'ACTIVE' : 'INACTIVE'}/></span>
                 <motion.button whileTap={{ scale: 0.92 }} onClick={() => openEditModal(u)}
-                  title="Edit user"
+                  title={translateUi("Edit user")}
                   style={{ background: 'none', border: '1px solid var(--surface-border)', borderRadius: 8, padding: '4px 7px', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}>
                   <Pencil size={13} />
                 </motion.button>
                 <motion.button whileTap={{ scale: 0.92 }} onClick={() => handleDelete(u)}
-                  title="Deactivate user" disabled={deletingId === u.id || !u.isActive}
+                  title={translateUi("Deactivate user")} disabled={deletingId === u.id || !u.isActive}
                   style={{ background: 'none', border: '1px solid rgba(255,69,58,0.3)', borderRadius: 8, padding: '4px 7px', cursor: 'pointer', color: 'var(--danger)', display: 'flex' }}>
                   <Trash2 size={13} />
                 </motion.button>
               </div>
             </motion.div>
           ))}
-          {filtered.length === 0 && <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>{q ? `No users match "${searchQuery}".` : 'No users found.'}</div>}
+          {filtered.length === 0 && <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}><TranslatedText text={q ? `No users match "${searchQuery}".` : 'No users found.'}/></div>}
         </div>
       </div>
 
@@ -302,13 +303,13 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
             onClick={e => { if (e.target === e.currentTarget) { setShowModal(false); setFormErrors({}); setEditingUser(null) } }}>
             <motion.div className="modal-box" initial={{ opacity: 0, scale: 0.92, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.92 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}><UserPlus size={20} /> {editingUser ? 'Edit User' : 'Add New User'}</h3>
+                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}><UserPlus size={20} /> <TranslatedText text={editingUser ? 'Edit User' : 'Add New User'}/></h3>
                 <button onClick={() => { setShowModal(false); setFormErrors({}); setEditingUser(null) }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '1.4rem', cursor: 'pointer', lineHeight: 1 }}>✕</button>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <Field label="Full Name *" error={formErrors.name}>
-                  <input className="input-field" placeholder="e.g. Ahmad Bin Ali" value={form.name}
+                  <input className="input-field" placeholder={translateUi("e.g. Ahmad Bin Ali")} value={form.name}
                     minLength={2} maxLength={100}
                     onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
                     style={{ borderColor: formErrors.name ? 'var(--danger)' : undefined }}
@@ -317,18 +318,18 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
 
                 <Field label="Role *">
                   <select className="select-field" value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))}>
-                    <option value="DRIVER">Driver / Maintainer</option>
-                    <option value="PARENT">Parent</option>
-                    <option value="ADMIN">Admin</option>
-                    {superAdminView && <option value="SCHOOL_ADMIN">School Admin</option>}
-                    {superAdminView && <option value="SUPER_ADMIN">Super Admin</option>}
+                    <option value="DRIVER"><TranslatedText text={"Driver / Maintainer"}/></option>
+                    <option value="PARENT"><TranslatedText text={"Parent"}/></option>
+                    <option value="ADMIN"><TranslatedText text={"Admin"}/></option>
+                    {superAdminView && <option value="SCHOOL_ADMIN"><TranslatedText text={"School Admin"}/></option>}
+                    {superAdminView && <option value="SUPER_ADMIN"><TranslatedText text={"Super Admin"}/></option>}
                   </select>
                 </Field>
-                <label style={{display:'flex',alignItems:'center',gap:8,fontSize:13}}><input type="checkbox" checked={form.isActive} onChange={e=>setForm(p=>({...p,isActive:e.target.checked}))}/> Account active</label>
+                <label style={{display:'flex',alignItems:'center',gap:8,fontSize:13}}><input type="checkbox" checked={form.isActive} onChange={e=>setForm(p=>({...p,isActive:e.target.checked}))}/><TranslatedText text={" Account active"}/></label>
 
                 {form.role === 'DRIVER' && <>
-                  <Field label="Personnel Type"><select className="select-field" value={form.personnelType} onChange={e=>setForm(p=>({...p,personnelType:e.target.value}))}><option value="DRIVER">Driver</option><option value="MAINTAINER">Maintainer</option></select></Field>
-                  <Field label="Employment Status"><select className="select-field" value={form.employmentStatus} onChange={e=>setForm(p=>({...p,employmentStatus:e.target.value}))}>{['ONBOARDING','ACTIVE','INACTIVE','OFFBOARDING','OFFBOARDED'].map(s=><option key={s} value={s}>{s}</option>)}</select></Field>
+                  <Field label="Personnel Type"><select className="select-field" value={form.personnelType} onChange={e=>setForm(p=>({...p,personnelType:e.target.value}))}><option value="DRIVER"><TranslatedText text={"Driver"}/></option><option value="MAINTAINER"><TranslatedText text={"Maintainer"}/></option></select></Field>
+                  <Field label="Employment Status"><select className="select-field" value={form.employmentStatus} onChange={e=>setForm(p=>({...p,employmentStatus:e.target.value}))}>{['ONBOARDING','ACTIVE','INACTIVE','OFFBOARDING','OFFBOARDED'].map(s=><option key={s} value={s}><TranslatedText text={s}/></option>)}</select></Field>
                   <Field label="License Number"><input className="input-field" value={form.licenseNumber} onChange={e=>setForm(p=>({...p,licenseNumber:e.target.value}))}/></Field>
                   <Field label="License Expiry"><input type="date" className="input-field" value={form.licenseExpiry} onChange={e=>setForm(p=>({...p,licenseExpiry:e.target.value}))}/></Field>
                   <Field label="Onboarding Date"><input type="date" className="input-field" value={form.onboardingDate} onChange={e=>setForm(p=>({...p,onboardingDate:e.target.value}))}/></Field>
@@ -338,13 +339,13 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
 
                 {superAdminView && <Field label="Organisation">
                   <select className="select-field" value={form.organizationId} onChange={e => setForm(p => ({ ...p, organizationId: e.target.value }))}>
-                    <option value="">{form.role === 'SUPER_ADMIN' ? 'Global platform access' : 'Select a school'}</option>
+                    <option value=""><TranslatedText text={form.role === 'SUPER_ADMIN' ? 'Global platform access' : 'Select a school'}/></option>
                     {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                   </select>
                 </Field>}
 
                 <Field label="Email Address *" error={formErrors.email}>
-                  <input type="email" className="input-field" placeholder="user@school.com" value={form.email}
+                  <input type="email" className="input-field" placeholder={translateUi("user@school.com")} value={form.email}
                     onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
                     style={{ borderColor: formErrors.email ? 'var(--danger)' : undefined }}
                   />
@@ -364,8 +365,8 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
                 </Field>
 
                 <Field label={editingUser ? 'New Password' : 'Password *'} error={formErrors.password}>
-                  <input type="password" className="input-field" placeholder={editingUser ? 'Leave blank to keep current' : 'Min. 6 characters'} value={form.password}
-                    minLength={editingUser ? undefined : 6} maxLength={128}
+                  <input type="password" className="input-field" placeholder={editingUser ? 'Leave blank to keep current' : translateUi('Min. 12 characters')} value={form.password}
+                    minLength={editingUser ? undefined : 12} maxLength={128}
                     onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
                     style={{ borderColor: formErrors.password ? 'var(--danger)' : undefined }}
                   />
@@ -373,13 +374,12 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
               </div>
 
               <div style={{ background: 'var(--info-bg)', border: '1px solid rgba(29,78,216,0.15)', borderRadius: 8, padding: '0.75rem 1rem', marginTop: '0.75rem', fontSize: '0.82rem', color: 'var(--info)', display: 'flex', gap: 8, alignItems: 'center' }}>
-                <AlertCircle size={15} /> For drivers, assign them to a bus in Fleet & Routes after creation.
-              </div>
+                <AlertCircle size={15} /><TranslatedText text={" For drivers, assign them to a bus in Fleet & Routes after creation. "}/></div>
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                <button className="btn" style={{ flex: 1, background: 'var(--surface-2)', border: '1px solid var(--surface-border)', color: 'var(--text-main)' }} onClick={() => { setShowModal(false); setFormErrors({}); setEditingUser(null) }}>Cancel</button>
+                <button className="btn" style={{ flex: 1, background: 'var(--surface-2)', border: '1px solid var(--surface-border)', color: 'var(--text-main)' }} onClick={() => { setShowModal(false); setFormErrors({}); setEditingUser(null) }}><TranslatedText text={"Cancel"}/></button>
                 <motion.button whileTap={{ scale: 0.97 }} className="btn btn-primary" style={{ flex: 2 }} onClick={handleSave} disabled={saving}>
-                  {saving ? (editingUser ? 'Saving…' : 'Creating…') : (editingUser ? '✓  Save Changes' : '✓  Create User')}
+                  <TranslatedText text={saving ? (editingUser ? 'Saving…' : 'Creating…') : (editingUser ? '✓  Save Changes' : '✓  Create User')}/>
                 </motion.button>
               </div>
             </motion.div>
@@ -393,12 +393,11 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
           <motion.div className="modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={e => { if (e.target === e.currentTarget) setShowInvoiceModal(false) }}>
             <motion.div className="modal-box" initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.92 }} style={{ maxWidth: 400 }}>
-              <h3 style={{ marginBottom: '0.5rem' }}>💰 Generate Invoice</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-                Create a Bukku invoice for <strong>{invoiceUser.name}</strong>
+              <h3 style={{ marginBottom: '0.5rem' }}><TranslatedText text={"💰 Generate Invoice"}/></h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}><TranslatedText text={" Create a Bukku invoice for "}/><strong>{invoiceUser.name}</strong>
               </p>
               <div className="input-group">
-                <label className="input-label">Amount (RM) *</label>
+                <label className="input-label"><TranslatedText text={"Amount (RM) *"}/></label>
                 <input
                   type="number"
                   className="input-field"
@@ -408,11 +407,11 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
                   onChange={e => { setInvoiceAmount(e.target.value); setInvoiceAmountErr('') }}
                   style={{ borderColor: invoiceAmountErr ? 'var(--danger)' : undefined }}
                 />
-                {invoiceAmountErr && <div style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: 3 }}>{invoiceAmountErr}</div>}
+                {invoiceAmountErr && <div style={{ color: 'var(--danger)', fontSize: '0.75rem', marginTop: 3 }}><TranslatedText text={invoiceAmountErr}/></div>}
               </div>
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button className="btn" style={{ flex: 1, background: 'var(--surface-2)', border: '1px solid var(--surface-border)' }} onClick={() => setShowInvoiceModal(false)}>Cancel</button>
-                <motion.button whileTap={{ scale: 0.97 }} className="btn btn-primary" style={{ flex: 2 }} onClick={handleGenerateInvoice}>Send Invoice</motion.button>
+                <button className="btn" style={{ flex: 1, background: 'var(--surface-2)', border: '1px solid var(--surface-border)' }} onClick={() => setShowInvoiceModal(false)}><TranslatedText text={"Cancel"}/></button>
+                <motion.button whileTap={{ scale: 0.97 }} className="btn btn-primary" style={{ flex: 2 }} onClick={handleGenerateInvoice}><TranslatedText text={"Send Invoice"}/></motion.button>
               </div>
             </motion.div>
           </motion.div>

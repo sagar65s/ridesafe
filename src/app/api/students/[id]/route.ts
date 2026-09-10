@@ -7,6 +7,8 @@ import { writeAuditLog } from '@/lib/audit'
 export const dynamic = 'force-dynamic'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const permissionSession = await getUserFromSession()
+  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
   try {
     const user = await getUserFromSession()
     if (!user) {
@@ -31,48 +33,35 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (existing.parentId !== user.id) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
-      // Allow parent to update: isSelfPickup, pickupTime, photoUrl, parentContact2
+      if (data.pickupStopId !== undefined || data.dropoffStopId !== undefined || data.isSelfPickup !== undefined) {
+        if (await prisma.trip.count({ where: { busId: existing.busId || '__none__', status: { in: ['DRIVER_STARTED_ROUTE', 'BUS_EN_ROUTE'] } } })) return NextResponse.json({ error: 'Stop preferences cannot change during an active trip' }, { status: 409 })
+      }
+      for (const field of ['pickupStopId', 'dropoffStopId'] as const) {
+        if (data[field] !== undefined) {
+          if (typeof data[field] !== 'string' || !existing.routeId || !await prisma.stop.findFirst({ where: { id: data[field], routeId: existing.routeId } })) return NextResponse.json({ error: 'Choose a stop on your assigned route' }, { status: 400 })
+        }
+      }
+      if (data.isSelfPickup !== undefined && typeof data.isSelfPickup !== 'boolean') return NextResponse.json({error:'Invalid pickup preference'},{status:400})
+      if (data.parentContact2 && (typeof data.parentContact2 !== 'string' || !/^[+0-9\s()\-]{7,20}$/.test(data.parentContact2))) return NextResponse.json({error:'Invalid contact number'},{status:400})
+      if (data.pickupTime !== undefined && (typeof data.pickupTime !== 'string' || data.pickupTime.length > 40)) return NextResponse.json({error:'Invalid pickup time'},{status:400})
+      if (data.photoUrl !== undefined) return NextResponse.json({error:'Contact the school to update the student photo'},{status:400})
+      // Allow parents to update their own transport preferences.
       updateData = {
+        ...(data.pickupStopId !== undefined && { pickupStopId: data.pickupStopId }),
+        ...(data.dropoffStopId !== undefined && { dropoffStopId: data.dropoffStopId }),
         ...(data.isSelfPickup !== undefined && { isSelfPickup: data.isSelfPickup }),
         ...(data.pickupTime !== undefined && { pickupTime: data.pickupTime }),
         ...(data.photoUrl !== undefined && { photoUrl: data.photoUrl }),
         ...(data.parentContact2 !== undefined && { parentContact2: data.parentContact2 }),
       }
     } else if (user.role === 'DRIVER') {
-      if (!canAccessOrganization(actor, existing.organizationId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-      if (!['CHECKED_OUT', 'DROPPED_OFF'].includes(data.status)) {
-        return NextResponse.json({ error: 'Invalid student status' }, { status: 400 })
-      }
-      const activeTrip = await prisma.trip.findFirst({
-        where: {
-          driverId: user.id,
-          routeId: existing.routeId || '__none__',
-          status: { in: ['DRIVER_STARTED_ROUTE', 'BUS_EN_ROUTE'] },
-        },
-      })
-      if (!activeTrip) return NextResponse.json({ error: 'No active trip for this student route' }, { status: 403 })
-
-      updateData = { status: data.status }
-
-      // Log the action for auditing
-      if (data.status) {
-        const action = data.status === 'CHECKED_OUT' ? 'PICKED_UP' : 'DROPPED_OFF';
-        const driver = await prisma.user.findUnique({ select: { lastLatitude: true, lastLongitude: true }, where: { id: user.id } })
-        await prisma.attendance.create({
-          data: {
-            tripId: activeTrip.id,
-            studentId: id,
-            action,
-            latitude: driver?.lastLatitude ?? null,
-            longitude: driver?.lastLongitude ?? null,
-          }
-        })
-      }
+      return NextResponse.json({ error: 'Use the attendance endpoint' }, { status: 403 })
     } else if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || user.role === 'SCHOOL_ADMIN') {
       if (!canAccessOrganization(actor, existing.organizationId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       // Relationship fields were previously stripped here, which made the
       // route/parent controls appear to save while silently keeping the old
       // assignment. Allow them only after checking tenant and role ownership.
+      if (['parentId','routeId','busId','pickupStopId','dropoffStopId','isActive','isSelfPickup'].some(key => data[key] !== undefined) && existing.busId && await prisma.trip.count({where:{busId:existing.busId,status:{in:['DRIVER_STARTED_ROUTE','BUS_EN_ROUTE']}}})) return NextResponse.json({error:'Assignments cannot change during an active trip'},{status:409})
       const { parentId, routeId, busId, pickupStopId, dropoffStopId } = data
       const targetRouteId = routeId !== undefined ? (routeId || null) : existing.routeId
       const targetBusId = busId !== undefined ? (busId || null) : existing.busId
@@ -151,6 +140,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const permissionSession = await getUserFromSession()
+  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
   try {
     const user = await getUserFromSession()
     if (!user || !['ADMIN', 'SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(user.role)) {
@@ -165,6 +156,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const actor = await getCurrentUser()
     if (!actor || !canAccessOrganization(actor, existing.organizationId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
+    if (existing.busId && await prisma.trip.count({where:{busId:existing.busId,status:{in:['DRIVER_STARTED_ROUTE','BUS_EN_ROUTE']}}})) return NextResponse.json({error:'Complete the active trip before deactivating this student'},{status:409})
     const student = await prisma.student.update({ where: { id }, data: { isActive: false, status: 'INACTIVE' } })
     await writeAuditLog({ actorId: user.id, organizationId: student.organizationId, action: 'DEACTIVATE', entityType: 'STUDENT', entityId: student.id })
     return NextResponse.json({ success: true, deactivated: true })

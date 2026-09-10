@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getUserFromSession } from '@/lib/auth'
+import { crewWhere } from '@/lib/transport'
+import { pushNotification } from '@/lib/notification-delivery'
 import { resolveUserOrganizationId } from '@/lib/authorization'
 
 export const dynamic = 'force-dynamic'
@@ -30,7 +32,7 @@ export async function POST(req: NextRequest) {
         // Find active trip for driver to get assigned students' parents
         const activeTrip = user.role === 'DRIVER' ? await prisma.trip.findFirst({
             where: {
-                driverId: user.id,
+                ...crewWhere(user.id),
                 status: { in: ['DRIVER_STARTED_ROUTE', 'BUS_EN_ROUTE'] }
             },
             include: {
@@ -48,6 +50,7 @@ export async function POST(req: NextRequest) {
         if (activeTrip && activeTrip.route.students.length > 0) {
             const parentIds = new Set(
                 activeTrip.route.students
+                    .filter(s=>s.busId===activeTrip.busId && s.isActive && !s.isSelfPickup)
                     .map(s => s.parentId)
                     .filter((id): id is string => id !== null)
             );
@@ -83,10 +86,11 @@ export async function POST(req: NextRequest) {
 
         if (notificationsToCreate.length > 0) {
             await prisma.notification.createMany({
-                data: notificationsToCreate
+                data: notificationsToCreate.map(n=>({...n,dedupeKey:`emergency:${alert.id}:${n.userId}`}))
             });
         }
 
+        await Promise.allSettled((await prisma.notification.findMany({where:{dedupeKey:{startsWith:`emergency:${alert.id}:`}}})).map(pushNotification))
         return NextResponse.json({ success: true, alert })
     } catch (error) {
         console.error('Error creating emergency alert:', error)

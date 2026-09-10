@@ -10,6 +10,8 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
     JWT_SECRET=build-only-secret-with-at-least-32-characters
 # Ensure prisma is generated
 RUN npx prisma generate
+ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
+ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY
 RUN npm run build
 # Keep the Prisma migration CLI but remove build/test-only packages from the
 # final image. Prisma is a runtime dependency because migrations run on start.
@@ -29,7 +31,7 @@ COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/node_modules ./node_modules
 # Prisma schema and migrations are required by the startup migration command.
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/scripts/bootstrap-admin.mjs ./scripts/bootstrap-admin.mjs
+COPY --from=builder /app/scripts ./scripts
 
 EXPOSE 3000
 CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && exec node server.js"]

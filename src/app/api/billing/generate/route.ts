@@ -5,6 +5,8 @@ import { getUserFromSession } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
 export async function POST(req: Request) {
+  const permissionSession = await getUserFromSession()
+  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
   try {
     const session = await getUserFromSession();
     if (!session || !['ADMIN', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(session.role)) {

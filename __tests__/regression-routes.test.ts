@@ -8,6 +8,7 @@ jest.mock('@/lib/authorization', () => ({
 }))
 jest.mock('@/lib/audit', () => ({ writeAuditLog: jest.fn() }))
 jest.mock('@/lib/prisma', () => ({ __esModule: true, default: {
+  $transaction: jest.fn(), $queryRaw: jest.fn(),
   organization: { findUnique: jest.fn() }, route: { findUnique: jest.fn() }, user: { findUnique: jest.fn() },
   student: { create: jest.fn(), findUnique: jest.fn() }, trip: { findUnique: jest.fn(), update: jest.fn() },
   attendance: { findMany: jest.fn(), create: jest.fn() }, pendingRegistration: { findUnique: jest.fn() },
@@ -25,6 +26,7 @@ const request = (path: string, body: object, method = 'POST') => new NextRequest
 const mock = (fn: unknown) => fn as jest.Mock
 beforeEach(() => {
   jest.clearAllMocks()
+  mock(prisma.$transaction).mockImplementation(fn=>fn(prisma))
   mock(getUserFromSession).mockResolvedValue({ id: 'admin', role: 'SCHOOL_ADMIN' })
   mock(getCurrentUser).mockResolvedValue({ id: 'admin', role: 'SCHOOL_ADMIN', organizationId: 'school-a' })
 })
@@ -51,8 +53,9 @@ it('a completed trip cannot be reopened', async () => {
 })
 it('driver cannot mark attendance on a completed trip', async () => {
   mock(getUserFromSession).mockResolvedValue({ id: 'driver', role: 'DRIVER' })
+  mock(getCurrentUser).mockResolvedValue({id:'driver',role:'DRIVER',organizationId:'school-a'})
   mock(prisma.trip.findUnique).mockResolvedValue({ id: 'trip', driverId: 'driver', routeId: 'r', status: 'TRIP_COMPLETED', route: { organizationId: 'school-a' } })
-  mock(prisma.student.findUnique).mockResolvedValue({ id: 's', isActive: true, routeId: 'r' })
+  mock(prisma.student.findUnique).mockResolvedValue({ id: 's', isActive: true, routeId: 'r', organizationId:'school-a' })
   const res = await markAttendance(request('/api/attendance', { tripId: 'trip', studentId: 's', action: 'PICKED_UP' }))
   expect(res.status).toBe(409)
   expect(prisma.attendance.create).not.toHaveBeenCalled()

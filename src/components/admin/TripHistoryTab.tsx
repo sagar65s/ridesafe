@@ -1,4 +1,5 @@
 'use client'
+import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 
@@ -29,7 +30,7 @@ export default function TripHistoryTab() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div className="glass-panel" style={{ padding: '2rem' }}>
-        <h3 style={{ marginBottom: '1.5rem', fontSize: '1.3rem' }}>Trip History</h3>
+        <h3 style={{ marginBottom: '1.5rem', fontSize: '1.3rem' }}><TranslatedText text={"Trip History"}/></h3>
 
         {loading ? (
           [1,2,3,4].map(i => <div key={i} className="skeleton" style={{ height:60, marginBottom:10, borderRadius:10 }} />)
@@ -46,26 +47,26 @@ export default function TripHistoryTab() {
                     </span>
                   </div>
                   <div style={{ display:'flex', gap:'1rem', fontSize:'0.8rem', color:'var(--text-muted)' }}>
-                    <span>{trip.pickedUp} picked</span>
-                    <span>{trip.droppedOff} dropped</span>
-                    <span>{trip.absent} absent</span>
-                    {trip.avgRating && <span>⭐ {trip.avgRating}</span>}
+                    <span>{trip.pickedUp}<TranslatedText text={" picked"}/></span>
+                    <span>{trip.droppedOff}<TranslatedText text={" dropped"}/></span>
+                    <span>{trip.absent}<TranslatedText text={" absent"}/></span>
+                    {trip.avgRating && <span>⭐ <TranslatedText text={trip.avgRating}/></span>}
                   </div>
                 </div>
                 <span className="badge" style={{ background:`${statusColor[trip.status] || '#6B7280'}22`, color:statusColor[trip.status] || '#6B7280', fontSize:'0.75rem' }}>
-                  {trip.status.replace(/_/g,' ')}
+                  <TranslatedText text={trip.status.replace(/_/g,' ')}/>
                 </span>
               </motion.div>
             ))}
-            {trips.length === 0 && <div style={{ textAlign:'center', padding:'3rem', color:'var(--text-muted)' }}>No trip history yet.</div>}
+            {trips.length === 0 && <div style={{ textAlign:'center', padding:'3rem', color:'var(--text-muted)' }}><TranslatedText text={"No trip history yet."}/></div>}
           </div>
         )}
 
         {totalPages > 1 && (
           <div style={{ display:'flex', justifyContent:'center', gap:'0.5rem', marginTop:'1.5rem' }}>
-            <button className="btn" disabled={page <= 1} onClick={() => load(page - 1)} style={{ background:'rgba(255,255,255,0.06)', color:'var(--text-main)' }}>← Prev</button>
-            <span style={{ padding:'0.5rem 1rem', color:'var(--text-muted)', fontSize:'0.85rem' }}>Page {page} of {totalPages}</span>
-            <button className="btn" disabled={page >= totalPages} onClick={() => load(page + 1)} style={{ background:'rgba(255,255,255,0.06)', color:'var(--text-main)' }}>Next →</button>
+            <button className="btn" disabled={page <= 1} onClick={() => load(page - 1)} style={{ background:'rgba(255,255,255,0.06)', color:'var(--text-main)' }}><TranslatedText text={"← Prev"}/></button>
+            <span style={{ padding:'0.5rem 1rem', color:'var(--text-muted)', fontSize:'0.85rem' }}><TranslatedText text={"Page "}/>{page}<TranslatedText text={" of "}/>{totalPages}</span>
+            <button className="btn" disabled={page >= totalPages} onClick={() => load(page + 1)} style={{ background:'rgba(255,255,255,0.06)', color:'var(--text-main)' }}><TranslatedText text={"Next →"}/></button>
           </div>
         )}
       </div>

@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslation as useLocaleText } from '@/i18n/provider'
+import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -95,9 +97,9 @@ function PaymentConfirmation({ regId, token }: { regId: string; token: string })
     return (
       <ResultCard>
         <Loader2 size={36} color={HC.yellow} style={{ marginBottom: 16, animation: 'spin 1s linear infinite' }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-        <h2 style={{ color: HC.text, fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>Confirming your payment…</h2>
-        <p style={{ color: HC.text2, fontSize: 14, lineHeight: 1.6 }}>This usually only takes a few seconds. Please don&apos;t close this page.</p>
+        <style><TranslatedText text={`@keyframes spin { to { transform: rotate(360deg) } }`}/></style>
+        <h2 style={{ color: HC.text, fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}><TranslatedText text={"Confirming your payment…"}/></h2>
+        <p style={{ color: HC.text2, fontSize: 14, lineHeight: 1.6 }}><TranslatedText text={"This usually only takes a few seconds. Please don't close this page."}/></p>
       </ResultCard>
     )
   }
@@ -106,22 +108,19 @@ function PaymentConfirmation({ regId, token }: { regId: string; token: string })
     return (
       <ResultCard>
         <CheckCircle size={40} color={HC.success} style={{ marginBottom: 16 }} />
-        <h2 style={{ color: HC.text, fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>Payment confirmed!</h2>
+        <h2 style={{ color: HC.text, fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}><TranslatedText text={"Payment confirmed!"}/></h2>
         <p style={{ color: HC.text2, fontSize: 14, lineHeight: 1.6, marginBottom: 16 }}>
-          {result.studentName ? <>{result.studentName}&apos;s registration is complete.</> : 'Registration complete.'} A parent account has been created for you.
-        </p>
+          {result.studentName ? <>{result.studentName}<TranslatedText text={"'s registration is complete."}/></> : 'Registration complete.'}<TranslatedText text={" A parent account has been created for you. "}/></p>
         {result.tempPassword && (
           <div style={{ background: HC.surface, border: `1px solid ${HC.line}`, borderRadius: HC.r, padding: '16px 18px', textAlign: 'left', marginBottom: 8 }}>
-            <div style={{ fontSize: 11, color: HC.text3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Login Email</div>
-            <div style={{ color: HC.text, fontSize: 14, marginBottom: 12, wordBreak: 'break-all' }}>{result.parentEmail}</div>
-            <div style={{ fontSize: 11, color: HC.text3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}>Temporary Password</div>
-            <div style={{ color: HC.yellow, fontSize: 16, fontWeight: 700, fontFamily: 'monospace' }}>{result.tempPassword}</div>
-            <div style={{ color: HC.text3, fontSize: 12, marginTop: 10 }}>Save this now — it won&apos;t be shown again. You can change it after logging in.</div>
+            <div style={{ fontSize: 11, color: HC.text3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}><TranslatedText text={"Login Email"}/></div>
+            <div style={{ color: HC.text, fontSize: 14, marginBottom: 12, wordBreak: 'break-all' }}><TranslatedText text={result.parentEmail}/></div>
+            <div style={{ fontSize: 11, color: HC.text3, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }}><TranslatedText text={"Temporary Password"}/></div>
+            <div style={{ color: HC.yellow, fontSize: 16, fontWeight: 700, fontFamily: 'monospace' }}><TranslatedText text={result.tempPassword}/></div>
+            <div style={{ color: HC.text3, fontSize: 12, marginTop: 10 }}><TranslatedText text={"Save this now — it won't be shown again. You can change it after logging in."}/></div>
           </div>
         )}
-        <Link href="/" style={{ display: 'inline-block', marginTop: 12, color: HC.onYellow, background: HC.yellow, padding: '10px 22px', borderRadius: HC.pill, fontSize: 13.5, fontWeight: 700, textDecoration: 'none' }}>
-          Go to login
-        </Link>
+        <Link href="/" style={{ display: 'inline-block', marginTop: 12, color: HC.onYellow, background: HC.yellow, padding: '10px 22px', borderRadius: HC.pill, fontSize: 13.5, fontWeight: 700, textDecoration: 'none' }}><TranslatedText text={" Go to login "}/></Link>
       </ResultCard>
     )
   }
@@ -130,26 +129,24 @@ function PaymentConfirmation({ regId, token }: { regId: string; token: string })
     return (
       <ResultCard>
         <XCircle size={40} color={HC.danger} style={{ marginBottom: 16 }} />
-        <h2 style={{ color: HC.text, fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>Payment not completed</h2>
-        <p style={{ color: HC.text2, fontSize: 14, lineHeight: 1.6 }}>Your registration wasn&apos;t completed. No account was created. You can try registering again.</p>
-        <Link href="/student-form" style={{ display: 'inline-block', marginTop: 16, color: HC.text2, border: `1px solid ${HC.lineStrong}`, padding: '10px 20px', borderRadius: HC.pill, fontSize: 13.5, textDecoration: 'none' }}>
-          Try again
-        </Link>
+        <h2 style={{ color: HC.text, fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}><TranslatedText text={"Payment not completed"}/></h2>
+        <p style={{ color: HC.text2, fontSize: 14, lineHeight: 1.6 }}><TranslatedText text={"Your registration wasn't completed. No account was created. You can try registering again."}/></p>
+        <Link href="/student-form" style={{ display: 'inline-block', marginTop: 16, color: HC.text2, border: `1px solid ${HC.lineStrong}`, padding: '10px 20px', borderRadius: HC.pill, fontSize: 13.5, textDecoration: 'none' }}><TranslatedText text={" Try again "}/></Link>
       </ResultCard>
     )
   }
 
   return (
     <ResultCard>
-      <h2 style={{ color: HC.text, fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>Still processing</h2>
-      <p style={{ color: HC.text2, fontSize: 14, lineHeight: 1.6 }}>
-        We&apos;re still waiting for payment confirmation. If you completed payment, check your email shortly — otherwise contact the transport office.
-      </p>
+      <h2 style={{ color: HC.text, fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}><TranslatedText text={"Still processing"}/></h2>
+      <p style={{ color: HC.text2, fontSize: 14, lineHeight: 1.6 }}><TranslatedText text={" We're still waiting for payment confirmation. If you completed payment, check your email shortly — otherwise contact the transport office. "}/></p>
     </ResultCard>
   )
 }
 
 function RegistrationForm() {
+ const {tx:translateUi}=useLocaleText()
+
   const { t } = useTranslation()
   const [form, setForm] = useState(defaultForm)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -217,7 +214,7 @@ function RegistrationForm() {
 
       {serverError && (
         <div style={{ background: HC.dangerBg, color: HC.danger, border: `1px solid rgba(255,69,58,0.25)`, borderRadius: HC.r, padding: '12px 16px', marginBottom: 18, fontSize: 13.5 }}>
-          {serverError}
+          <TranslatedText text={serverError}/>
         </div>
       )}
 
@@ -233,58 +230,58 @@ function RegistrationForm() {
           </>
         )}
         <label style={labelStyle()}>{t('registration.parentName')} *</label>
-        <input style={fieldStyle(!!errors.parentName)} value={form.parentName} onChange={e => set('parentName', e.target.value)} placeholder="e.g. Zulkifli bin Hassan" />
-        {errors.parentName && <div style={{ color: HC.danger, fontSize: 12, marginBottom: 12 }}>{errors.parentName}</div>}
+        <input style={fieldStyle(!!errors.parentName)} value={form.parentName} onChange={e => set('parentName', e.target.value)} placeholder={translateUi("e.g. Zulkifli bin Hassan")} />
+        {errors.parentName && <div style={{ color: HC.danger, fontSize: 12, marginBottom: 12 }}><TranslatedText text={errors.parentName}/></div>}
         <div style={{ marginBottom: 14 }} />
 
         <label style={labelStyle()}>{t('registration.parentEmail')} *</label>
-        <input type="email" style={fieldStyle(!!errors.parentEmail)} value={form.parentEmail} onChange={e => set('parentEmail', e.target.value)} placeholder="you@example.com" />
-        {errors.parentEmail && <div style={{ color: HC.danger, fontSize: 12, marginBottom: 12 }}>{errors.parentEmail}</div>}
-        <div style={{ color: HC.text3, fontSize: 12, marginTop: -2, marginBottom: 14 }}>Your parent account login will be created at this email after payment.</div>
+        <input type="email" style={fieldStyle(!!errors.parentEmail)} value={form.parentEmail} onChange={e => set('parentEmail', e.target.value)} placeholder={translateUi("you@example.com")} />
+        {errors.parentEmail && <div style={{ color: HC.danger, fontSize: 12, marginBottom: 12 }}><TranslatedText text={errors.parentEmail}/></div>}
+        <div style={{ color: HC.text3, fontSize: 12, marginTop: -2, marginBottom: 14 }}><TranslatedText text={"Your parent account login will be created at this email after payment."}/></div>
 
         <label style={labelStyle()}>{t('registration.studentName')} *</label>
-        <input style={fieldStyle(!!errors.name)} value={form.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Aiman bin Zulkifli" />
+        <input style={fieldStyle(!!errors.name)} value={form.name} onChange={e => set('name', e.target.value)} placeholder={translateUi("e.g. Aiman bin Zulkifli")} />
         {errors.name && <div style={{ color: HC.danger, fontSize: 12, marginBottom: 12 }}>{errors.name}</div>}
         <div style={{ marginBottom: 14 }} />
 
         <div style={{ display: 'flex', gap: 12, marginBottom: 14 }}>
           <div style={{ flex: 1 }}>
             <label style={labelStyle()}>{t('registration.grade')} *</label>
-            <input style={fieldStyle(!!errors.grade)} value={form.grade} onChange={e => set('grade', e.target.value)} placeholder="e.g. Year 4" />
+            <input style={fieldStyle(!!errors.grade)} value={form.grade} onChange={e => set('grade', e.target.value)} placeholder={translateUi("e.g. Year 4")} />
             {errors.grade && <div style={{ color: HC.danger, fontSize: 12 }}>{errors.grade}</div>}
           </div>
           <div style={{ flex: 1 }}>
             <label style={labelStyle()}>{t('registration.level')}</label>
             <select className="select-field" style={fieldStyle(false)} value={form.level} onChange={e => set('level', e.target.value)}>
-              <option value="Primary">Primary</option>
-              <option value="Secondary">Secondary</option>
+              <option value="Primary"><TranslatedText text={"Primary"}/></option>
+              <option value="Secondary"><TranslatedText text={"Secondary"}/></option>
             </select>
           </div>
         </div>
 
         <label style={labelStyle()}>{t('registration.dob')}</label>
         <input type="date" style={fieldStyle(!!errors.dob)} value={form.dob} max={todayStr} onChange={e => set('dob', e.target.value)} />
-        {errors.dob && <div style={{ color: HC.danger, fontSize: 12, marginBottom: 12 }}>{errors.dob}</div>}
+        {errors.dob && <div style={{ color: HC.danger, fontSize: 12, marginBottom: 12 }}><TranslatedText text={errors.dob}/></div>}
         <div style={{ marginBottom: 14 }} />
 
         <label style={labelStyle()}>{t('registration.startDate')}</label>
         <input type="date" style={fieldStyle(!!errors.preferredStartDate)} value={form.preferredStartDate} min={todayStr} onChange={e => set('preferredStartDate', e.target.value)} />
-        {errors.preferredStartDate && <div style={{ color: HC.danger, fontSize: 12, marginBottom: 12 }}>{errors.preferredStartDate}</div>}
-        <div style={{ color: HC.text3, fontSize: 12, marginTop: -2, marginBottom: 14 }}>When would you like transport to begin? Leave blank if unsure.</div>
+        {errors.preferredStartDate && <div style={{ color: HC.danger, fontSize: 12, marginBottom: 12 }}><TranslatedText text={errors.preferredStartDate}/></div>}
+        <div style={{ color: HC.text3, fontSize: 12, marginTop: -2, marginBottom: 14 }}><TranslatedText text={"When would you like transport to begin? Leave blank if unsure."}/></div>
 
         <label style={labelStyle()}>{t('registration.contact')} *</label>
         <input type="tel" style={fieldStyle(!!errors.parentContact1)} value={form.parentContact1} maxLength={20} onChange={e => set('parentContact1', e.target.value.replace(/[^0-9+\s()-]/g, ''))} placeholder="+60 12-345 6789" />
-        {errors.parentContact1 && <div style={{ color: HC.danger, fontSize: 12, marginBottom: 12 }}>{errors.parentContact1}</div>}
+        {errors.parentContact1 && <div style={{ color: HC.danger, fontSize: 12, marginBottom: 12 }}><TranslatedText text={errors.parentContact1}/></div>}
         <div style={{ marginBottom: 14 }} />
 
         <label style={labelStyle()}>{t('registration.secondaryContact')}</label>
         <input type="tel" style={fieldStyle(!!errors.parentContact2)} value={form.parentContact2} maxLength={20} onChange={e => set('parentContact2', e.target.value.replace(/[^0-9+\s()-]/g, ''))} placeholder="+60 12-345 6789" />
-        {errors.parentContact2 && <div style={{ color: HC.danger, fontSize: 12, marginBottom: 12 }}>{errors.parentContact2}</div>}
+        {errors.parentContact2 && <div style={{ color: HC.danger, fontSize: 12, marginBottom: 12 }}><TranslatedText text={errors.parentContact2}/></div>}
         <div style={{ marginBottom: 14 }} />
 
         <label style={labelStyle()}>{t('registration.pickup')}</label>
         <select className="select-field" style={fieldStyle(false)} value={form.selfPickupSession} onChange={e => set('selfPickupSession', e.target.value)}>
-          {SELF_PICKUP_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          {SELF_PICKUP_OPTIONS.map(o => <option key={o.value} value={o.value}><TranslatedText text={o.label}/></option>)}
         </select>
         <div style={{ marginBottom: 24 }} />
 
@@ -298,7 +295,7 @@ function RegistrationForm() {
             fontFamily: 'inherit',
           }}
         >
-          {submitting ? t('registration.redirecting') : t('registration.continuePayment')}
+          <TranslatedText text={submitting ? t('registration.redirecting') : t('registration.continuePayment')}/>
         </motion.button>
       </form>
     </div>

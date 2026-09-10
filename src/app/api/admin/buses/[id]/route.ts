@@ -7,6 +7,8 @@ import { writeAuditLog } from '@/lib/audit'
 export const dynamic = 'force-dynamic'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const permissionSession = await getUserFromSession()
+  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
   try {
     const auth = await getUserFromSession()
     if (!auth || !['ADMIN', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(auth.role)) {
@@ -21,7 +23,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const actor = await getCurrentUser()
     if (!actor || !canAccessOrganization(actor, existing.organizationId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const { plateNumber, busNumber, registrationNumber, capacity, status, gpsStatus, driverId, routeId, wialonUnitId, katsanaVehicleId } = await req.json()
+    const { plateNumber, busNumber, registrationNumber, capacity, status, gpsStatus, driverId, maintainerId, routeId, wialonUnitId, katsanaVehicleId } = await req.json()
     const updates: Record<string, unknown> = {}
 
     if (plateNumber !== undefined) {
@@ -48,28 +50,37 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       updates.gpsStatus = gpsStatus
     }
     if (driverId !== undefined) updates.driverId = driverId || null
+    if (maintainerId !== undefined) updates.maintainerId = maintainerId || null
     if (routeId !== undefined) updates.routeId = routeId || null
     if (wialonUnitId !== undefined) updates.wialonUnitId = wialonUnitId || null
     if (katsanaVehicleId !== undefined) updates.katsanaVehicleId = katsanaVehicleId || null
 
     if (driverId) {
-      const driver = await prisma.user.findUnique({ where: { id: driverId }, select: { role: true, organizationId: true, isActive: true, employmentStatus: true } })
-      if (!driver || driver.role !== 'DRIVER' || !driver.isActive || driver.employmentStatus === 'OFFBOARDED' || driver.organizationId !== existing.organizationId || !canAccessOrganization(actor, driver.organizationId)) return NextResponse.json({ error: 'Invalid or inactive driver / maintainer assignment' }, { status: 400 })
+      const driver = await prisma.user.findUnique({ where: { id: driverId }, select: { role: true, personnelType: true, organizationId: true, isActive: true, employmentStatus: true } })
+      if (!driver || driver.role !== 'DRIVER' || driver.personnelType === 'MAINTAINER' || !driver.isActive || driver.employmentStatus === 'OFFBOARDED' || driver.organizationId !== existing.organizationId || !canAccessOrganization(actor, driver.organizationId)) return NextResponse.json({ error: 'Invalid or inactive driver / maintainer assignment' }, { status: 400 })
       const conflictingBus = await prisma.bus.findFirst({ where:{ driverId,status:'ACTIVE',id:{not:id} }, select:{plateNumber:true} })
       if (conflictingBus) return NextResponse.json({ error:`Driver / maintainer is already assigned to bus ${conflictingBus.plateNumber}` }, { status:409 })
+    }
+    if (maintainerId) {
+      if (maintainerId === (driverId === undefined ? existing.driverId : driverId)) return NextResponse.json({ error: 'Choose separate driver and maintainer accounts' }, { status: 400 })
+      const maintainer = await prisma.user.findUnique({ where: { id: maintainerId }, select: { role: true, personnelType: true, organizationId: true, isActive: true } })
+      if (!maintainer || maintainer.role !== 'DRIVER' || maintainer.personnelType !== 'MAINTAINER' || !maintainer.isActive || maintainer.organizationId !== existing.organizationId) return NextResponse.json({ error: 'Invalid maintainer for this school' }, { status: 400 })
+      const assigned = await prisma.bus.findFirst({ where: { maintainerId, status: 'ACTIVE', id: { not: id } } })
+      if (assigned) return NextResponse.json({ error: 'Maintainer already assigned to another bus' }, { status: 409 })
     }
     if (routeId) {
       const route = await prisma.route.findUnique({ where: { id: routeId }, select: { organizationId: true, isActive: true } })
       if (!route || !route.isActive || route.organizationId !== existing.organizationId || !canAccessOrganization(actor, route.organizationId)) return NextResponse.json({ error: 'Invalid or inactive route assignment' }, { status: 400 })
     }
 
-    if ((driverId !== undefined && driverId !== existing.driverId || routeId !== undefined && routeId !== existing.routeId || status !== undefined && status !== existing.status) && await prisma.trip.count({ where: { busId: id, status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } } })) return NextResponse.json({ error: 'Complete or cancel active trips before reassigning this bus' }, { status: 409 })
+    if ((maintainerId !== undefined && maintainerId !== existing.maintainerId || driverId !== undefined && driverId !== existing.driverId || routeId !== undefined && routeId !== existing.routeId || status !== undefined && status !== existing.status) && await prisma.trip.count({ where: { busId: id, status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } } })) return NextResponse.json({ error: 'Complete or cancel active trips before reassigning this bus' }, { status: 409 })
 
     const bus = await prisma.$transaction(async tx => {
       if (driverId !== undefined && existing.driverId && driverId !== existing.driverId) await tx.driverAssignmentHistory.create({ data: { driverId: existing.driverId, busId: id, routeId: existing.routeId, action: 'UNASSIGNED', reason: driverId ? 'Bus reassigned' : 'Bus assignment removed' } })
       const updated = await tx.bus.update({
         where: { id }, data: updates,
-        include: { driver: { select: { id: true, name: true, phone: true, personnelType: true, employmentStatus: true } }, route: { select: { id: true, name: true } } },
+        include: { driver: { select: { id: true, name: true, phone: true, personnelType: true, employmentStatus: true } },
+                maintainer: { select: { id: true, name: true, phone: true } }, route: { select: { id: true, name: true } } },
       })
       if (driverId && driverId !== existing.driverId) await tx.driverAssignmentHistory.create({ data: { driverId, busId: id, routeId: updated.routeId, action: existing.driverId ? 'REASSIGNED' : 'ASSIGNED' } })
       return updated
@@ -88,6 +99,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const permissionSession = await getUserFromSession()
+  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
   try {
     const auth = await getUserFromSession()
     if (!auth || !['ADMIN', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(auth.role)) {
@@ -106,7 +119,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
     const bus = await prisma.$transaction(async tx => {
       if (existing.driverId) await tx.driverAssignmentHistory.create({ data: { driverId: existing.driverId, busId: id, routeId: existing.routeId, action: 'UNASSIGNED', reason: 'Bus deactivated' } })
-      return tx.bus.update({ where: { id }, data: { status: 'INACTIVE', driverId: null } })
+      return tx.bus.update({ where: { id }, data: { status: 'INACTIVE', driverId: null, maintainerId: null } })
     })
     await writeAuditLog({ actorId: auth.id, organizationId: existing.organizationId, action: 'DEACTIVATE', entityType: 'BUS', entityId: id, details: { plateNumber: bus.plateNumber } })
     return NextResponse.json({ success: true, deactivated: true })

@@ -1,3 +1,4 @@
+import ui from './ui.json'
 export type SupportedLocale = 'en' | 'ms' | 'zh'
 
 // Legacy screens pre-date the key-based translator. Keeping their labels here
@@ -18,7 +19,7 @@ const ms: Record<string, string> = {
   'Email':'Emel', 'End Date (Optional)':'Tarikh Tamat (Pilihan)', 'ETA to School':'Anggaran Masa ke Sekolah', 'Event Title *':'Tajuk Acara *',
   'Failed to load analytics.':'Gagal memuatkan analitik.', 'Fleet (Buses)':'Armada (Bas)', 'Fleet Maintenance':'Penyelenggaraan Armada',
   'Full Name *':'Nama Penuh *', 'Geofence Radius (metres)':'Radius Geopagar (meter)', 'Grade *':'Darjah *',
-  'Green Leaderboard':'Carta Hijau', 'Inbox':'Peti Masuk', 'Language / Bahasa / 语言':'Bahasa', 'Level':'Peringkat',
+  'Inbox':'Peti Masuk', 'Language / Bahasa / 语言':'Bahasa', 'Level':'Peringkat',
   'Live Control Center':'Pusat Kawalan Langsung', 'Loading fleet...':'Memuatkan armada...', 'Loading…':'Memuatkan…',
   'Log Maintenance':'Rekod Penyelenggaraan', 'Login Email':'Emel Log Masuk', 'Lost & Found':'Hilang & Jumpa',
   'Management of school holidays, exams, and special events':'Pengurusan cuti sekolah, peperiksaan dan acara khas',
@@ -65,7 +66,7 @@ const zh: Record<string, string> = {
   'Driver Shift Schedule':'司机排班', 'Driver Workspace Setup':'司机工作区设置', 'Email':'电子邮件', 'End Date (Optional)':'结束日期（可选）',
   'ETA to School':'预计到校时间', 'Event Title *':'活动标题 *', 'Failed to load analytics.':'无法加载分析。', 'Fleet (Buses)':'车队（校车）',
   'Fleet Maintenance':'车队维护', 'Full Name *':'全名 *', 'Geofence Radius (metres)':'地理围栏半径（米）', 'Grade *':'年级 *',
-  'Green Leaderboard':'绿色排行榜', 'Inbox':'收件箱', 'Language / Bahasa / 语言':'语言', 'Level':'阶段', 'Live Control Center':'实时控制中心',
+  'Inbox':'收件箱', 'Language / Bahasa / 语言':'语言', 'Level':'阶段', 'Live Control Center':'实时控制中心',
   'Loading fleet...':'正在加载车队…', 'Loading…':'加载中…', 'Log Maintenance':'记录维护', 'Login Email':'登录邮箱', 'Lost & Found':'失物招领',
   'Management of school holidays, exams, and special events':'管理学校假期、考试和特别活动', 'Message':'消息', 'Message *':'消息 *',
   'Messages':'消息', 'Min. 3 characters':'至少 3 个字符', 'Morning Pickup Time':'早晨接送时间', 'Name':'姓名', 'NEW':'新',
@@ -97,10 +98,14 @@ export function translateLiteral(value: string, locale: SupportedLocale): string
   const leading = value.match(/^\s*/)?.[0] || ''
   const trailing = value.match(/\s*$/)?.[0] || ''
   const core = value.trim()
+  if (/^e\.g\.(?:,)?\s/.test(core)) return leading + (locale === 'ms' ? 'cth. ' : locale === 'zh' ? '例如：' : 'e.g. ') + core.replace(/^e\.g\.(?:,)?\s*/, '') + trailing
+  const dictionary = ui as Record<string, { ms: string; zh: string }>
+  const original = Object.entries(dictionary).find(([,v])=>v.ms === core || v.zh === core)?.[0] || core
+  if (dictionary[original]) return leading + (locale === 'en' ? original : dictionary[original][locale]) + trailing
   const source = Object.entries(ms).find(([, translated]) => translated === core)?.[0]
     || Object.entries(zh).find(([, translated]) => translated === core)?.[0]
     || core
   if (locale === 'en') return `${leading}${source}${trailing}`
-  const dictionary = locale === 'ms' ? ms : zh
-  return `${leading}${dictionary[source] || source}${trailing}`
+  const legacy = locale === 'ms' ? ms : zh
+  return `${leading}${legacy[source] || source}${trailing}`
 }

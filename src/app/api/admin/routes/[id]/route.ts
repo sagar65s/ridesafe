@@ -7,6 +7,8 @@ import { writeAuditLog } from '@/lib/audit'
 export const dynamic = 'force-dynamic'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const permissionSession = await getUserFromSession()
+  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
   try {
     const auth = await getUserFromSession()
     if (!auth || !['ADMIN', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(auth.role)) {
@@ -34,6 +36,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (afternoonTime !== undefined) updates.afternoonTime = afternoonTime || null
     if (isActive !== undefined) updates.isActive = Boolean(isActive)
 
+    if (isActive === false && await prisma.trip.count({where:{routeId:id,status:{in:['DRIVER_STARTED_ROUTE','BUS_EN_ROUTE']}}})) return NextResponse.json({error:'Complete the active trip before deactivating the route'},{status:409})
     const route = await prisma.route.update({
       where: { id },
       data: updates,
@@ -53,6 +56,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const permissionSession = await getUserFromSession()
+  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
   try {
     const auth = await getUserFromSession()
     if (!auth || !['ADMIN', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(auth.role)) {
@@ -67,6 +72,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const actor = await getCurrentUser()
     if (!actor || !canAccessOrganization(actor, existing.organizationId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
+    if (await prisma.trip.count({where:{routeId:id,status:{in:['DRIVER_STARTED_ROUTE','BUS_EN_ROUTE']}}})) return NextResponse.json({error:'Complete the active trip before deactivating the route'},{status:409})
     const route = await prisma.route.update({ where: { id }, data: { isActive: false } })
     await prisma.bus.updateMany({ where: { routeId: id }, data: { routeId: null } })
     await writeAuditLog({ actorId: auth.id, organizationId: existing.organizationId, action: 'DEACTIVATE', entityType: 'ROUTE', entityId: id, details: { name: route.name } })

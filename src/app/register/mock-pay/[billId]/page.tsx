@@ -1,5 +1,6 @@
 'use client'
 
+import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -55,34 +56,31 @@ export default function MockPayPage({ params }: { params: Promise<{ billId: stri
     }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', marginBottom: 20, color: HC.text3, fontSize: 12.5 }}>
-          <ShieldCheck size={15} /> Simulated Billplz Checkout (test mode — no real payment provider configured)
-        </div>
+          <ShieldCheck size={15} /><TranslatedText text={" Simulated Billplz Checkout (test mode — no real payment provider configured) "}/></div>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           style={{ background: HC.bgSoft, border: `1px solid ${HC.line}`, borderRadius: HC.r, padding: '28px 26px' }}>
           {loading ? (
-            <div style={{ textAlign: 'center', color: HC.text3, padding: '20px 0' }}><Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} /><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>
+            <div style={{ textAlign: 'center', color: HC.text3, padding: '20px 0' }}><Loader2 size={24} style={{ animation: 'spin 1s linear infinite' }} /><style><TranslatedText text={`@keyframes spin{to{transform:rotate(360deg)}}`}/></style></div>
           ) : error && !summary ? (
-            <div style={{ color: HC.danger, fontSize: 14 }}>{error}</div>
+            <div style={{ color: HC.danger, fontSize: 14 }}><TranslatedText text={error}/></div>
           ) : summary ? (
             <>
-              <h2 style={{ color: HC.text, fontSize: 19, fontWeight: 700, margin: '0 0 4px' }}>RideSafe Registration Fee</h2>
-              <p style={{ color: HC.text2, fontSize: 13.5, marginBottom: 20 }}>Payer: {summary.parentName} · Student: {summary.studentName}</p>
+              <h2 style={{ color: HC.text, fontSize: 19, fontWeight: 700, margin: '0 0 4px' }}><TranslatedText text={"RideSafe Registration Fee"}/></h2>
+              <p style={{ color: HC.text2, fontSize: 13.5, marginBottom: 20 }}><TranslatedText text={"Payer: "}/><TranslatedText text={summary.parentName}/><TranslatedText text={" · Student: "}/>{summary.studentName}</p>
               <div style={{ background: HC.surface, border: `1px solid ${HC.line}`, borderRadius: HC.r, padding: '18px 20px', marginBottom: 22, textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: HC.text3, textTransform: 'uppercase', letterSpacing: '.08em' }}>Amount Due</div>
-                <div style={{ fontSize: 30, fontWeight: 800, color: HC.yellow, marginTop: 4 }}>RM {summary.amount.toFixed(2)}</div>
+                <div style={{ fontSize: 11, color: HC.text3, textTransform: 'uppercase', letterSpacing: '.08em' }}><TranslatedText text={"Amount Due"}/></div>
+                <div style={{ fontSize: 30, fontWeight: 800, color: HC.yellow, marginTop: 4 }}><TranslatedText text={"RM "}/><TranslatedText text={summary.amount.toFixed(2)}/></div>
               </div>
 
-              {error && <div style={{ color: HC.danger, fontSize: 13, marginBottom: 12 }}>{error}</div>}
+              {error && <div style={{ color: HC.danger, fontSize: 13, marginBottom: 12 }}><TranslatedText text={error}/></div>}
 
               <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} disabled={processing}
                 onClick={() => act('paid')}
                 style={{ width: '100%', padding: '14px', borderRadius: HC.pill, background: HC.yellow, color: HC.onYellow, fontWeight: 700, fontSize: 14.5, border: 'none', cursor: processing ? 'not-allowed' : 'pointer', opacity: processing ? 0.7 : 1, marginBottom: 10 }}>
-                {processing ? 'Processing…' : 'Simulate Successful Payment'}
+                <TranslatedText text={processing ? 'Processing…' : 'Simulate Successful Payment'}/>
               </motion.button>
               <button disabled={processing} onClick={() => act('failed')}
-                style={{ width: '100%', padding: '12px', borderRadius: HC.pill, background: 'none', color: HC.text3, border: `1px solid ${HC.line}`, cursor: processing ? 'not-allowed' : 'pointer', fontSize: 13.5, fontFamily: 'inherit' }}>
-                Simulate Failed Payment
-              </button>
+                style={{ width: '100%', padding: '12px', borderRadius: HC.pill, background: 'none', color: HC.text3, border: `1px solid ${HC.line}`, cursor: processing ? 'not-allowed' : 'pointer', fontSize: 13.5, fontFamily: 'inherit' }}><TranslatedText text={" Simulate Failed Payment "}/></button>
             </>
           ) : null}
         </motion.div>

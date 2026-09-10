@@ -1,4 +1,6 @@
 'use client'
+import { useTranslation as useLocaleText } from '@/i18n/provider'
+import { TranslatedText } from '@/i18n/provider'
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, Bus, AlertTriangle, GraduationCap, Settings } from 'lucide-react'
@@ -9,6 +11,8 @@ interface TripRecord { id: string; status: string; date?: string; busId?: string
 interface EmergencyRecord { id: string; timestamp: string; latitude?: number; longitude?: number; driver?: { name: string; phone?: string } }
 
 export default function OverviewTab({ currentUserRole }: { currentUserRole: string }) {
+ const {tx:translateUi}=useLocaleText()
+
     const [students, setStudents] = useState<StudentRecord[]>([])
     const [trips, setTrips] = useState<TripRecord[]>([])
     const [platformStats, setPlatformStats] = useState({ schools:0, buses:0, drivers:0, runningBuses:0 })
@@ -119,18 +123,6 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
         if (timesArray.length === 0) {
             setSettingsError('Enter at least one pickup time'); return
         }
-        const lat = parseFloat(schoolLat)
-        const lng = parseFloat(schoolLng)
-        const radius = parseFloat(geofenceRadius)
-        if (schoolLat !== '' && (isNaN(lat) || lat < -90 || lat > 90)) {
-            setSettingsError('Latitude must be between -90 and 90'); return
-        }
-        if (schoolLng !== '' && (isNaN(lng) || lng < -180 || lng > 180)) {
-            setSettingsError('Longitude must be between -180 and 180'); return
-        }
-        if (geofenceRadius !== '' && (isNaN(radius) || radius <= 0)) {
-            setSettingsError('Geofence radius must be a positive number of metres'); return
-        }
         try {
             const res = await fetch('/api/settings', {
                 method: 'POST',
@@ -142,12 +134,9 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     schoolName, pickupTimes: timesArray,
-                    ...(schoolLat !== '' && { schoolLat: lat }),
-                    ...(schoolLng !== '' && { schoolLng: lng }),
-                    ...(geofenceRadius !== '' && { geofenceRadius: radius }),
                 })
             })
-            if (res.ok || schoolRes.ok) {
+            if (res.ok && schoolRes.ok) {
                 isEditingRef.current = false
                 showToast('Settings updated successfully!')
             } else {
@@ -193,7 +182,7 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
                             border: `1px solid ${toastType === 'success' ? 'var(--success)' : 'var(--danger)'}`,
                             borderRadius: 12, color: 'var(--text-main)', fontWeight: 600, backdropFilter: 'blur(12px)'
                         }}>
-                        {toast}
+                        <TranslatedText text={toast}/>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -206,26 +195,21 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
                         <h2 style={{ color: '#ef4444', marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <motion.span animate={{ scale: [1, 1.25, 1] }} transition={{ repeat: Infinity, duration: 1 }} style={{ display: 'flex' }}>
                                 <AlertTriangle size={24} color="#ef4444" />
-                            </motion.span>
-                            ACTIVE EMERGENCIES ({emergencies.length})
+                            </motion.span><TranslatedText text={" ACTIVE EMERGENCIES ("}/>{emergencies.length})
                         </h2>
                         <div style={{ display: 'grid', gap: '1rem' }}>
                             {emergencies.map(e => (
                                 <motion.div layout key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.3)', padding: '1rem', borderRadius: 8 }}>
                                     <div>
-                                        <strong style={{ display: 'block', fontSize: '1.05rem' }}>
-                                            Driver: {e.driver?.name || 'Unknown'} {e.driver?.phone ? `(${e.driver.phone})` : ''}
+                                        <strong style={{ display: 'block', fontSize: '1.05rem' }}><TranslatedText text={" Driver: "}/>{e.driver?.name || 'Unknown'} {e.driver?.phone ? `(${e.driver.phone})` : ''}
                                         </strong>
-                                        <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginTop: 4 }}>
-                                            Triggered: {new Date(e.timestamp).toLocaleString()}<br />
-                                            Location: {e.latitude && e.longitude ? `${e.latitude.toFixed(5)}, ${e.longitude.toFixed(5)}` : 'Unknown'}
+                                        <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginTop: 4 }}><TranslatedText text={" Triggered: "}/>{new Date(e.timestamp).toLocaleString()}<br /><TranslatedText text={" Location: "}/><TranslatedText text={e.latitude && e.longitude ? `${e.latitude.toFixed(5)}, ${e.longitude.toFixed(5)}` : 'Unknown'}/>
                                         </div>
                                     </div>
                                     <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                                         className="btn btn-success" onClick={() => handleResolveEmergency(e.id)}
                                         style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <CheckCircle size={16} /> Resolve
-                                    </motion.button>
+                                        <CheckCircle size={16} /><TranslatedText text={" Resolve "}/></motion.button>
                                 </motion.div>
                             ))}
                         </div>
@@ -253,66 +237,42 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
                         style={{ textAlign: 'center', justifyContent: 'center' }}>
                         <div style={{ fontSize: '2.5rem', marginBottom: 10 }}>{icon}</div>
                         <div style={{ fontSize: '2.25rem', fontWeight: 800, color }}>{val}</div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}><TranslatedText text={label}/></div>
                     </motion.div>
                 ))}
             </motion.div>
 
             <motion.div variants={containerVariants} initial="hidden" animate="visible"
-                style={{ display: 'grid', gap: '2rem', gridTemplateColumns: (currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN') ? '1fr 2fr' : '1fr' }}>
+                style={{ display: 'grid', gap: '2rem', gridTemplateColumns: currentUserRole === 'SUPER_ADMIN' ? '1fr 2fr' : '1fr' }}>
 
                 {/* Settings panel — admin/school-admin only (NOT super admin who has org-level view) */}
                 {currentUserRole === 'SCHOOL_ADMIN' && (
                     <motion.div variants={cardVariants} className="bento-card" style={{ padding: '2rem', alignSelf: 'start' }}>
-                        <h3 style={{ marginTop: 0, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: 8 }}><Settings size={18} /> Organisation Settings</h3>
+                        <h3 style={{ marginTop: 0, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: 8 }}><Settings size={18} /><TranslatedText text={" Organisation Settings"}/></h3>
 
                         <div className="input-group">
-                            <label className="input-label">Organisation Name</label>
+                            <label className="input-label"><TranslatedText text={"Organisation Name"}/></label>
                             <input type="text" className="input-field" value={schoolName}
                                 minLength={3} maxLength={100}
                                 onChange={e => { isEditingRef.current = true; setSchoolName(e.target.value) }}
                                 onBlur={() => { /* keep isEditingRef true until saved */ }}
-                                placeholder="e.g. SK Taman Maju" />
-                            <div style={{ fontSize:'0.72rem', color:'var(--text-dim)', marginTop:2 }}>Min. 3 characters</div>
+                                placeholder={translateUi("e.g. SK Taman Maju")} />
+                            <div style={{ fontSize:'0.72rem', color:'var(--text-dim)', marginTop:2 }}><TranslatedText text={"Min. 3 characters"}/></div>
                         </div>
 
                         <div className="input-group">
-                            <label className="input-label">Available Pickup Times</label>
+                            <label className="input-label"><TranslatedText text={"Available Pickup Times"}/></label>
                             <input type="text" className="input-field" value={pickupTimes}
-                                onChange={e => { isEditingRef.current = true; setPickupTimes(e.target.value) }} placeholder="e.g. 3:00 PM, 4:00 PM" />
-                            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 4 }}>Comma-separated list of times</div>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                            <div className="input-group">
-                                <label className="input-label">School Latitude</label>
-                                <input type="text" inputMode="decimal" className="input-field" value={schoolLat}
-                                    onChange={e => { isEditingRef.current = true; setSchoolLat(e.target.value) }} placeholder="3.1390" />
-                            </div>
-                            <div className="input-group">
-                                <label className="input-label">School Longitude</label>
-                                <input type="text" inputMode="decimal" className="input-field" value={schoolLng}
-                                    onChange={e => { isEditingRef.current = true; setSchoolLng(e.target.value) }} placeholder="101.6869" />
-                            </div>
-                        </div>
-
-                        <div className="input-group">
-                            <label className="input-label">Geofence Radius (metres)</label>
-                            <input type="text" inputMode="decimal" className="input-field" value={geofenceRadius}
-                                onChange={e => { isEditingRef.current = true; setGeofenceRadius(e.target.value) }} placeholder="500" />
-                            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                                How close a bus must be to the school pin to count as &quot;arrived&quot; / trigger ETA alerts
-                            </div>
+                                onChange={e => { isEditingRef.current = true; setPickupTimes(e.target.value) }} placeholder={translateUi("e.g. 3:00 PM, 4:00 PM")} />
+                            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 4 }}><TranslatedText text={"Comma-separated list of times"}/></div>
                         </div>
 
                         {settingsError && (
-                            <div style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.5rem' }}>{settingsError}</div>
+                            <div style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.5rem' }}><TranslatedText text={settingsError}/></div>
                         )}
 
                         <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                            onClick={handleUpdateSettings} className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>
-                            Save Settings
-                        </motion.button>
+                            onClick={handleUpdateSettings} className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}><TranslatedText text={" Save Settings "}/></motion.button>
                     </motion.div>
                 )}
 
@@ -320,24 +280,21 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
                 {currentUserRole === 'SUPER_ADMIN' && (
                     <motion.div variants={cardVariants} className="bento-card" style={{ padding: '2rem', alignSelf: 'start' }}>
                         <h3 style={{ marginTop: 0, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <Settings size={18} /> System Overview
-                        </h3>
+                            <Settings size={18} /><TranslatedText text={" System Overview "}/></h3>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <div style={{ padding: '1rem', borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--surface-border)' }}>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Total Students (all orgs)</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}><TranslatedText text={"Total Students (all orgs)"}/></div>
                                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>{students.length}</div>
                             </div>
                             <div style={{ padding: '1rem', borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--surface-border)' }}>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Active Trips</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}><TranslatedText text={"Active Trips"}/></div>
                                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--bus-yellow)' }}>{activeTrips}</div>
                             </div>
                             <div style={{ padding: '1rem', borderRadius: 10, background: 'var(--surface-2)', border: '1px solid var(--surface-border)' }}>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Open Emergencies</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}><TranslatedText text={"Open Emergencies"}/></div>
                                 <div style={{ fontSize: '1.5rem', fontWeight: 800, color: emergencies.length > 0 ? 'var(--danger)' : 'var(--success)' }}>{emergencies.length}</div>
                             </div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                                Manage organisations, users, and settings in the respective tabs.
-                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}><TranslatedText text={" Manage organisations, users, and settings in the respective tabs. "}/></div>
                         </div>
                     </motion.div>
                 )}
@@ -345,10 +302,10 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
                 {/* Students overview */}
                 <motion.div variants={cardVariants} className="bento-card" style={{ padding: '2rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                        <h3 style={{ margin: 0 }}>Students Overview</h3>
+                        <h3 style={{ margin: 0 }}><TranslatedText text={"Students Overview"}/></h3>
                         <div style={{ display: 'flex', gap: 8 }}>
-                            <span className="badge badge-success">{presentStudents} In</span>
-                            <span className="badge badge-pending">{students.length - presentStudents} Out</span>
+                            <span className="badge badge-success">{presentStudents}<TranslatedText text={" In"}/></span>
+                            <span className="badge badge-pending">{students.length - presentStudents}<TranslatedText text={" Out"}/></span>
                         </div>
                     </div>
 
@@ -368,27 +325,23 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
                                     <div>
                                         <div style={{ fontWeight: 500, fontSize: '0.95rem' }}>{student.name}</div>
                                         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                            {student.grade} · {student.parentContact1}
+                                            {student.grade} · <TranslatedText text={student.parentContact1}/>
                                         </div>
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: 6 }}>
-                                    {student.isSelfPickup && <span className="badge badge-warning">Self-Pickup</span>}
+                                    {student.isSelfPickup && <span className="badge badge-warning"><TranslatedText text={"Self-Pickup"}/></span>}
                                     <span className={`badge ${student.status === 'CHECKED_OUT' ? 'badge-success' : 'badge-pending'}`}>
-                                        {student.status.replace('_', ' ')}
+                                        <TranslatedText text={student.status.replace('_', ' ')}/>
                                     </span>
                                 </div>
                             </motion.div>
                         ))}
                         {students.length === 0 && (
-                            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>
-                                No students registered yet. Go to the Students tab to add some.
-                            </div>
+                            <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}><TranslatedText text={" No students registered yet. Go to the Students tab to add some. "}/></div>
                         )}
                         {students.length > 15 && (
-                            <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 8 }}>
-                                ... and {students.length - 15} more. See the Students tab for the full list.
-                            </div>
+                            <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: 8 }}><TranslatedText text={" ... and "}/>{students.length - 15}<TranslatedText text={" more. See the Students tab for the full list. "}/></div>
                         )}
                     </div>
                 </motion.div>

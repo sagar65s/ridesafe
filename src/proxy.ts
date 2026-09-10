@@ -38,6 +38,7 @@ const PUBLIC_PATHS = [
   '/api/auth/login',
   '/api/auth/me',        // Used for logout POST
   '/api/health',
+  '/api/internal/tracking',
   '/api/public/',        // Public forms (e.g. student self-registration)
 ]
 
@@ -61,6 +62,12 @@ export async function proxy(request: NextRequest) {
   // Skip non-API routes (pages, static assets)
   if (isNonApiPath(pathname)) {
     return NextResponse.next()
+  }
+
+  if (!['GET','HEAD','OPTIONS'].includes(request.method) && !pathname.startsWith('/api/public/billplz/') && pathname !== '/api/internal/tracking') {
+    const origin=request.headers.get('origin')
+    const configured=process.env.APP_URL ? new URL(process.env.APP_URL).origin : request.nextUrl.origin
+    if (request.headers.get('sec-fetch-site') === 'cross-site' || origin && ![request.nextUrl.origin,configured].includes(origin)) return NextResponse.json({error:'Cross-origin write rejected'},{status:403})
   }
 
   // Verify before assigning a user bucket so shared school Wi-Fi does not

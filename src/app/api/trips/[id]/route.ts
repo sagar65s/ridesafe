@@ -16,10 +16,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
         if (user.role === 'PARENT') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-        const trip = await prisma.trip.findUnique({ where: { id } })
+        return await prisma.$transaction(async tx => {
+        await tx.$queryRaw`SELECT id FROM "Trip" WHERE id = ${id} FOR UPDATE`
+        const trip = await tx.trip.findUnique({ where: { id } })
         if (!trip) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-        if (user.role === 'DRIVER' && trip.driverId !== user.id) {
+        if (user.role === 'DRIVER' && trip.driverId !== user.id && trip.maintainerId !== user.id) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
         if (['ADMIN', 'SCHOOL_ADMIN'].includes(user.role)) {
@@ -42,8 +44,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         if (data.delayReason !== undefined && String(data.delayReason || '').length > 500) return NextResponse.json({ error: 'Delay reason is too long' }, { status: 400 })
 
         if (data.status === 'TRIP_COMPLETED') {
-            const students = await prisma.student.findMany({ where: { routeId: trip.routeId, isActive: true, isSelfPickup: false, ...(trip.busId ? { OR: [{ busId: trip.busId }, { busId: null }] } : {}) }, select: { id: true } })
-            const attendances = await prisma.attendance.findMany({ where: { tripId: trip.id }, select: { studentId: true, action: true } })
+            const students = await tx.student.findMany({ where: { routeId: trip.routeId, isActive: true, isSelfPickup: false, busId: trip.busId }, select: { id: true } })
+            const attendances = await tx.attendance.findMany({ where: { tripId: trip.id }, select: { studentId: true, action: true } })
             const incomplete = students.filter(student => {
                 const actions = attendances.filter(item => item.studentId === student.id).map(item => item.action)
                 return !actions.includes('ABSENT') && !(actions.includes('PICKED_UP') && actions.includes('DROPPED_OFF'))
@@ -51,7 +53,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             if (incomplete.length) return NextResponse.json({ error: `Complete attendance for ${incomplete.length} student(s) before ending the trip` }, { status: 409 })
         }
 
-        const updated = await prisma.trip.update({
+        const updated = await tx.trip.update({
             where: { id },
             data: {
                 ...(data.status && { status: data.status }),
@@ -63,6 +65,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         await writeAuditLog({ actorId: user.id, organizationId: route?.organizationId, action: data.status === 'TRIP_COMPLETED' ? 'COMPLETE' : data.delayMinutes ? 'DELAY' : 'UPDATE', entityType: 'TRIP', entityId: trip.id, details: { status: updated.status, delayMinutes: updated.delayMinutes, delayReason: updated.delayReason } })
 
         return NextResponse.json({ trip: updated })
+        })
     } catch (error) {
         console.error('Trip PATCH Error:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

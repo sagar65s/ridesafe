@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import {pushNotification} from '@/lib/notification-delivery'
+import {randomUUID} from 'node:crypto'
 import { getUserFromSession } from '@/lib/auth'
 import { resolveUserOrganizationId } from '@/lib/authorization'
 
@@ -16,14 +18,15 @@ export async function GET() {
 
     const organizationId = await resolveUserOrganizationId(user.id)
     const announcements = await prisma.announcement.findMany({
-      where: user.role === 'SUPER_ADMIN' ? {} : { organizationId: organizationId || '__none__' },
+      where: { deletedAt: null, ...(user.role === 'SUPER_ADMIN' ? {} : { organizationId: organizationId || '__none__' }) },
       orderBy: { createdAt: 'desc' },
       take: 50,
     })
 
     return NextResponse.json({ announcements })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    console.error(e)
+    const msg = 'Internal server error'
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
@@ -36,7 +39,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { title, body, targetRole, type } = await req.json()
-    if (!title?.trim() || !body?.trim()) return NextResponse.json({ error: 'Title and body required' }, { status: 400 })
+    if (typeof title !== 'string' || typeof body !== 'string' || title.length > 160 || body.length > 2000 || !title.trim() || !body.trim()) return NextResponse.json({ error: 'Title and body required' }, { status: 400 })
     const validRoles = ['ALL', 'ADMIN', 'SCHOOL_ADMIN', 'DRIVER', 'PARENT']
     const validTypes = ['INFO', 'WARNING', 'EMERGENCY']
     if (targetRole && !validRoles.includes(targetRole)) return NextResponse.json({ error: 'Invalid target role' }, { status: 400 })
@@ -50,10 +53,11 @@ export async function POST(req: Request) {
 
     const users = await prisma.user.findMany({ where: { ...where, isActive: true }, select: { id: true } })
 
+    const broadcastKey = randomUUID()
     // Batch create notifications
     const result = await prisma.notification.createMany({
       data: users.map(u => ({
-        userId: u.id,
+        userId: u.id, dedupeKey: `announcement:${broadcastKey}:${u.id}`,
         title: title.trim(),
         body: body.trim(),
         type: type || 'INFO',
@@ -69,9 +73,23 @@ export async function POST(req: Request) {
       }
     })
 
+    await Promise.allSettled((await prisma.notification.findMany({where:{dedupeKey:{startsWith:`announcement:${broadcastKey}:`}}})).map(pushNotification))
     return NextResponse.json({ sent: result.count, targetRole: targetRole || 'ALL', announcement })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    console.error(e)
+    const msg = 'Internal server error'
     return NextResponse.json({ error: msg }, { status: 500 })
   }
+}
+
+export async function DELETE(req: Request) {
+  const user = await getUserFromSession()
+  if (!user || !ADMIN_ROLES.includes(user.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const { id } = await req.json().catch(() => ({}))
+  if (typeof id !== 'string') return NextResponse.json({ error: 'Announcement ID required' }, { status: 400 })
+  const organizationId = await resolveUserOrganizationId(user.id)
+  const item = await prisma.announcement.findFirst({ where: { id, deletedAt: null, ...(user.role === 'SUPER_ADMIN' ? {} : { organizationId: organizationId || '__none__' }) } })
+  if (!item || (user.role === 'ADMIN' && item.createdBy !== user.id)) return NextResponse.json({ error: 'Not found or not permitted' }, { status: 404 })
+  await prisma.announcement.update({ where: { id }, data: { deletedAt: new Date() } })
+  return NextResponse.json({ success: true })
 }

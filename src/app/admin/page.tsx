@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslation as useLocaleText } from '@/i18n/provider'
+import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -12,7 +14,6 @@ import FleetTab from '@/components/admin/FleetTab'
 import LiveTripsTab from '@/components/admin/LiveTripsTab'
 import MessagesTab from '@/components/admin/MessagesTab'
 import AnalyticsTab from '@/components/admin/AnalyticsTab'
-import ScheduleTab from '@/components/admin/ScheduleTab'
 import MaintenanceTab from '@/components/admin/MaintenanceTab'
 import LostFoundTab from '@/components/admin/LostFoundTab'
 import AnnouncementsTab from '@/components/admin/AnnouncementsTab'
@@ -33,17 +34,17 @@ import {
 import type { LucideIcon } from 'lucide-react'
 
 const HC = {
-  bg:         '#08080A',
-  bgSoft:     '#0E0E11',
-  surface:    '#141417',
-  surface2:   '#1C1C21',
+  bg:         '#102033',
+  bgSoft:     '#13283c',
+  surface:    '#173147',
+  surface2:   '#203d52',
   line:       '#26262C',
   lineStrong: '#3A3A43',
   text:       '#FFFFFF',
   text2:      '#A6A6B2',
   text3:      '#6E6E7A',
-  yellow:     '#FFD60A',
-  onYellow:   '#08080A',
+  yellow:     '#f9c846',
+  onYellow:   '#102033',
   danger:     '#FF453A',
   dangerBg:   'rgba(255,69,58,0.12)',
   r:          '12px',
@@ -63,7 +64,6 @@ function buildSidebarGroups(t: (k: string) => string): SidebarGroup[] {
         { id: 'STUDENTS',    icon: GraduationCap,   label: t('nav.students') },
         { id: 'ATTENDANCE',  icon: ClipboardCheck,  label: t('nav.attendance') },
         { id: 'LIVETRIPS',   icon: MapPin,          label: t('nav.liveTrips') },
-        { id: 'SCHEDULE',    icon: CalendarDays,    label: t('nav.schedule') },
         { id: 'HISTORY',     icon: History,         label: t('nav.history') },
       ],
     },
@@ -74,6 +74,9 @@ function buildSidebarGroups(t: (k: string) => string): SidebarGroup[] {
         { id: 'MAINTENANCE',   icon: Wrench,    label: t('nav.maintenance') },
         { id: 'LOSTFOUND',     icon: Package,   label: t('nav.lostFound') },
         { id: 'ANNOUNCEMENTS', icon: Megaphone, label: t('nav.announcements') },
+        { id: 'CALENDAR', icon: CalendarDays, label: t('admin.calendar') },
+        { id: 'SETTINGS', icon: Settings2, label: 'School Settings' },
+        { id: 'AUDIT', icon: ScrollText, label: 'Audit Logs' },
         { id: 'ISSUES',        icon: MessageSquareWarning, label: 'Transport Issues' },
       ],
     },
@@ -105,12 +108,14 @@ function SidebarItem({ icon: Icon, label, active, onClick }: {
       }}
     >
       <Icon size={16} style={{ flexShrink: 0 }} />
-      {label}
+      <TranslatedText text={label}/>
     </button>
   )
 }
 
 export default function AdminDashboard() {
+ const {tx:translateUi}=useLocaleText()
+
   const [activeTab, setActiveTab]             = useState('OVERVIEW')
   const [searchQuery, setSearchQuery]         = useState('')
   const [currentUserRole, setCurrentUserRole] = useState<string>('')
@@ -130,7 +135,7 @@ export default function AdminDashboard() {
   const TAB_LABELS: Record<string, string> = {
     OVERVIEW: t('nav.overview'), FLEET: t('nav.fleet'), STUDENTS: t('nav.students'),
     ATTENDANCE: t('nav.attendance'),
-    LIVETRIPS: t('nav.liveTrips'), SCHEDULE: t('nav.schedule'), HISTORY: t('nav.history'),
+    LIVETRIPS: t('nav.liveTrips'), HISTORY: t('nav.history'),
     USERS: t('nav.users'), MAINTENANCE: t('nav.maintenance'), LOSTFOUND: t('nav.lostFound'),
     ANNOUNCEMENTS: t('nav.announcements'), ANALYTICS: t('nav.analytics'),
     MESSAGES: t('nav.messages'), CALENDAR: t('admin.calendar'),
@@ -139,9 +144,6 @@ export default function AdminDashboard() {
   const SUPER_ADMIN_ITEMS: { id: string; icon: LucideIcon; label: string }[] = [
     { id: 'ORGANIZATIONS', icon: Building2,   label: t('admin.organizations') },
     { id: 'SUPERUSERS',    icon: ShieldCheck, label: t('admin.allUsers') },
-    { id: 'CALENDAR',      icon: Bell,        label: t('admin.calendar') },
-    { id: 'AUDIT',         icon: ScrollText,  label: 'Audit Logs' },
-    { id: 'SETTINGS',      icon: Settings2,   label: 'System Management' },
   ]
 
   useEffect(() => {
@@ -227,9 +229,7 @@ export default function AdminDashboard() {
       {/* SUPER_ADMIN section */}
       {currentUserRole === 'SUPER_ADMIN' && (
         <div style={{ marginBottom: 8 }}>
-          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.14em', color: HC.yellow, padding: '8px 14px 6px', textTransform: 'uppercase', opacity: 0.85 }}>
-            Super Admin
-          </div>
+          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.14em', color: HC.yellow, padding: '8px 14px 6px', textTransform: 'uppercase', opacity: 0.85 }}><TranslatedText text={" Super Admin "}/></div>
           {SUPER_ADMIN_ITEMS.map(item => (
             <SidebarItem key={item.id} icon={item.icon} label={item.label} active={activeTab === item.id} onClick={() => handleNavClick(item.id)} />
           ))}
@@ -241,7 +241,7 @@ export default function AdminDashboard() {
       {SIDEBAR_GROUPS.map(group => (
         <div key={group.label} style={{ marginBottom: 8 }}>
           <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.14em', color: HC.text3, padding: '8px 14px 6px', textTransform: 'uppercase' }}>
-            {group.label}
+            <TranslatedText text={group.label}/>
           </div>
           {group.items.map(item => (
             <SidebarItem
@@ -264,10 +264,10 @@ export default function AdminDashboard() {
             background: 'linear-gradient(135deg, #FFD60A, #F5A623)',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             fontWeight: 800, color: HC.onYellow, fontSize: 13,
-          }}>{initials}</span>
+          }}><TranslatedText text={initials}/></span>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: HC.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userName}</div>
-            <div style={{ fontSize: 11, color: HC.text3 }}>{currentUserRole.replace(/_/g, ' ')}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: HC.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><TranslatedText text={userName}/></div>
+            <div style={{ fontSize: 11, color: HC.text3 }}><TranslatedText text={currentUserRole.replace(/_/g, ' ')}/></div>
           </div>
         </div>
       </div>
@@ -326,7 +326,7 @@ export default function AdminDashboard() {
             <button
               onClick={() => setSidebarOpen(true)}
               style={{ background: 'none', border: 'none', color: HC.text2, cursor: 'pointer', display: 'flex', padding: 6, borderRadius: 8, flexShrink: 0 }}
-              aria-label="Open menu"
+              aria-label={translateUi("Open menu")}
             >
               <Menu size={22} />
             </button>
@@ -335,8 +335,7 @@ export default function AdminDashboard() {
           {/* Title */}
           <div style={{ minWidth: 0 }}>
             {!isMobile && (
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: HC.yellow }}>
-                Live · {dateLabel}
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: HC.yellow }}><TranslatedText text={" Live · "}/><TranslatedText text={dateLabel}/>
               </div>
             )}
             <h2 style={{
@@ -345,7 +344,7 @@ export default function AdminDashboard() {
               letterSpacing: '-0.025em', marginTop: isMobile ? 0 : 3,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
-              {TAB_LABELS[activeTab] || activeTab}
+              <TranslatedText text={TAB_LABELS[activeTab] || activeTab}/>
             </h2>
           </div>
 
@@ -373,8 +372,8 @@ export default function AdminDashboard() {
                   {searchResults.map(result => (
                     <button key={`${result.tab}-${result.id}`} onClick={() => { setActiveTab(result.tab); if (isMobile) setSidebarOpen(false) }}
                       style={{ width:'100%', border:0, background:'transparent', color:HC.text, padding:'10px 12px', borderRadius:9, cursor:'pointer', textAlign:'left', fontFamily:'inherit' }}>
-                      <div style={{ fontWeight:700, fontSize:13 }}>{result.label}</div>
-                      <div style={{ color:HC.text3, fontSize:11.5, marginTop:2 }}>{result.detail} · {TAB_LABELS[result.tab] || result.tab}</div>
+                      <div style={{ fontWeight:700, fontSize:13 }}><TranslatedText text={result.label}/></div>
+                      <div style={{ color:HC.text3, fontSize:11.5, marginTop:2 }}><TranslatedText text={result.detail}/> · <TranslatedText text={TAB_LABELS[result.tab] || result.tab}/></div>
                     </button>
                   ))}
                   {searchResults.length === 0 && <div style={{ padding:'14px 12px', color:HC.text3, fontSize:13 }}>{t('common.noData')}</div>}
@@ -398,7 +397,7 @@ export default function AdminDashboard() {
                 width: isMobile ? 36 : 'auto', height: isMobile ? 36 : 'auto',
                 justifyContent: 'center',
               }}
-              title="Logout"
+              title={translateUi("Logout")}
             >
               <LogOut size={isMobile ? 16 : 15} />
               {!isMobile && t('common.logout')}
@@ -424,17 +423,16 @@ export default function AdminDashboard() {
               {activeTab === 'FLEET'         && <FleetTab searchQuery={searchQuery} />}
               {activeTab === 'LIVETRIPS'     && <LiveTripsTab />}
               {activeTab === 'HISTORY'       && <TripHistoryTab />}
-              {activeTab === 'SCHEDULE'      && <ScheduleTab />}
               {activeTab === 'MAINTENANCE'   && <MaintenanceTab />}
               {activeTab === 'LOSTFOUND'     && <LostFoundTab />}
               {activeTab === 'ANNOUNCEMENTS' && <AnnouncementsTab />}
               {activeTab === 'MESSAGES'       && <MessagesTab />}
-              {activeTab === 'CALENDAR'       && <AcademicCalendarTab />}
+              {activeTab === 'CALENDAR'       && <AcademicCalendarTab currentRole={currentUserRole} />}
               {activeTab === 'ORGANIZATIONS'  && <OrganizationsTab />}
               {activeTab === 'SUPERUSERS'     && <UsersTab superAdminView searchQuery={searchQuery} />}
               {activeTab === 'ISSUES'         && <TransportIssuesTab />}
               {activeTab === 'AUDIT'          && <AuditLogsTab />}
-              {activeTab === 'SETTINGS'       && <SystemManagementTab />}
+              {activeTab === 'SETTINGS'       && <SystemManagementTab schoolScoped={currentUserRole === 'SCHOOL_ADMIN'} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -475,7 +473,7 @@ export default function AdminDashboard() {
                   onClick={handleLogout}
                   disabled={loggingOut}
                 >
-                  {loggingOut ? t('common.loading') : t('common.logout')}
+                  <TranslatedText text={loggingOut ? t('common.loading') : t('common.logout')}/>
                 </motion.button>
               </div>
             </motion.div>

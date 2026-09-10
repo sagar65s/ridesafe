@@ -4,6 +4,7 @@ import { getUserFromSession } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
 import { canAccessOrganization, getCurrentUser } from '@/lib/authorization'
 import { canCreateRole, isUserRole } from '@/lib/roles'
+import { crewWhere } from '@/lib/transport'
 import { writeAuditLog } from '@/lib/audit'
 
 export const dynamic = 'force-dynamic'
@@ -85,8 +86,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     if (password) {
-      if (password.length < 6) {
-        return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
+      if (password.length < 12) {
+        return NextResponse.json({ error: 'Password must be at least 12 characters' }, { status: 400 })
       }
       updates.password = await bcrypt.hash(password, 12)
     }
@@ -118,24 +119,25 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (targetRole === 'SUPER_ADMIN') updates.organizationId = null
 
     if (id === auth.id && (isActive === false || employmentStatus === 'OFFBOARDED' || (role !== undefined && role !== existing.role))) return NextResponse.json({ error: 'You cannot deactivate or change your own role' }, { status: 400 })
-    if (targetRole !== existing.role || targetOrganizationId !== existing.organizationId) {
+    if (targetRole !== existing.role || targetOrganizationId !== existing.organizationId || personnelType !== undefined && personnelType !== existing.personnelType) {
       const [buses, children, activeTrips] = await Promise.all([
-        prisma.bus.count({ where: { driverId: id } }),
+        prisma.bus.count({ where: { ...crewWhere(id) } }),
         prisma.student.count({ where: { parentId: id } }),
-        prisma.trip.count({ where: { driverId: id, status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } } }),
+        prisma.trip.count({ where: { ...crewWhere(id), status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } } }),
       ])
       if (buses || children || activeTrips) return NextResponse.json({ error: 'Reassign linked buses, students and active trips before changing the school or role' }, { status: 409 })
     }
 
     const shouldOffboard = existing.role === 'DRIVER' && (employmentStatus === 'OFFBOARDED' || isActive === false)
-    if (shouldOffboard && await prisma.trip.count({ where: { driverId: id, status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } } })) return NextResponse.json({ error: 'Complete or cancel active trips before offboarding this driver' }, { status: 409 })
+    if (shouldOffboard && await prisma.trip.count({ where: { ...crewWhere(id), status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } } })) return NextResponse.json({ error: 'Complete or cancel active trips before offboarding this driver' }, { status: 409 })
     const user = await prisma.$transaction(async tx => {
       if (shouldOffboard) {
-        const assignedBuses = await tx.bus.findMany({ where: { driverId: id }, select: { id: true, routeId: true } })
+        const assignedBuses = await tx.bus.findMany({ where: { ...crewWhere(id) }, select: { id: true, routeId: true } })
         for (const bus of assignedBuses) {
           await tx.driverAssignmentHistory.create({ data: { driverId: id, busId: bus.id, routeId: bus.routeId, action: 'OFFBOARDED', reason: offboardingReason?.trim() || 'Account deactivated' } })
         }
         await tx.bus.updateMany({ where: { driverId: id }, data: { driverId: null } })
+        await tx.bus.updateMany({ where: { maintainerId: id }, data: { maintainerId: null } })
       }
       return tx.user.update({
         where: { id }, data: updates,
@@ -177,15 +179,16 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: 'Only a Super Admin can deactivate this account' }, { status: 403 })
     }
 
-    if (existing.role === 'DRIVER' && await prisma.trip.count({ where: { driverId: id, status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } } })) return NextResponse.json({ error: 'Complete or cancel active trips before offboarding this driver' }, { status: 409 })
+    if (existing.role === 'DRIVER' && await prisma.trip.count({ where: { ...crewWhere(id), status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } } })) return NextResponse.json({ error: 'Complete or cancel active trips before offboarding this driver' }, { status: 409 })
 
     await prisma.$transaction(async tx => {
       if (existing.role === 'DRIVER') {
-        const assignedBuses = await tx.bus.findMany({ where: { driverId: id }, select: { id: true, routeId: true } })
+        const assignedBuses = await tx.bus.findMany({ where: { ...crewWhere(id) }, select: { id: true, routeId: true } })
         for (const bus of assignedBuses) {
           await tx.driverAssignmentHistory.create({ data: { driverId: id, busId: bus.id, routeId: bus.routeId, action: 'OFFBOARDED', reason: 'Account deactivated' } })
         }
         await tx.bus.updateMany({ where: { driverId: id }, data: { driverId: null } })
+        await tx.bus.updateMany({ where: { maintainerId: id }, data: { maintainerId: null } })
       }
       await tx.user.update({ where: { id }, data: { isActive: false, ...(existing.role === 'DRIVER' ? { employmentStatus: 'OFFBOARDED', offboardingDate: new Date() } : {}) } })
     })

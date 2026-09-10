@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getUserFromSession } from '@/lib/auth'
 import { canAccessOrganization, getCurrentUser } from '@/lib/authorization'
+import { crewWhere } from '@/lib/transport'
 import { writeAuditLog } from '@/lib/audit'
 
 export const dynamic = 'force-dynamic'
@@ -26,18 +27,18 @@ export async function GET(req: NextRequest) {
           route: { select: { id: true, name: true } },
           pickupStop: { select: { id: true, name: true } },
           dropoffStop: { select: { id: true, name: true } },
-          bus: { select: { id: true, busNumber: true, plateNumber: true, status: true, driver: { select: { id: true, name: true, phone: true, personnelType: true } } } },
+          bus: { select: { id: true, busNumber: true, plateNumber: true, status: true, driver: { select: { id: true, name: true, phone: true, personnelType: true } }, maintainer: { select: { id: true, name: true, phone: true, personnelType: true } } } },
         }
       })
     } else if (user.role === 'DRIVER') {
       // A driver/maintainer can only see students assigned to their own bus or route.
-      const assignedBuses = await prisma.bus.findMany({ where: { driverId: user.id, status: 'ACTIVE' }, select: { id: true, routeId: true } })
+      const assignedBuses = await prisma.bus.findMany({ where: { ...crewWhere(user.id), status: 'ACTIVE', organizationId: actor.organizationId || '__none__' }, select: { id: true, routeId: true } })
       const busIds = assignedBuses.map(bus => bus.id)
       const routeIds = assignedBuses.map(bus => bus.routeId).filter((id): id is string => Boolean(id))
       students = await prisma.student.findMany({
         where: {
           organizationId: actor.organizationId || '__none__', isActive: true,
-          OR: [{ busId: { in: busIds.length ? busIds : ['__none__'] } }, { busId: null, routeId: { in: routeIds.length ? routeIds : ['__none__'] } }],
+          busId: { in: busIds },
         },
         include: {
           parent: { select: { id: true, name: true, phone: true } },
@@ -53,8 +54,8 @@ export async function GET(req: NextRequest) {
       students = await prisma.student.findMany({
         where: { parentId: user.id, isActive: true },
         include: {
-          route: { include: { stops: { orderBy: { order: 'asc' } }, buses: { select: { id: true, busNumber: true, plateNumber: true, status: true, driver: { select: { id: true, name: true, phone: true, personnelType: true } } } } } },
-          bus: { select: { id: true, busNumber: true, plateNumber: true, status: true, driver: { select: { id: true, name: true, phone: true, personnelType: true } } } },
+          route: { include: { stops: { orderBy: { order: 'asc' } } } },
+          bus: { select: { id: true, busNumber: true, plateNumber: true, status: true, driver: { select: { id: true, name: true, phone: true, personnelType: true } }, maintainer: { select: { id: true, name: true, phone: true, personnelType: true } } } },
           pickupStop: true, dropoffStop: true,
         },
       })
@@ -70,6 +71,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const permissionSession = await getUserFromSession()
+  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
   try {
     const user = await getUserFromSession()
     if (!user || (!['ADMIN', 'SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(user.role))) {
@@ -111,7 +114,7 @@ export async function POST(req: NextRequest) {
     }
     if (busId) {
       const bus = await prisma.bus.findUnique({ where: { id: busId }, select: { organizationId: true, routeId: true, status:true } })
-      if (bus?.status !== 'ACTIVE' || bus.organizationId !== resolvedOrganizationId || !canAccessOrganization(actor, bus.organizationId) || (routeId && bus.routeId && bus.routeId !== routeId)) return NextResponse.json({ error: 'Invalid bus for the selected school or route' }, { status: 400 })
+      if (bus?.status !== 'ACTIVE' || bus.organizationId !== resolvedOrganizationId || !canAccessOrganization(actor, bus.organizationId) || (routeId && bus.routeId !== routeId)) return NextResponse.json({ error: 'Invalid bus for the selected school or route' }, { status: 400 })
     }
     if (studentCode) {
       const duplicate = await prisma.student.findFirst({ where: { studentCode: String(studentCode).trim(), organizationId: resolvedOrganizationId }, select: { id: true } })

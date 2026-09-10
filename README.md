@@ -1,170 +1,159 @@
-# RideSafe School Bus Transport Management
+# RideSafe — School Bus Transport Management
 
-RideSafe is a responsive, multi-school transport platform built with Next.js, React, TypeScript, Prisma, PostgreSQL and Redis. It supports live bus tracking, trip operations, student boarding/drop-off, parent alerts, invoicing, emergency monitoring and academic calendars.
+Complete source rebuild: Next.js 16 / React 19 / TypeScript / Prisma **5.22.0** / PostgreSQL. English, Bahasa Malaysia and Simplified Chinese. Keep the supplied `package-lock.json`; do not upgrade Prisma independently to v7.
 
-## Exact account roles
+## Start on Windows — no Docker required
 
-| Role | Scope |
-|---|---|
-| `SUPER_ADMIN` | Every school, platform settings, global users, calendar imports, audit/SOS/statistics |
-| `SCHOOL_ADMIN` | Full transport and user administration for one assigned school |
-| `ADMIN` | Daily transport coordination for one assigned school |
-| `DRIVER` | Driver or maintainer mobile workspace; `personnelType` distinguishes the two without adding a sixth role |
-| `PARENT` | Only linked children, assigned trips, notifications, invoices and issues |
+Install Node.js 20.9+ and use a PostgreSQL database. For an existing Neon database, keep your existing connection details. In Command Prompt, inside the extracted project:
 
-Unknown roles cannot log in. API checks enforce school, bus, route, trip and parent/child ownership; hiding a menu item is not used as the security boundary.
-
-## Main workflows
-
-- School, school-admin and global user management with activate/deactivate controls.
-- Students with ID, class/section, parent, contact, pickup/drop, bus, route, stops and active status.
-- Buses, GPS status, routes, stops, driver/maintainer assignment and maintenance.
-- Driver/maintainer onboarding, offboarding and assignment history. Records are preserved when offboarded.
-- Trip start, GPS updates, attendance, delay reason, relevant-user broadcast, SOS and completion validation.
-- Parent live tracking, 2-minute/1-minute horn notifications, own-child history, invoice inbox and issue reporting.
-- Super Admin academic-calendar CSV import, event management, global KPIs, audit logs and notification/SOS settings.
-- English, Bahasa Malaysia and Simplified Chinese selection on login and dashboards.
-- Invoice persistence and in-app delivery even when optional Bukku/Resend providers are unavailable.
-
-The removed “AI Optimization” feature is not part of this build.
-
-## Local Docker run (recommended)
-
-Requirements: Docker Desktop on Windows/macOS, or Docker Engine + Compose on Linux.
-
-1. Start Docker Desktop and wait until it says the engine is running.
-2. Open a terminal in this project directory.
-3. Create local configuration:
-
-   Windows Command Prompt:
-
-   ```bat
-   copy .env.production.example .env.production
-   ```
-
-   PowerShell/Linux/macOS:
-
-   ```bash
-   cp .env.production.example .env.production
-   ```
-
-4. Edit `.env.production`. Replace `POSTGRES_PASSWORD`, use the same password inside `DATABASE_URL`, generate a unique 32+ character `JWT_SECRET`, and set `APP_URL=http://localhost:3500` for local use. To test registration without real Billplz credentials, set `BILLPLZ_MOCK_ENABLED=true` and `ALLOW_LOCAL_PAYMENT_MOCK=true`; the mock is accepted only with a loopback `APP_URL`. Never copy production secrets into a local test file.
-5. Validate and start:
-
-   ```bash
-   docker compose config --quiet
-   docker compose up --build -d
-   docker compose ps
-   docker compose logs --tail=100 ridesafe
-   ```
-
-6. On a fresh database, create the initial Super Admin using the first-account instructions below. Then open <http://localhost:3500>. Health check: <http://localhost:3500/api/health>.
-
-Do not run the seed against important data. On a brand-new disposable database only, the seed requires both `ALLOW_DESTRUCTIVE_SEED=true` and a 12+ character `TEST_USER_PASSWORD`.
-
-Useful Docker commands:
-
-```bash
-docker compose logs -f ridesafe
-docker compose restart ridesafe
-docker compose down
+```bat
+npm ci
+copy .env.example .env
 ```
 
-`docker compose down` keeps named database/Redis volumes. Never use `docker compose down -v` when data must be retained.
+Edit `.env`: set `DATABASE_URL`, `APP_URL=http://localhost:3000`, a random `JWT_SECRET` of at least 32 characters, and `REDIS_URL=""` if Redis is not installed for local development. Generate a random secret with:
 
-## Node development run
+```bat
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
-Requirements: Node.js 20+, PostgreSQL and optionally Redis.
+Then:
 
-```bash
-npm ci
-cp .env.example .env
+```bat
 npm run db:generate
 npm run db:migrate
 npm run dev
 ```
 
-Edit `.env` with your local PostgreSQL URL and a random JWT secret before migrations. If Redis is not installed, set `REDIS_URL=""` for development; production requires reachable Redis. Without `REDIS_URL`, development uses an in-process Redis-compatible fallback. Open <http://localhost:3000>.
+Open http://localhost:3000. Existing accounts/passwords remain intact. Do not run a destructive seed or reset an existing database to install this update.
 
-## Existing database upgrade (data-preserving)
+For a **new database only**, create the first Super Admin:
 
-The new migrations are additive: they add columns/tables/indexes and do not truncate, reset or seed data. Always back up first:
-
-```bash
-docker compose exec -T postgres pg_dump -U ridesafe -d ridesafe_db > ridesafe-before-upgrade.sql
+```bat
+set "BOOTSTRAP_ADMIN_EMAIL=your-email@example.com"
+set "BOOTSTRAP_ADMIN_NAME=Super Admin"
+set "BOOTSTRAP_ADMIN_PASSWORD=YOUR_UNIQUE_PASSWORD_AT_LEAST_12_CHARACTERS"
+node --env-file=.env scripts/bootstrap-admin.mjs
+set "BOOTSTRAP_ADMIN_PASSWORD="
 ```
 
-Confirm the file is non-empty. Then run `npm run db:migrate` or start the application container, whose startup command runs `prisma migrate deploy`.
+Bootstrap refuses to overwrite an existing Super Admin. Shell environment values override `.env` when using `--env-file`.
 
-If the existing database was originally created with `prisma db push` and has no `_prisma_migrations` table, do not blindly start the upgraded container: first have the initial migration baselined by the deployment owner, then deploy the additive migrations. Do not use `prisma migrate reset`, `prisma db push --force-reset`, the seed command, or `docker compose down -v` on an important database.
+## Existing database / Vercel upgrade
 
-## Quality checks
+1. Back up the database using your database provider. Retain the current `JWT_SECRET` and existing service credentials.
+2. Replace the project source with this archive and run `npm ci`.
+3. Apply the included **additive migrations** with the direct PostgreSQL connection string. For Neon, use the direct connection for migration and your intended application connection in deployment settings:
 
-```bash
+   ```bat
+   set "DATABASE_URL=YOUR_NEON_DIRECT_CONNECTION_URL"
+   npm run db:migrate
+   set "DATABASE_URL="
+   ```
+
+4. In your existing Vercel project, set database/auth/service environment variables. Set `APP_URL` to the final HTTPS site URL. Set `NEXT_PUBLIC_VAPID_PUBLIC_KEY` **before building**. Build command: `npm run build`; install command: `npm ci`.
+5. Redeploy. Never run `npx prisma` from an empty directory: the supplied dependency is pinned to 5.22.0. `npm run db:migrate` uses that installed version.
+6. In a local environment connected to your intended database, run `npm run transport:check`. This is read-only and lists student IDs with incomplete transport assignments. Correct those records through the School Admin portal before starting trips.
+
+Production requires reachable PostgreSQL **and a valid REDIS_URL**. Set the hosted Redis connection in Vercel too; leaving it blank is supported only for local development. The portals also poll scoped tracking endpoints. Serverless multi-instance deployments should use a shared edge/hosting rate limit in addition to the app's per-process limiter.
+
+## Permissions
+
+| Account | Allowed access |
+| --- | --- |
+| Super Admin | All schools, school/user creation, platform control, all transport operations, calendar Excel/CSV import, audit |
+| School Admin | Full management of its assigned school's users, buses, routes, stops, students, calendar, reports, notifications and issues |
+| Admin / Transport Coordinator | Assigned school only: overview, attendance monitoring, live tracking, trip history, announcements, messages and issues |
+| Driver / Maintainer | Assigned bus roster, dated boarding/drop-off/absence, trip start/finish, GPS **publishing**, broadcast and emergency SOS; no live tracking map |
+| Parent | Own children, assigned bus tracking, valid route stops, own alerts/messages/attendance/invoices and issue reporting |
+
+There are exactly five roles. A maintainer uses role `DRIVER` with `personnelType=MAINTAINER`; the bus has separate driver and maintainer assignments. A Super Admin must choose a school when creating a normal Admin, School Admin, driver or parent.
+
+## Configure one school, step by step
+
+1. Super Admin creates the school and its School Admin. Create a normal Admin only with the correct school selected.
+2. School Admin creates driver and maintainer accounts, selecting the correct personnel type.
+3. Add a route and its stops **in travel order**, with accurate latitude and longitude. Include both pickup and destination stops.
+4. Add a bus, assign its route, driver and optional maintainer.
+5. Create/link the parent's account and the student in the same school. Assign the student to the exact bus and route.
+6. Set the student's pickup and drop-off stops on that route. Parents can select from their child's assigned route only. The application does not infer a home address or invent coordinates.
+7. A trip follows the configured route and pickup → drop-off assignments. Configure the appropriate directional route/assignments for the run; closed-trip history is retained. Do not change a route or student assignment during a live trip.
+8. The driver/maintainer starts the assigned trip. The roster appears automatically. The GPS permission prompt starts mobile tracking; dedicated GPS can be configured instead.
+9. At the student's pickup stop, confirm boarding. At the destination stop, confirm drop-off. Each action records date/time and staff ID and creates the linked parent's notification. Repeated taps do not duplicate attendance/alerts.
+10. The crew explicitly confirms the assigned stop. When fresh device GPS is supplied, the server rejects locations more than 300 metres away. Without GPS, this is staff confirmation, not independent proof of physical presence.
+11. Every student must be absent or boarded **and** dropped off before the trip can finish. Dated events are retained; the management attendance screen monitors and exports them.
+
+## Parent horn and background notifications
+
+Run once:
+
+```bat
+npm run push:keys
+```
+
+Copy the generated public/private keys into the corresponding environment variables and set `VAPID_SUBJECT` to your contact `mailto:` address. Keep the private key server-side. Use the same keys across deployments. Rebuild after changing the public key.
+
+Parent flow:
+
+- Open the Parent workspace and select **Enable arrival horn**. The test plays three horn sounds and unlocks audio for the current page.
+- Select **Enable background alerts** and allow browser notifications. HTTPS and browser/device support are required.
+- Fresh moving GPS estimates arrival through the pending route stops. When the estimate first reaches five minutes or less, RideSafe creates one alert per trip/student/boarding-or-drop-off stage. The open page plays three horn sounds. No extra 2-minute/1-minute horn stages remain.
+- A stopped bus or GPS older than 90 seconds shows an unavailable ETA; it does not invent an arrival time. The displayed ETA is based on distance and speed, not traffic-aware road routing, and is approximate.
+
+**Important device limitation:** a website cannot guarantee custom horn audio when the browser is closed, suspended, muted or the phone is locked. Background Web Push uses the device's notification sound/vibration and permission settings. Some phones require installing the website to the Home Screen. For guaranteed background custom audio, a separately built native mobile app and platform-specific testing are necessary. Physical GPS/device delivery was not available to test in this workspace.
+
+For hardware GPS alerts even when no portal is open, run an **independent, continuously running worker** with `APP_URL` and a random 32+ character `TRACKING_WORKER_SECRET` shared with the web server:
+
+```bat
+npm run tracking:worker
+```
+
+It calls the bearer-protected hardware tracking endpoint every 15 seconds. Deploy this process on a worker-capable host. Do not put an infinite worker loop inside a Vercel request handler. Mobile GPS updates themselves also evaluate arrival alerts while the crew shares its location.
+
+## Academic calendar: Excel and CSV
+
+Only **Super Admin and School Admin** can create, edit, delete or import calendar events. School Admin imports are forced to its own school. Super Admin can choose a school or global calendar; School Admin cannot modify global events.
+
+Working examples are in `samples/academic-calendar.xlsx` and `samples/academic-calendar.csv`. These contain clearly labelled example dates, not an official school calendar.
+
+Columns:
+
+```csv
+title,startDate,endDate,type,description,isPublic,color
+```
+
+Required: `title,startDate,type`. Dates use `YYYY-MM-DD`; real Excel date cells are supported. Valid types: `HOLIDAY`, `WORKING_DAY`, `SPECIAL_HOLIDAY`, `EXAM`, `EVENT`, `TERM_START`, `TERM_END`, `ASSEMBLY`. Optional `isPublic` is `true`/`false`; color is `#RRGGBB`.
+
+Maximum 2 MB, 2000 events, 20 columns; first worksheet only. Quoted CSV commas/newlines and UTF-8 are supported. Formulas and invalid rows reject the entire import. Legacy binary `.xls` files must be saved as `.xlsx` first. Imports append events; do not import the same file twice unless duplicate events are intended.
+
+## Notifications, deletion and retained records
+
+System notifications are necessary for boarding/drop-off, arrival, school broadcasts and emergencies. School notification settings affect background push; dated in-app records remain. Emergency push is not suppressed by the normal push preference.
+
+Messages can be deleted from the current user's view without deleting the other participant's copy. Announcements can be removed by the school manager or Super Admin; a coordinator can remove its own announcement. An already delivered notification cannot be recalled from a phone.
+
+Removed: Schedule navigation/functionality, fake Green Leaderboard/gamification screens, unused assets/components, unused `node-ssh`, ineffective school-geofence ETA controls and inactive notification/email/escalation controls. Existing historical database tables remain to avoid destructive data loss. `/api/shifts` returns 410; old attendance overwrite/delete endpoints return 405.
+
+Kept because they relate to school transport: actual route departure times, maintenance, lost-and-found, invoicing, emergency SOS, issue reporting and audit history.
+
+## Verification and production build
+
+```bat
 npm run typecheck
 npm run lint
 npm test
 npm run build
+npm start
 ```
 
-External GPS, invoice, email and payment delivery require their provider credentials. Core local data entry, RBAC, trip management, notifications and local invoice records do not require those providers.
+The build explicitly uses webpack to avoid a Turbopack persistent-cache failure encountered during verification. Full results and remaining deployment/device checks are in `FIXES_AND_VERIFICATION.md`.
 
-## Project structure
+## Optional Docker
 
-```text
-src/app/                 Pages and API route handlers
-src/components/admin/    Admin modules
-src/lib/                 Auth, authorization, adapters and services
-src/i18n/                EN/MS/ZH translations
-prisma/schema.prisma     Data model
-prisma/migrations/       Data-preserving migration history
-public/                  Logo, PWA and alert audio assets
+Copy `.env.production.example` to `.env.production`, set real secrets and matching database credentials. Pass the environment file explicitly so the public push key is available to the build:
+
+```bash
+docker compose --env-file .env.production up --build -d
 ```
 
-License: proprietary; all rights reserved.
-
-## First Super Admin (fresh installation)
-
-A new empty database has no login accounts. `admin:create` adds only the first
-Super Admin. It does not seed, reset data, or replace an existing account.
-Run migrations first. In Windows PowerShell, enter your chosen credentials:
-
-```powershell
-$env:BOOTSTRAP_ADMIN_EMAIL = "your-email@example.com"
-$env:BOOTSTRAP_ADMIN_PASSWORD = [System.Net.NetworkCredential]::new("", (Read-Host "Admin password (12+ characters)" -AsSecureString)).Password
-```
-
-For Node development (with your local `DATABASE_URL` configured in `.env`):
-
-```powershell
-npm run admin:create
-```
-
-For the local Docker installation, run this instead:
-
-```powershell
-docker compose exec -e BOOTSTRAP_ADMIN_EMAIL -e BOOTSTRAP_ADMIN_PASSWORD ridesafe node scripts/bootstrap-admin.mjs
-```
-
-Then clear the temporary values from that terminal:
-
-```powershell
-Remove-Item Env:BOOTSTRAP_ADMIN_EMAIL, Env:BOOTSTRAP_ADMIN_PASSWORD
-```
-
-Linux/macOS users can export the same two variables, run the corresponding
-command, then unset them. Sign in, create the school, create its School Admin,
-and assign routes/buses/drivers/students. Do not use the destructive seed for
-first-install setup with data you want to retain.
-
-## September 9 corrections and upgrade
-
-Read `FIXES_AND_VERIFICATION.md` for this delivery's actual checks and limits.
-The new notification migration adds a nullable unique deduplication key and
-preserves existing notifications. Apply all pending migrations before running
-the updated app. Docker startup applies them automatically; Node uses
-`npm run db:migrate`. Back up an existing database first as described above.
-
-This source keeps a persistent Node/Docker deployment model with PostgreSQL,
-Redis and SSE. It has not been converted into a Vercel/serverless deployment.
-Keep deployment-specific changes separate from installing these fixes.
+Local Docker defaults to port 3500. Set the corresponding `APP_URL`. Bootstrap inside the app container with explicitly supplied bootstrap variables. Never remove database volumes during an upgrade. Docker is optional; the Windows Node/Vercel workflow above is supported.

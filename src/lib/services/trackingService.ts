@@ -46,7 +46,7 @@ export class TrackingService {
         if (!wialon.isAuthenticated()) await wialon.authenticate()
 
         const pos = await wialon.getUnitPosition(bus.wialonUnitId)
-        if (pos) {
+        if (pos && Date.now() - pos.timestamp * 1000 <= 90000 && Date.now() - pos.timestamp * 1000 >= -30000) {
           return {
             lat:       pos.lat,
             lng:       pos.lng,
@@ -70,7 +70,7 @@ export class TrackingService {
         if (!katsana.isAuthenticated()) await katsana.authenticate()
 
         const pos = await katsana.fetchLocation(bus.katsanaVehicleId)
-        if (pos) {
+        if (pos && Date.now() - new Date(pos.timestamp).getTime() <= 90000 && Date.now() - new Date(pos.timestamp).getTime() >= -30000) {
           return {
             lat:       pos.lat,
             lng:       pos.lng,
@@ -88,7 +88,7 @@ export class TrackingService {
     }
 
     // ── 3. Mobile GPS fallback ───────────────────────────────────────────────
-    console.warn(`[TrackingService] Both hardware trackers unavailable for bus ${busId} — using Mobile GPS`)
+
 
     const driver = await prisma.user.findUnique({
       where: { id: driverId },
@@ -100,7 +100,7 @@ export class TrackingService {
       },
     })
 
-    if (driver?.lastLatitude != null && driver?.lastLongitude != null) {
+    if (driver?.lastLatitude != null && driver?.lastLongitude != null && driver.lastLocationUpdate) {
       return {
         lat:       driver.lastLatitude,
         lng:       driver.lastLongitude,

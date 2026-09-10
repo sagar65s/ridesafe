@@ -1,4 +1,6 @@
 'use client'
+import { useTranslation as useLocaleText } from '@/i18n/provider'
+import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, AlertTriangle, MessageSquarePlus, Mails, Send, X } from 'lucide-react'
@@ -31,6 +33,8 @@ const ROLE_BG: Record<string, string> = {
 const MAX_CHARS = 1000
 
 export default function MessagesTab() {
+ const {tx:translateUi}=useLocaleText()
+
   const [messages, setMessages] = useState<Message[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -132,7 +136,7 @@ export default function MessagesTab() {
             style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, padding: '0.875rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', background: toastType === 'success' ? 'var(--success-bg)' : 'var(--danger-bg)', border: `1px solid ${toastType === 'success' ? 'var(--success)' : 'var(--danger)'}`, borderRadius: 12, color: 'var(--text-main)', fontWeight: 500 }}
           >
             {toastType === 'error' ? <AlertTriangle size={18} color="var(--danger)" /> : <CheckCircle size={18} color="var(--success)" />}
-            {toast}
+            <TranslatedText text={toast}/>
           </motion.div>
         )}
       </AnimatePresence>
@@ -141,17 +145,14 @@ export default function MessagesTab() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <div>
-            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              Admin Inbox
-              {unreadCount > 0 && (
+            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><TranslatedText text={" Admin Inbox "}/>{unreadCount > 0 && (
                 <span style={{ background: 'var(--danger)', color: 'white', borderRadius: '99px', fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', minWidth: 20, textAlign: 'center' }}>
                   {unreadCount}
                 </span>
               )}
             </h3>
             <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: 4 }}>
-              {unreadCount > 0 ? `${unreadCount} unread · ` : ''}{messages.length} total messages
-            </div>
+              <TranslatedText text={unreadCount > 0 ? `${unreadCount} unread · ` : ''}/>{messages.length}<TranslatedText text={" total messages "}/></div>
           </div>
           <motion.button
             whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
@@ -159,16 +160,15 @@ export default function MessagesTab() {
             onClick={() => setShowCompose(true)}
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            <MessageSquarePlus size={18} /> Compose
-          </motion.button>
+            <MessageSquarePlus size={18} /><TranslatedText text={" Compose "}/></motion.button>
         </div>
 
         {/* Message list */}
         {messages.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
             <Mails size={40} style={{ marginBottom: 12, opacity: 0.4 }} />
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>No messages yet</div>
-            <div style={{ fontSize: '0.85rem' }}>Compose a message to a driver or parent.</div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}><TranslatedText text={"No messages yet"}/></div>
+            <div style={{ fontSize: '0.85rem' }}><TranslatedText text={"Compose a message to a driver or parent."}/></div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', maxHeight: 520, overflowY: 'auto', paddingRight: 4 }}>
@@ -188,7 +188,7 @@ export default function MessagesTab() {
                   transition: 'all 0.15s',
                 }}
               >
-                {/* Message header */}
+                <button className="btn btn-danger" onClick={async e=>{e.stopPropagation();const r=await fetch('/api/messages',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:msg.id})});if(r.ok)setMessages(v=>v.filter(item=>item.id!==msg.id));else alert((await r.json()).error || 'Delete failed')}}><TranslatedText text={"Delete"}/></button>{/* Message header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.6rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                     <div style={{
@@ -204,10 +204,10 @@ export default function MessagesTab() {
                       <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)' }}>
                         {msg.sender.name}
                         <span className={`badge ${msg.sender.role === 'DRIVER' ? 'badge-info' : msg.sender.role === 'PARENT' ? 'badge-success' : 'badge-warning'}`} style={{ marginLeft: 8, fontSize: '0.65rem' }}>
-                          {msg.sender.role}
+                          <TranslatedText text={msg.sender.role}/>
                         </span>
                         {!msg.read && (
-                          <span className="badge badge-danger" style={{ marginLeft: 6, fontSize: '0.62rem' }}>NEW</span>
+                          <span className="badge badge-danger" style={{ marginLeft: 6, fontSize: '0.62rem' }}><TranslatedText text={"NEW"}/></span>
                         )}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 1 }}>
@@ -249,8 +249,7 @@ export default function MessagesTab() {
               {/* Modal header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <MessageSquarePlus size={20} /> New Message
-                </h3>
+                  <MessageSquarePlus size={20} /><TranslatedText text={" New Message "}/></h3>
                 <button onClick={handleCloseCompose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                   <X size={20} />
                 </button>
@@ -258,21 +257,19 @@ export default function MessagesTab() {
 
               {/* Recipient */}
               <div className="input-group">
-                <label className="input-label">Send To *</label>
+                <label className="input-label"><TranslatedText text={"Send To *"}/></label>
                 {users.length === 0 ? (
-                  <div style={{ padding: '0.75rem', background: 'var(--warning-bg)', borderRadius: 8, fontSize: '0.85rem', color: 'var(--warning)' }}>
-                    No drivers or parents registered yet.
-                  </div>
+                  <div style={{ padding: '0.75rem', background: 'var(--warning-bg)', borderRadius: 8, fontSize: '0.85rem', color: 'var(--warning)' }}><TranslatedText text={" No drivers or parents registered yet. "}/></div>
                 ) : (
                   <select
                     className="select-field"
                     value={recipientId}
                     onChange={e => setRecipientId(e.target.value)}
                   >
-                    <option value="">Select recipient…</option>
+                    <option value=""><TranslatedText text={"Select recipient…"}/></option>
                     {users.map(u => (
                       <option key={u.id} value={u.id}>
-                        {u.name} — {u.role}
+                        {u.name} — <TranslatedText text={u.role}/>
                       </option>
                     ))}
                   </select>
@@ -282,7 +279,7 @@ export default function MessagesTab() {
               {/* Message body */}
               <div className="input-group">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.4rem' }}>
-                  <label className="input-label" style={{ margin: 0 }}>Message *</label>
+                  <label className="input-label" style={{ margin: 0 }}><TranslatedText text={"Message *"}/></label>
                   <span style={{ fontSize: '0.72rem', color: content.length > MAX_CHARS ? 'var(--danger)' : 'var(--text-muted)' }}>
                     {content.length}/{MAX_CHARS}
                   </span>
@@ -290,7 +287,7 @@ export default function MessagesTab() {
                 <textarea
                   className="input-field"
                   rows={5}
-                  placeholder="Type your message here…"
+                  placeholder={translateUi("Type your message here…")}
                   value={content}
                   maxLength={MAX_CHARS}
                   onChange={e => setContent(e.target.value)}
@@ -304,9 +301,7 @@ export default function MessagesTab() {
                   className="btn"
                   style={{ flex: 1, background: 'var(--surface-2)', border: '1px solid var(--surface-border)', color: 'var(--text-main)' }}
                   onClick={handleCloseCompose}
-                >
-                  Cancel
-                </button>
+                ><TranslatedText text={" Cancel "}/></button>
                 <motion.button
                   whileTap={{ scale: 0.97 }}
                   className="btn btn-primary"
@@ -314,7 +309,7 @@ export default function MessagesTab() {
                   onClick={handleSend}
                   disabled={sending || !recipientId || !content.trim()}
                 >
-                  {sending ? 'Sending…' : <><Send size={16} /> Send Message</>}
+                  {sending ? 'Sending…' : <><Send size={16} /><TranslatedText text={" Send Message"}/></>}
                 </motion.button>
               </div>
             </motion.div>

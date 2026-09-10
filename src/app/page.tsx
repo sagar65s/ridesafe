@@ -1,5 +1,7 @@
 'use client'
 
+import { useTranslation as useLocaleText } from '@/i18n/provider'
+import { TranslatedText } from '@/i18n/provider'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -27,6 +29,8 @@ const HC = {
 }
 
 export default function LoginPage() {
+ const {tx:translateUi}=useLocaleText()
+
   const { t } = useTranslation()
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
@@ -65,14 +69,14 @@ export default function LoginPage() {
 
   return (
     <>
-    <style>{`
+    <style><TranslatedText text={`
       .tb-login { display: flex; flex-direction: row; }
       @media (max-width: 820px) {
         .tb-login { flex-direction: column !important; }
         .tb-login-brand { flex: none !important; min-height: 260px; padding: 28px 24px !important; }
         .tb-login-form { flex: none !important; padding: 32px 24px !important; min-height: auto; }
       }
-    `}</style>
+    `}/></style>
     <div className="tb-login" style={{
       minHeight: 'calc(100vh - 70px)',
       margin: '-2rem -2rem -2rem',
@@ -137,9 +141,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <div style={{ fontSize: 12, color: HC.text3, position: 'relative' }}>
-          © 2026 RideSafe
-        </div>
+        <div style={{ fontSize: 12, color: HC.text3, position: 'relative' }}><TranslatedText text={" © 2026 RideSafe "}/></div>
       </motion.div>
 
       {/* ── Right form panel ── */}
@@ -181,7 +183,7 @@ export default function LoginPage() {
                 borderRadius: HC.r, padding: '12px 16px', marginBottom: 20, fontSize: 13.5,
               }}
             >
-              {error}
+              <TranslatedText text={error}/>
             </motion.div>
           )}
 
@@ -204,7 +206,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
-                placeholder="your@email.com"
+                placeholder={translateUi("your@email.com")}
                 style={{
                   flex: 1, background: 'transparent', border: 'none', outline: 'none',
                   color: HC.text, fontSize: 14.5, fontFamily: 'inherit',
@@ -294,14 +296,14 @@ export default function LoginPage() {
           </form>
 
           <div style={{ marginTop: 28, textAlign: 'center', fontSize: 12.5, color: HC.text3 }}>
-            {t('auth.needAccess')}{' '}
+            {t('auth.needAccess')}<TranslatedText text={' '}/>
             <a href="#" style={{ color: HC.yellow, textDecoration: 'none', fontWeight: 600 }}>
               {t('auth.contactAdmin')}
             </a>
           </div>
 
           <div style={{ marginTop: 10, textAlign: 'center', fontSize: 12.5, color: HC.text3 }}>
-            {t('auth.newStudent')}{' '}
+            {t('auth.newStudent')}<TranslatedText text={' '}/>
             <Link href="/student-form" style={{ color: HC.yellow, textDecoration: 'none', fontWeight: 600 }}>
               {t('auth.registerHere')}
             </Link>

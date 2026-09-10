@@ -20,19 +20,12 @@ export async function GET(req: NextRequest) {
     // Role-based filter
     const where: Prisma.TripWhereInput = {}
     let parentStudentIds: string[] = []
-    if (user.role === 'DRIVER') where.driverId = user.id
+    if (user.role === 'DRIVER') where.OR = [{ driverId: user.id }, { maintainerId: user.id }]
     if (user.role === 'PARENT') {
-      // Get student route IDs
-      const assignedStudents = await prisma.student.findMany({
-        where: { parentId: user.id, isActive: true }, select: { id: true, routeId: true, busId: true }
-      })
-      parentStudentIds = assignedStudents.map(student => student.id)
-      const assignments = assignedStudents.filter(student => student.routeId).map(student => ({
-        routeId: student.routeId as string,
-        ...(student.busId ? { busId: student.busId } : {}),
-      }))
-      if (assignments.length > 0) where.OR = assignments
-      else return NextResponse.json({ trips: [], total: 0, page })
+      const assignedStudents = await prisma.student.findMany({where:{parentId:user.id},select:{id:true}})
+      parentStudentIds = assignedStudents.map(student=>student.id)
+      if (!parentStudentIds.length) return NextResponse.json({trips:[],total:0,page,totalPages:0})
+      where.attendances = {some:{studentId:{in:parentStudentIds}}}
     }
     if (['ADMIN', 'SCHOOL_ADMIN'].includes(user.role)) {
       const organizationId = await resolveUserOrganizationId(user.id)
@@ -74,7 +67,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ trips: formatted, total, page, totalPages: Math.ceil(total / limit) })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Internal server error'
+    console.error(e)
+    const msg = 'Internal server error'
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

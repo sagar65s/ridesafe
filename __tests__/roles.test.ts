@@ -17,7 +17,7 @@ describe('five-role access control', () => {
 
   test('transport coordinator has daily operations but no platform management', () => {
     expect(canAccessAdminTab('ADMIN', 'LIVETRIPS')).toBe(true)
-    expect(canAccessAdminTab('ADMIN', 'STUDENTS')).toBe(true)
+    expect(canAccessAdminTab('ADMIN', 'STUDENTS')).toBe(false)
     expect(canAccessAdminTab('ADMIN', 'ORGANIZATIONS')).toBe(false)
     expect(canAccessAdminTab('ADMIN', 'USERS')).toBe(false)
     expect(canAccessAdminTab('ADMIN', 'SETTINGS')).toBe(false)

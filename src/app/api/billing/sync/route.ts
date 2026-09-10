@@ -4,6 +4,8 @@ import { getUserFromSession } from '@/lib/auth';
 import { getCurrentUser } from '@/lib/authorization';
 
 export async function POST() {
+  const permissionSession = await getUserFromSession()
+  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
   try {
     const session = await getUserFromSession();
     if (!session || !['ADMIN', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(session.role)) {

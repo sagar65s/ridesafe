@@ -9,6 +9,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
   const showPublicHeader = pathname === '/'
 
+  if (pathname === '/parent' || pathname === '/driver') return <>{children}</>
   return (
     <div className="container">
       {showPublicHeader && (

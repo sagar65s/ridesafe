@@ -1,11 +1,13 @@
 type RideSafeLogoProps = {
+  tone?: "light" | "dark"
   compact?: boolean
   height?: number
   className?: string
 }
 
 /** A single, scalable brand mark used everywhere in the app. */
-export default function RideSafeLogo({ compact = false, height = 34, className }: RideSafeLogoProps) {
+export default function RideSafeLogo({ compact = false, height = 34, className, tone = "light" }: RideSafeLogoProps) {
+
   const width = compact ? height : Math.round(height * 4.1)
   return (
     <svg
@@ -26,10 +28,11 @@ export default function RideSafeLogo({ compact = false, height = 34, className }
         <circle cx="35" cy="37" r="4" fill="#08080A" />
       </g>
       {!compact && (
-        <text x="57" y="33" fill="#FFFFFF" fontFamily="Sora, Arial, sans-serif" fontSize="25" fontWeight="800" letterSpacing="-1">
-          Ride<tspan fill="#FFD60A">Safe</tspan>
+        <text x="57" y="33" fill={tone === "dark" ? "#142c47" : "#FFFFFF"} fontFamily="Sora, Arial, sans-serif" fontSize="25" fontWeight="800" letterSpacing="-1">Ride<tspan fill="#FFD60A">Safe</tspan>
         </text>
       )}
     </svg>
   )
 }
+
+

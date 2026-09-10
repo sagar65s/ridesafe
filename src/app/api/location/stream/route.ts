@@ -9,11 +9,11 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: NextRequest) {
   const user = await getUserFromSession()
   if (!user) return new Response('Unauthorized', { status: 401 })
+  if (user.role === 'DRIVER') return new Response('Forbidden', { status: 403 })
   const organizationId = await resolveUserOrganizationId(user.id)
   if (user.role !== 'SUPER_ADMIN' && !organizationId) return new Response('Organization not assigned', { status: 403 })
   const channel = user.role === 'SUPER_ADMIN' ? 'location_updates:global' : `location_updates:${organizationId}`
   let allowedDriverIds: Set<string> | null = null
-  if (user.role === 'DRIVER') allowedDriverIds = new Set([user.id])
   if (user.role === 'PARENT') {
     const students = await prisma.student.findMany({ where: { parentId: user.id, isActive: true }, select: { routeId: true, busId: true } })
     const assignments = students.filter(s => s.routeId).map(s => ({ routeId: s.routeId as string, ...(s.busId ? { busId: s.busId } : {}) }))
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
           const payload = JSON.parse(message) as { id?: string }
           if (allowedDriverIds && (!payload.id || !allowedDriverIds.has(payload.id))) return
           // Parents refresh the scoped endpoint for their child's stop-specific ETA.
-          send(`data: ${user.role === 'PARENT' ? JSON.stringify({ refresh: true }) : message}\n\n`)
+          send(`data: ${JSON.stringify({ refresh: true })}\n\n`)
         } catch { /* Ignore malformed publisher messages. */ }
       }
       cleanup = close

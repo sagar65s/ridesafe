@@ -56,6 +56,9 @@ model User {
   offboardingReason  String?
   employmentStatus   String?       @default("ACTIVE") // ACTIVE, INACTIVE, ONBOARDING, OFFBOARDING, OFFBOARDED
 
+  maintainedBuses Bus[] @relation("MaintainerBus")
+  maintainedTrips Trip[] @relation("MaintainerTrips")
+  pushSubscriptions PushSubscription[]
   parentStudents    Student[]                 @relation("ParentStudents")
   trips             Trip[]                    @relation("DriverTrips")
   emergencies       EmergencyAlert[]          @relation("DriverEmergencies")
@@ -124,6 +127,8 @@ model SystemSetting {
 }
 
 model Attendance {
+  recordedById String?
+  dedupeKey String? @unique
   id        String   @id @default(cuid())
   tripId    String
   studentId String
@@ -161,6 +166,8 @@ model Bus {
   organizationId     String?
   organization       Organization? @relation(fields: [organizationId], references: [id])
 
+  maintainerId String?
+  maintainer User? @relation("MaintainerBus", fields: [maintainerId], references: [id])
   driverId String?
   driver   User?   @relation("DriverBus", fields: [driverId], references: [id])
 
@@ -217,6 +224,8 @@ model Stop {
 }
 
 model Trip {
+  maintainerId String?
+  maintainer User? @relation("MaintainerTrips", fields: [maintainerId], references: [id])
   id           String   @id @default(cuid())
   routeId      String
   driverId     String
@@ -234,6 +243,7 @@ model Trip {
 }
 
 model Notification {
+  metadata String?
   dedupeKey String? @unique
   id        String   @id @default(cuid())
   userId    String
@@ -247,6 +257,7 @@ model Notification {
 }
 
 model Announcement {
+  deletedAt DateTime?
   id             String   @id @default(cuid())
   title          String
   body           String
@@ -262,6 +273,8 @@ model Announcement {
 }
 
 model Message {
+  senderDeletedAt DateTime?
+  recipientDeletedAt DateTime?
   id          String   @id @default(cuid())
   senderId    String
   recipientId String
@@ -456,4 +469,15 @@ model AuditLog {
 
   @@index([organizationId, createdAt])
   @@index([actorId, createdAt])
+}
+
+model PushSubscription {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint String @unique
+  p256dh String
+  auth String
+  createdAt DateTime @default(now())
+  @@index([userId])
 }

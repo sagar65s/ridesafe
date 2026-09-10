@@ -18,6 +18,7 @@ export async function GET(request: Request) {
             where: auth.role === 'SUPER_ADMIN' ? {} : { organizationId: actor?.organizationId || '__none__' },
             include: {
                 driver: { select: { id: true, name: true, phone: true, personnelType: true, employmentStatus: true } },
+                maintainer: { select: { id: true, name: true, phone: true } },
                 route: { select: { id: true, name: true } },
                 organization: { select: { id: true, name: true } },
                 _count: { select: { students: true, trips: true } },
@@ -33,13 +34,15 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const permissionSession = await getUserFromSession()
+  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
     try {
         const auth = await getUserFromSession()
         if (!auth || !['ADMIN', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(auth.role)) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { plateNumber, busNumber, registrationNumber, capacity, status, gpsStatus, driverId, routeId, wialonUnitId, katsanaVehicleId, organizationId } = await request.json()
+        const { plateNumber, busNumber, registrationNumber, capacity, status, gpsStatus, driverId, maintainerId, routeId, wialonUnitId, katsanaVehicleId, organizationId } = await request.json()
 
         if (!plateNumber || !capacity) {
             return NextResponse.json({ error: 'Plate number and capacity are required' }, { status: 400 })
@@ -56,11 +59,18 @@ export async function POST(request: Request) {
         if (status && !['ACTIVE', 'INACTIVE', 'MAINTENANCE'].includes(status)) return NextResponse.json({ error: 'Invalid bus status' }, { status: 400 })
         if (gpsStatus && !['NOT_CONFIGURED', 'CONFIGURED', 'ONLINE', 'OFFLINE'].includes(gpsStatus)) return NextResponse.json({ error: 'Invalid GPS status' }, { status: 400 })
         if (driverId) {
-            const driver = await prisma.user.findUnique({ where: { id: driverId }, select: { role: true, organizationId: true, isActive: true, employmentStatus: true } })
-            if (!driver || driver.role !== 'DRIVER' || !driver.isActive || driver.employmentStatus === 'OFFBOARDED' || driver.organizationId !== resolvedOrganizationId) return NextResponse.json({ error: 'Invalid or inactive driver / maintainer' }, { status: 400 })
+            const driver = await prisma.user.findUnique({ where: { id: driverId }, select: { role: true, personnelType: true, organizationId: true, isActive: true, employmentStatus: true } })
+            if (!driver || driver.role !== 'DRIVER' || driver.personnelType === 'MAINTAINER' || !driver.isActive || driver.employmentStatus === 'OFFBOARDED' || driver.organizationId !== resolvedOrganizationId) return NextResponse.json({ error: 'Invalid or inactive driver / maintainer' }, { status: 400 })
             const existingAssignment = await prisma.bus.findFirst({ where:{ driverId,status:'ACTIVE' }, select:{ plateNumber:true } })
             if (existingAssignment) return NextResponse.json({ error:`Driver / maintainer is already assigned to bus ${existingAssignment.plateNumber}` }, { status:409 })
         }
+    if (maintainerId) {
+      if (maintainerId === driverId) return NextResponse.json({ error: 'Choose separate driver and maintainer accounts' }, { status: 400 })
+      const maintainer = await prisma.user.findUnique({ where: { id: maintainerId }, select: { role: true, personnelType: true, organizationId: true, isActive: true } })
+      if (!maintainer || maintainer.role !== 'DRIVER' || maintainer.personnelType !== 'MAINTAINER' || !maintainer.isActive || maintainer.organizationId !== resolvedOrganizationId) return NextResponse.json({ error: 'Invalid maintainer for this school' }, { status: 400 })
+      const assigned = await prisma.bus.findFirst({ where: { maintainerId, status: 'ACTIVE' } })
+      if (assigned) return NextResponse.json({ error: 'Maintainer already assigned to another bus' }, { status: 409 })
+    }
         if (routeId) {
             const route = await prisma.route.findUnique({ where: { id: routeId }, select: { organizationId: true, isActive: true } })
             if (!route?.isActive || route.organizationId !== resolvedOrganizationId || !canAccessOrganization(actor, route.organizationId)) return NextResponse.json({ error: 'Invalid or inactive route assignment' }, { status: 400 })
@@ -74,13 +84,15 @@ export async function POST(request: Request) {
                 status: status || 'ACTIVE',
                 gpsStatus: gpsStatus || ((wialonUnitId || katsanaVehicleId) ? 'CONFIGURED' : 'NOT_CONFIGURED'),
                 driverId: driverId || null,
+                maintainerId: maintainerId || null,
                 routeId: routeId || null,
                 wialonUnitId: wialonUnitId || null,
                 katsanaVehicleId: katsanaVehicleId || null,
                 organizationId: resolvedOrganizationId,
             },
             include: {
-                driver: true,
+                driver: { select: { id: true, name: true, phone: true } },
+                maintainer: { select: { id: true, name: true, phone: true } },
                 route: true
             }
         })

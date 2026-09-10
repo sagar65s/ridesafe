@@ -1,4 +1,6 @@
 'use client'
+import { useTranslation as useLocaleText } from '@/i18n/provider'
+import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -8,6 +10,8 @@ interface Announcement {
 }
 
 export default function AnnouncementsTab() {
+ const {tx:translateUi}=useLocaleText()
+
   const [form, setForm] = useState({ title: '', body: '', targetRole: 'ALL', type: 'INFO' })
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<{ sent: number; targetRole: string } | null>(null)
@@ -55,32 +59,32 @@ export default function AnnouncementsTab() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <AnimatePresence>{toast && <motion.div initial={{ opacity:0,y:-20 }} animate={{ opacity:1,y:0 }} exit={{ opacity:0 }} style={{ position:'fixed',top:20,right:20,zIndex:9999,padding:'0.875rem 1.5rem',background:'rgba(16,185,129,0.15)',border:'1px solid var(--success)',borderRadius:12,color:'var(--text-main)',fontWeight:500,backdropFilter:'blur(12px)' }}>{toast}</motion.div>}</AnimatePresence>
+      <AnimatePresence>{toast && <motion.div initial={{ opacity:0,y:-20 }} animate={{ opacity:1,y:0 }} exit={{ opacity:0 }} style={{ position:'fixed',top:20,right:20,zIndex:9999,padding:'0.875rem 1.5rem',background:'rgba(16,185,129,0.15)',border:'1px solid var(--success)',borderRadius:12,color:'var(--text-main)',fontWeight:500,backdropFilter:'blur(12px)' }}><TranslatedText text={toast}/></motion.div>}</AnimatePresence>
 
       <div className="glass-panel" style={{ padding: '2rem', maxWidth: 700 }}>
-        <h3 style={{ marginBottom: '1.5rem', fontSize: '1.3rem' }}>Broadcast Announcement</h3>
+        <h3 style={{ marginBottom: '1.5rem', fontSize: '1.3rem' }}><TranslatedText text={"Broadcast Announcement"}/></h3>
 
         <div style={{ display: 'grid', gap: '1.25rem' }}>
           {/* Title */}
           <div className="input-group">
-            <label className="input-label">Title</label>
-            <input className="input-field" placeholder="e.g., School Holiday Notice" value={form.title} onChange={e => setForm(p => ({...p, title: e.target.value}))} />
+            <label className="input-label"><TranslatedText text={"Title"}/></label>
+            <input className="input-field" placeholder={translateUi("e.g., School Holiday Notice")} value={form.title} onChange={e => setForm(p => ({...p, title: e.target.value}))} />
           </div>
 
           {/* Message */}
           <div className="input-group">
-            <label className="input-label">Message</label>
-            <textarea className="input-field" rows={4} placeholder="Type your announcement..." value={form.body} onChange={e => setForm(p => ({...p, body: e.target.value}))} style={{ resize: 'vertical', minHeight: 100 }} />
+            <label className="input-label"><TranslatedText text={"Message"}/></label>
+            <textarea className="input-field" rows={4} placeholder={translateUi("Type your announcement...")} value={form.body} onChange={e => setForm(p => ({...p, body: e.target.value}))} style={{ resize: 'vertical', minHeight: 100 }} />
           </div>
 
           {/* Target Audience */}
           <div className="input-group">
-            <label className="input-label">Target Audience</label>
+            <label className="input-label"><TranslatedText text={"Target Audience"}/></label>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {roles.map(r => (
                 <button key={r.value} onClick={() => setForm(p => ({...p, targetRole: r.value}))} className="btn"
                   style={{ padding: '0.5rem 1rem', fontSize: '0.82rem', background: form.targetRole === r.value ? 'var(--primary)' : 'rgba(255,255,255,0.06)', color: form.targetRole === r.value ? '#fff' : 'var(--text-muted)', border: form.targetRole === r.value ? 'none' : '1px solid var(--surface-border)' }}>
-                  {r.label}
+                  <TranslatedText text={r.label}/>
                 </button>
               ))}
             </div>
@@ -88,12 +92,12 @@ export default function AnnouncementsTab() {
 
           {/* Priority */}
           <div className="input-group">
-            <label className="input-label">Priority</label>
+            <label className="input-label"><TranslatedText text={"Priority"}/></label>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               {types.map(t => (
                 <button key={t.value} onClick={() => setForm(p => ({...p, type: t.value}))} className="btn"
                   style={{ padding: '0.5rem 1rem', fontSize: '0.82rem', background: form.type === t.value ? `${t.color}22` : 'rgba(255,255,255,0.06)', color: form.type === t.value ? t.color : 'var(--text-muted)', border: `1px solid ${form.type === t.value ? t.color : 'var(--surface-border)'}` }}>
-                  {t.label}
+                  <TranslatedText text={t.label}/>
                 </button>
               ))}
             </div>
@@ -102,28 +106,25 @@ export default function AnnouncementsTab() {
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             className="btn btn-primary" style={{ width: '100%', padding: '1rem', fontSize: '1.05rem', fontWeight: 700 }}
             onClick={handleSend} disabled={sending}>
-            {sending ? 'Sending...' : 'Send Announcement'}
+            <TranslatedText text={sending ? 'Sending...' : 'Send Announcement'}/>
           </motion.button>
         </div>
 
         {result && (
-          <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} style={{ marginTop:'1.5rem', padding:'1rem', background:'rgba(16,185,129,0.06)', borderRadius:12, border:'1px solid var(--success)', textAlign:'center' }}>
-            Successfully sent to <strong>{result.sent}</strong> {result.targetRole === 'ALL' ? 'users' : result.targetRole.toLowerCase() + 's'}
+          <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} style={{ marginTop:'1.5rem', padding:'1rem', background:'rgba(16,185,129,0.06)', borderRadius:12, border:'1px solid var(--success)', textAlign:'center' }}><TranslatedText text={" Successfully sent to "}/><strong>{result.sent}</strong> <TranslatedText text={result.targetRole === 'ALL' ? 'users' : result.targetRole.toLowerCase() + 's'}/>
           </motion.div>
         )}
       </div>
 
       {/* Past announcements */}
       <div className="glass-panel" style={{ padding: '2rem', maxWidth: 700, marginTop: '1.5rem' }}>
-        <h3 style={{ marginBottom: '1.25rem', fontSize: '1.1rem' }}>Past Announcements</h3>
+        <h3 style={{ marginBottom: '1.25rem', fontSize: '1.1rem' }}><TranslatedText text={"Past Announcements"}/></h3>
         {loadingPast ? (
           <div style={{ display: 'grid', gap: 10 }}>
             {[1, 2].map(i => <div key={i} className="skeleton" style={{ height: 60, borderRadius: 10 }} />)}
           </div>
         ) : past.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            No announcements sent yet.
-          </div>
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}><TranslatedText text={" No announcements sent yet. "}/></div>
         ) : (
           <div style={{ display: 'grid', gap: '0.65rem' }}>
             {past.map(a => {
@@ -131,12 +132,11 @@ export default function AnnouncementsTab() {
               return (
                 <div key={a.id} style={{ padding: '0.9rem 1.1rem', background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px solid var(--surface-border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                    <div style={{ fontWeight: 600 }}>{a.title}</div>
-                    <span className="badge" style={{ background: `${typeColor}22`, color: typeColor, fontSize: '0.68rem', flexShrink: 0 }}>{a.type}</span>
+                    <div style={{ fontWeight: 600 }} data-no-translate>{a.title}</div><button className="btn btn-danger" onClick={async()=>{ const r=await fetch('/api/announcements',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:a.id})}); if(r.ok)setPast(v=>v.filter(item=>item.id!==a.id)); else alert((await r.json()).error || 'Delete failed') }}><TranslatedText text={"Delete"}/></button>
+                    <span className="badge" style={{ background: `${typeColor}22`, color: typeColor, fontSize: '0.68rem', flexShrink: 0 }}><TranslatedText text={a.type}/></span>
                   </div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 4 }}>{a.body}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 6 }}>
-                    Sent to {a.sentCount} {a.targetRole === 'ALL' ? 'users' : a.targetRole.toLowerCase() + 's'} · {new Date(a.createdAt).toLocaleString()}
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 6 }}><TranslatedText text={" Sent to "}/>{a.sentCount} <TranslatedText text={a.targetRole === 'ALL' ? 'users' : a.targetRole.toLowerCase() + 's'}/> · {new Date(a.createdAt).toLocaleString()}
                   </div>
                 </div>
               )

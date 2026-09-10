@@ -26,7 +26,10 @@ services:
       - redis_data:/data
 
   ridesafe:
-    build: .
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:-}
     container_name: ridesafe-app
     restart: always
     ports:

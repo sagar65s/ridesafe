@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getUserFromSession } from '@/lib/auth'
+import { getCurrentUser, canAccessOrganization } from '@/lib/authorization'
 
 // Next.js 15: params is now a Promise
 type RouteContext = { params: Promise<{ id: string }> }
@@ -8,11 +9,15 @@ type RouteContext = { params: Promise<{ id: string }> }
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   try {
     const session = await getUserFromSession()
-    if (!session || session.role !== 'SUPER_ADMIN') {
+    if (!session || !['SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(session.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id } = await params
+    const actor = await getCurrentUser()
+    const scope = await prisma.academicEvent.findUnique({ where: { id }, select: { organizationId: true } })
+    if (!scope) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    if (!actor || !canAccessOrganization(actor, scope.organizationId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const body = await request.json()
     const { title, description, startDate, endDate, type, isPublic, color } = body
@@ -51,11 +56,15 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 export async function DELETE(request: NextRequest, { params }: RouteContext) {
   try {
     const session = await getUserFromSession()
-    if (!session || session.role !== 'SUPER_ADMIN') {
+    if (!session || !['SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(session.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id } = await params
+    const actor = await getCurrentUser()
+    const scope = await prisma.academicEvent.findUnique({ where: { id }, select: { organizationId: true } })
+    if (!scope) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    if (!actor || !canAccessOrganization(actor, scope.organizationId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     await prisma.academicEvent.delete({ where: { id } })
     return NextResponse.json({ success: true })

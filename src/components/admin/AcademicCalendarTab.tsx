@@ -1,9 +1,12 @@
 'use client'
+import { useTranslation as useLocaleText } from '@/i18n/provider'
+import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, CalendarPlus, CheckCircle, AlertTriangle, Trash2, Edit2, Globe, Lock, Upload, FileSpreadsheet } from 'lucide-react'
 
 interface AcademicEvent {
+  organizationId: string | null
   id: string
   title: string
   description: string | null
@@ -17,7 +20,9 @@ interface AcademicEvent {
 interface Organization { id: string; name: string }
 interface CalendarImport { id: string; fileName: string; academicYear: string; eventCount: number; createdAt: string; organization?: Organization | null; importedBy: { name: string } }
 
-export default function AcademicCalendarTab() {
+export default function AcademicCalendarTab({ currentRole }: { currentRole: string }) {
+ const {tx:translateUi}=useLocaleText()
+
   const [events, setEvents] = useState<AcademicEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -70,7 +75,7 @@ export default function AcademicCalendarTab() {
   }, [])
 
   const handleImport = async () => {
-    if (!importFile || !academicYear.trim()) return showToast('Choose a CSV file and enter the academic year', 'error')
+    if (!importFile || !academicYear.trim()) return showToast('Choose an Excel or CSV file and enter the academic year', 'error')
     const data = new FormData()
     data.append('file', importFile)
     data.append('academicYear', academicYear.trim())
@@ -106,7 +111,7 @@ export default function AcademicCalendarTab() {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...form,
+          ...form, organizationId: importOrganizationId || undefined,
           endDate: form.endDate || null
         })
       })
@@ -182,7 +187,7 @@ export default function AcademicCalendarTab() {
               border:`1px solid ${toastType === 'success' ? 'var(--success)' : 'var(--danger)'}`,
               borderRadius:12, color:'var(--text-main)', fontWeight:500, backdropFilter:'blur(12px)' }}>
             {toastType === 'error' ? <AlertTriangle size={18} color="var(--danger)"/> : <CheckCircle size={18} color="var(--success)"/>}
-            {toast}
+            <TranslatedText text={toast}/>
           </motion.div>
         )}
       </AnimatePresence>
@@ -190,8 +195,8 @@ export default function AcademicCalendarTab() {
       <div className="glass-panel" style={{ padding: '2rem' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'2rem', flexWrap:'wrap', gap:'1rem' }}>
           <div>
-            <h2 style={{ margin:0, fontSize:'1.5rem', display:'flex', alignItems:'center', gap:10 }}><Calendar size={28}/> Academic Calendar</h2>
-            <p style={{ color:'var(--text-muted)', fontSize:'0.9rem', marginTop:4 }}>Management of school holidays, exams, and special events</p>
+            <h2 style={{ margin:0, fontSize:'1.5rem', display:'flex', alignItems:'center', gap:10 }}><Calendar size={28}/><TranslatedText text={" Academic Calendar"}/></h2>
+            <p style={{ color:'var(--text-muted)', fontSize:'0.9rem', marginTop:4 }}><TranslatedText text={"Management of school holidays, exams, and special events"}/></p>
           </div>
           <motion.button 
             whileHover={{ scale:1.04 }} 
@@ -203,38 +208,35 @@ export default function AcademicCalendarTab() {
               setShowModal(true)
             }}
           >
-            <CalendarPlus size={20}/> Add Event
-          </motion.button>
+            <CalendarPlus size={20}/><TranslatedText text={" Add Event "}/></motion.button>
         </div>
 
         <div style={{ marginBottom:'2rem', padding:'1.25rem', border:'1px solid var(--surface-border)', borderRadius:14, background:'var(--surface-2)' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8, fontWeight:800, marginBottom:6 }}><FileSpreadsheet size={19}/> Import Academic Calendar</div>
-          <div style={{ color:'var(--text-muted)', fontSize:12, marginBottom:14 }}>
-            CSV columns: <code>title,startDate,endDate,type,description,isPublic,color</code>. This calendar is separate from transport schedules.
-          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:8, fontWeight:800, marginBottom:6 }}><FileSpreadsheet size={19}/><TranslatedText text={" Import Academic Calendar"}/></div>
+          <div style={{ color:'var(--text-muted)', fontSize:12, marginBottom:14 }}><TranslatedText text={" Excel / CSV columns: "}/><code><TranslatedText text={"title,startDate,endDate,type,description,isPublic,color"}/></code><TranslatedText text={". Dates: YYYY-MM-DD. Maximum 2 MB and 2000 events. "}/></div>
           <div className="calendar-import-grid" style={{ display:'grid', gridTemplateColumns:'1.2fr .7fr 1fr auto', gap:10, alignItems:'end' }}>
             <div className="input-group" style={{ margin:0 }}>
-              <label className="input-label">Calendar CSV</label>
-              <input id="calendar-file" className="input-field" type="file" accept=".csv,text/csv" onChange={e => setImportFile(e.target.files?.[0] || null)} />
+              <label className="input-label"><TranslatedText text={"Calendar file (.xlsx / .csv)"}/></label>
+              <input id="calendar-file" className="input-field" type="file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" onChange={e => setImportFile(e.target.files?.[0] || null)} />
             </div>
             <div className="input-group" style={{ margin:0 }}>
-              <label className="input-label">Academic Year</label>
+              <label className="input-label"><TranslatedText text={"Academic Year"}/></label>
               <input className="input-field" placeholder="2026-2027" value={academicYear} onChange={e => setAcademicYear(e.target.value)} />
             </div>
             <div className="input-group" style={{ margin:0 }}>
-              <label className="input-label">School</label>
+              <label className="input-label"><TranslatedText text={"School"}/></label>
               <select className="select-field" value={importOrganizationId} onChange={e => setImportOrganizationId(e.target.value)}>
-                <option value="">Global / all schools</option>
+                <option value=""><TranslatedText text={currentRole === 'SUPER_ADMIN' ? 'Global / all schools' : 'Your school'}/></option>
                 {organizations.map(org => <option key={org.id} value={org.id}>{org.name}</option>)}
               </select>
             </div>
-            <button className="btn btn-primary" disabled={importing} onClick={handleImport}><Upload size={16}/>{importing ? 'Importing…' : 'Import'}</button>
+            <button className="btn btn-primary" disabled={importing} onClick={handleImport}><Upload size={16}/><TranslatedText text={importing ? 'Importing…' : 'Import'}/></button>
           </div>
           {imports.length > 0 && (
             <div style={{ marginTop:14, display:'grid', gap:6 }}>
               {imports.slice(0, 5).map(item => <div key={item.id} style={{ fontSize:12, color:'var(--text-muted)', display:'flex', justifyContent:'space-between', gap:10 }}>
-                <span>{item.fileName} · {item.academicYear} · {item.organization?.name || 'Global'}</span>
-                <span>{item.eventCount} events · {new Date(item.createdAt).toLocaleDateString()}</span>
+                <span><TranslatedText text={item.fileName}/> · <TranslatedText text={item.academicYear}/> · {item.organization?.name || 'Global'}</span>
+                <span>{item.eventCount}<TranslatedText text={" events · "}/>{new Date(item.createdAt).toLocaleDateString()}</span>
               </div>)}
             </div>
           )}
@@ -242,9 +244,7 @@ export default function AcademicCalendarTab() {
 
         <div style={{ display:'grid', gap:'1rem' }}>
           {events.length === 0 ? (
-            <div style={{ textAlign:'center', padding:'3rem', color:'var(--text-muted)', background:'rgba(255,255,255,0.02)', borderRadius:12, border:'1px dashed var(--surface-border)' }}>
-              No academic events scheduled yet.
-            </div>
+            <div style={{ textAlign:'center', padding:'3rem', color:'var(--text-muted)', background:'rgba(255,255,255,0.02)', borderRadius:12, border:'1px dashed var(--surface-border)' }}><TranslatedText text={" No academic events scheduled yet. "}/></div>
           ) : (
             events.map(event => (
               <motion.div 
@@ -259,7 +259,7 @@ export default function AcademicCalendarTab() {
                     <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                       <h4 style={{ margin:0 }}>{event.title}</h4>
                       <span className="badge" style={{ fontSize:'0.65rem', background:'rgba(255,255,255,0.05)', color:'var(--text-muted)' }}>
-                        {typeLabels[event.type] || event.type}
+                        <TranslatedText text={typeLabels[event.type] || event.type}/>
                       </span>
                       {event.isPublic ? <Globe size={14} color="var(--success)" /> : <Lock size={14} color="var(--text-dim)" />}
                     </div>
@@ -271,8 +271,8 @@ export default function AcademicCalendarTab() {
                   </div>
                 </div>
                 <div style={{ display:'flex', gap:'0.5rem' }}>
-                  <button onClick={() => handleEdit(event)} style={{ background:'none', border:'none', color:'var(--primary)', cursor:'pointer', padding:8 }} title="Edit"><Edit2 size={18}/></button>
-                  <button onClick={() => handleDelete(event.id)} style={{ background:'none', border:'none', color:'var(--danger)', cursor:'pointer', padding:8 }} title="Delete"><Trash2 size={18}/></button>
+                  {(currentRole === 'SUPER_ADMIN' || event.organizationId) && <><button onClick={() => handleEdit(event)} style={{ background:'none', border:'none', color:'var(--primary)', cursor:'pointer', padding:8 }} title={translateUi("Edit")}><Edit2 size={18}/></button>
+                  <button onClick={() => handleDelete(event.id)} style={{ background:'none', border:'none', color:'var(--danger)', cursor:'pointer', padding:8 }} title={translateUi("Delete")}><Trash2 size={18}/></button></>}
                 </div>
               </motion.div>
             ))
@@ -286,43 +286,43 @@ export default function AcademicCalendarTab() {
             <motion.div className="modal-box" initial={{ scale:0.9, y:20 }} animate={{ scale:1, y:0 }} exit={{ scale:0.9, y:20 }}>
               <h3 style={{ marginBottom:'1.5rem', display:'flex', alignItems:'center', gap:10 }}>
                 {editingId ? <Edit2 size={24}/> : <CalendarPlus size={24}/>} 
-                {editingId ? 'Edit Event' : 'Add New Event'}
+                <TranslatedText text={editingId ? 'Edit Event' : 'Add New Event'}/>
               </h3>
               
               <div style={{ display:'grid', gap:'1.25rem' }}>
                 <div className="input-group">
-                  <label className="input-label">Event Title *</label>
-                  <input className="input-field" placeholder="e.g. Mid-Term Break" value={form.title} onChange={e => setForm(p => ({...p, title: e.target.value}))} />
+                  <label className="input-label"><TranslatedText text={"Event Title *"}/></label>
+                  <input className="input-field" placeholder={translateUi("e.g. Mid-Term Break")} value={form.title} onChange={e => setForm(p => ({...p, title: e.target.value}))} />
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label">Description</label>
-                  <textarea className="input-field" style={{ minHeight:80, resize:'vertical' }} placeholder="Optional details..." value={form.description} onChange={e => setForm(p => ({...p, description: e.target.value}))} />
+                  <label className="input-label"><TranslatedText text={"Description"}/></label>
+                  <textarea className="input-field" style={{ minHeight:80, resize:'vertical' }} placeholder={translateUi("Optional details...")} value={form.description} onChange={e => setForm(p => ({...p, description: e.target.value}))} />
                 </div>
 
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem' }}>
                   <div className="input-group">
-                    <label className="input-label">Start Date *</label>
+                    <label className="input-label"><TranslatedText text={"Start Date *"}/></label>
                     <input className="input-field" type="date" value={form.startDate} onChange={e => setForm(p => ({...p, startDate: e.target.value}))} />
                     {form.startDate && form.startDate < new Date().toISOString().split('T')[0] && (
-                      <div style={{ fontSize:'0.72rem', color:'var(--warning)', marginTop:4 }}>This date is in the past — use this to log a historical event.</div>
+                      <div style={{ fontSize:'0.72rem', color:'var(--warning)', marginTop:4 }}><TranslatedText text={"This date is in the past — use this to log a historical event."}/></div>
                     )}
                   </div>
                   <div className="input-group">
-                    <label className="input-label">End Date (Optional)</label>
+                    <label className="input-label"><TranslatedText text={"End Date (Optional)"}/></label>
                     <input className="input-field" type="date" value={form.endDate} onChange={e => setForm(p => ({...p, endDate: e.target.value}))} />
                   </div>
                 </div>
 
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem' }}>
                   <div className="input-group">
-                    <label className="input-label">Type</label>
+                    <label className="input-label"><TranslatedText text={"Type"}/></label>
                     <select className="select-field" value={form.type} onChange={e => setForm(p => ({...p, type: e.target.value}))}>
-                      {Object.entries(typeLabels).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                      {Object.entries(typeLabels).map(([val, label]) => <option key={val} value={val}><TranslatedText text={label}/></option>)}
                     </select>
                   </div>
                   <div className="input-group">
-                    <label className="input-label">Color Theme</label>
+                    <label className="input-label"><TranslatedText text={"Color Theme"}/></label>
                     <input className="input-field" type="color" style={{ height:46, padding:4, cursor:'pointer' }} value={form.color} onChange={e => setForm(p => ({...p, color: e.target.value}))} />
                   </div>
                 </div>
@@ -335,14 +335,14 @@ export default function AcademicCalendarTab() {
                       onChange={e => setForm(p => ({ ...p, isPublic: e.target.checked }))} 
                       style={{ width:20, height:20, cursor:'pointer' }}
                     />
-                   <label htmlFor="isVisible" style={{ cursor:'pointer', fontSize:'0.9rem', fontWeight:500 }}>Visible to Parents & Students</label>
+                   <label htmlFor="isVisible" style={{ cursor:'pointer', fontSize:'0.9rem', fontWeight:500 }}><TranslatedText text={"Visible to Parents & Students"}/></label>
                 </div>
               </div>
 
               <div style={{ display:'flex', gap:'1rem', marginTop:'2rem' }}>
-                <button className="btn" style={{ flex:1, background:'rgba(0,0,0,0.05)' }} onClick={() => setShowModal(false)}>Cancel</button>
+                <button className="btn" style={{ flex:1, background:'rgba(0,0,0,0.05)' }} onClick={() => setShowModal(false)}><TranslatedText text={"Cancel"}/></button>
                 <motion.button whileTap={{ scale:0.97 }} className="btn btn-primary" style={{ flex:2 }} onClick={handleSave}>
-                  {editingId ? 'Update Event' : 'Create Event'}
+                  <TranslatedText text={editingId ? 'Update Event' : 'Create Event'}/>
                 </motion.button>
               </div>
             </motion.div>

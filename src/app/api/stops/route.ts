@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const permissionSession = await getUserFromSession()
+  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
     try {
         const user = await getUserFromSession()
         if (!user || user.role === 'PARENT' || user.role === 'DRIVER') {

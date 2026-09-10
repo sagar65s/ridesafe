@@ -1,4 +1,7 @@
 'use client'
+import {csvCell} from '@/lib/csv'
+import { useTranslation as useLocaleText } from '@/i18n/provider'
+import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, AlertTriangle, Check, UserX, Bus, Download, Trash2, CalendarDays } from 'lucide-react'
@@ -25,16 +28,17 @@ const STATUS_META: Record<string, { label: string; color: string; bg: string }> 
 }
 
 function todayStr() {
-  return new Date().toISOString().slice(0, 10)
+  return new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kuala_Lumpur'})
 }
 
 export default function AttendanceTab() {
+ const {tx:translateUi}=useLocaleText()
+
   const [date, setDate] = useState(todayStr())
   const [routeId, setRouteId] = useState('')
   const [routes, setRoutes] = useState<Route[]>([])
   const [trips, setTrips] = useState<TripAttendance[]>([])
   const [loading, setLoading] = useState(true)
-  const [busyKey, setBusyKey] = useState<string | null>(null)
   const [toast, setToast] = useState('')
   const [toastType, setToastType] = useState<'success' | 'error'>('success')
 
@@ -55,40 +59,7 @@ export default function AttendanceTab() {
       .catch(() => setLoading(false))
   }, [date, routeId])
 
-  useEffect(() => { load() }, [load])
-
-  const setStatus = async (trip: TripAttendance, entry: RosterEntry, action: 'PICKED_UP' | 'DROPPED_OFF' | 'ABSENT') => {
-    const key = `${trip.tripId}:${entry.studentId}`
-    setBusyKey(key)
-    try {
-      const res = entry.attendanceId
-        ? await fetch(`/api/attendance/${entry.attendanceId}`, {
-            method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action })
-          })
-        : await fetch('/api/attendance', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tripId: trip.tripId, studentId: entry.studentId, action })
-          })
-      if (res.ok) {
-        showToast(`${entry.name} marked ${STATUS_META[action].label.toLowerCase()}`)
-        load()
-      } else {
-        const e = await res.json(); showToast(e.error || 'Failed to update', 'error')
-      }
-    } catch { showToast('Network error', 'error') } finally { setBusyKey(null) }
-  }
-
-  const clearStatus = async (trip: TripAttendance, entry: RosterEntry) => {
-    if (!entry.attendanceId) return
-    if (!confirm(`Clear attendance record for ${entry.name}?`)) return
-    const key = `${trip.tripId}:${entry.studentId}`
-    setBusyKey(key)
-    try {
-      const res = await fetch(`/api/attendance/${entry.attendanceId}`, { method: 'DELETE' })
-      if (res.ok) { showToast('Record cleared'); load() }
-      else { const e = await res.json(); showToast(e.error || 'Failed to clear record', 'error') }
-    } catch { showToast('Network error', 'error') } finally { setBusyKey(null) }
-  }
+  useEffect(() => { const timer = setTimeout(load, 0); return () => clearTimeout(timer) }, [load])
 
   const exportCSV = () => {
     const rows = [['Route', 'Driver', 'Student', 'Grade', 'Status', 'Time']]
@@ -96,7 +67,7 @@ export default function AttendanceTab() {
       t.routeName, t.driverName, s.name, s.grade, STATUS_META[s.status].label,
       s.timestamp ? new Date(s.timestamp).toLocaleTimeString() : ''
     ])))
-    const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n')
+    const csv = rows.map(r => r.map(csvCell).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
     a.download = `attendance_${date}.csv`; a.click()
@@ -125,7 +96,7 @@ export default function AttendanceTab() {
               border: `1px solid ${toastType === 'success' ? 'var(--success)' : 'var(--danger)'}`,
               borderRadius: 12, color: 'var(--text-main)', fontWeight: 500, backdropFilter: 'blur(12px)' }}>
             {toastType === 'error' ? <AlertTriangle size={18} color="var(--danger)" /> : <CheckCircle size={18} color="var(--success)" />}
-            {toast}
+            <TranslatedText text={toast}/>
           </motion.div>
         )}
       </AnimatePresence>
@@ -135,23 +106,21 @@ export default function AttendanceTab() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <CalendarDays size={20} color="var(--primary)" /> Attendance
-            </h3>
+              <CalendarDays size={20} color="var(--primary)" /><TranslatedText text={" Attendance "}/></h3>
             <div style={{ fontSize: '0.83rem', color: 'var(--text-muted)', marginTop: 4 }}>
-              {summary.total} students across {trips.length} trip{trips.length !== 1 ? 's' : ''} on {date}
+              {summary.total}<TranslatedText text={" students across "}/>{trips.length}<TranslatedText text={" trip"}/><TranslatedText text={trips.length !== 1 ? 's' : ''}/><TranslatedText text={" on "}/><TranslatedText text={date}/>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
             <input type="date" className="input-field" style={{ marginBottom: 0, padding: '0.5rem 0.75rem', width: 'auto' }}
               value={date} onChange={e => setDate(e.target.value)} max={todayStr()} />
             <select className="select-field" style={{ width: 'auto', minWidth: 160 }} value={routeId} onChange={e => setRouteId(e.target.value)}>
-              <option value="">All Routes</option>
+              <option value=""><TranslatedText text={"All Routes"}/></option>
               {routes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select>
             <button className="btn" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--surface-border)', display: 'flex', alignItems: 'center', gap: 6 }}
               onClick={exportCSV} disabled={trips.length === 0}>
-              <Download size={16} /> Export CSV
-            </button>
+              <Download size={16} /><TranslatedText text={" Export CSV "}/></button>
           </div>
         </div>
 
@@ -172,8 +141,7 @@ export default function AttendanceTab() {
         </div>
 
         {routesMissing.length > 0 && (
-          <div style={{ marginTop: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', background: 'var(--surface-2)', borderRadius: 8, padding: '0.6rem 0.9rem' }}>
-            No trip recorded on {date} for: {routesMissing.map(r => r.name).join(', ')}
+          <div style={{ marginTop: '1rem', fontSize: '0.8rem', color: 'var(--text-muted)', background: 'var(--surface-2)', borderRadius: 8, padding: '0.6rem 0.9rem' }}><TranslatedText text={" No trip recorded on "}/><TranslatedText text={date}/><TranslatedText text={" for: "}/>{routesMissing.map(r => r.name).join(', ')}
           </div>
         )}
       </div>
@@ -186,8 +154,8 @@ export default function AttendanceTab() {
       ) : trips.length === 0 ? (
         <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
           <CalendarDays size={40} style={{ opacity: 0.25, marginBottom: '1rem' }} />
-          <div style={{ fontWeight: 600, marginBottom: 4 }}>No trips on this date</div>
-          <div style={{ fontSize: '0.85rem' }}>Pick another date, or a route with a completed run.</div>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}><TranslatedText text={"No trips on this date"}/></div>
+          <div style={{ fontSize: '0.85rem' }}><TranslatedText text={"Pick another date, or a route with a completed run."}/></div>
         </div>
       ) : (
         <div style={{ display: 'grid', gap: '1.25rem' }}>
@@ -199,18 +167,15 @@ export default function AttendanceTab() {
                   <div style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Bus size={15} /> {trip.routeName}
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                    Driver: {trip.driverName}{trip.busPlate && ` · ${trip.busPlate}`} · {new Date(trip.date).toLocaleTimeString()}
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}><TranslatedText text={" Driver: "}/>{trip.driverName}<TranslatedText text={trip.busPlate && ` · ${trip.busPlate}`}/> · {new Date(trip.date).toLocaleTimeString()}
                   </div>
                 </div>
-                <span className="badge badge-info">{trip.status.replace(/_/g, ' ')}</span>
+                <span className="badge badge-info"><TranslatedText text={trip.status.replace(/_/g, ' ')}/></span>
               </div>
 
               <div style={{ display: 'grid', gap: '0.5rem' }}>
                 {trip.roster.map(entry => {
-                  const meta = STATUS_META[entry.status]
-                  const key = `${trip.tripId}:${entry.studentId}`
-                  const busy = busyKey === key
+                  const meta = STATUS_META[entry.status] || STATUS_META.NOT_MARKED
                   return (
                     <div key={entry.studentId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8,
                       padding: '0.6rem 0.9rem', background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--surface-border)' }}>
@@ -222,40 +187,15 @@ export default function AttendanceTab() {
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                         <span style={{ padding: '3px 10px', borderRadius: 999, fontSize: '0.72rem', fontWeight: 600, color: meta.color, background: meta.bg }}>
-                          {meta.label}
+                          <TranslatedText text={meta.label}/>
                         </span>
-                        {entry.status !== 'PICKED_UP' && (
-                          <button disabled={busy} onClick={() => setStatus(trip, entry, 'PICKED_UP')} title="Mark picked up"
-                            className="btn" style={{ padding: '3px 8px', fontSize: '0.72rem', background: STATUS_META.PICKED_UP.bg, color: STATUS_META.PICKED_UP.color, border: 'none' }}>
-                            <Check size={12} />
-                          </button>
-                        )}
-                        {entry.status !== 'DROPPED_OFF' && (
-                          <button disabled={busy} onClick={() => setStatus(trip, entry, 'DROPPED_OFF')} title="Mark dropped off"
-                            className="btn" style={{ padding: '3px 8px', fontSize: '0.72rem', background: STATUS_META.DROPPED_OFF.bg, color: STATUS_META.DROPPED_OFF.color, border: 'none' }}>
-                            <Check size={12} />
-                          </button>
-                        )}
-                        {entry.status !== 'ABSENT' && (
-                          <button disabled={busy} onClick={() => setStatus(trip, entry, 'ABSENT')} title="Mark absent"
-                            className="btn" style={{ padding: '3px 8px', fontSize: '0.72rem', background: STATUS_META.ABSENT.bg, color: STATUS_META.ABSENT.color, border: 'none' }}>
-                            <UserX size={12} />
-                          </button>
-                        )}
-                        {entry.attendanceId && (
-                          <button disabled={busy} onClick={() => clearStatus(trip, entry)} title="Clear record"
-                            style={{ background: 'none', border: '1px solid rgba(255,69,58,0.3)', borderRadius: 8, padding: '3px 6px', cursor: 'pointer', color: 'var(--danger)', display: 'flex' }}>
-                            <Trash2 size={12} />
-                          </button>
-                        )}
+
                       </div>
                     </div>
                   )
                 })}
                 {trip.roster.length === 0 && (
-                  <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                    No students assigned to this route.
-                  </div>
+                  <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}><TranslatedText text={" No students assigned to this route. "}/></div>
                 )}
               </div>
             </motion.div>

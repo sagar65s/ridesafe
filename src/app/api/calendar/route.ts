@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getUserFromSession } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/authorization'
 
 export async function GET() {
   try {
     const session = await getUserFromSession()
+    if (!session) return NextResponse.json({error:'Unauthorized'},{status:401})
     const user = session ? await prisma.user.findUnique({ where: { id: session.id }, select: { role: true, organizationId: true } }) : null
 
     const isAdmin = user && ['ADMIN', 'SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(user.role)
@@ -31,11 +33,15 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getUserFromSession()
-    if (!session || session.role !== 'SUPER_ADMIN') {
+    if (!session || !['SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(session.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     const body = await request.json()
-    const { title, description, startDate, endDate, type, isPublic, color, organizationId } = body
+    const { title, description, startDate, endDate, type, isPublic, color } = body
+    const actor = await getCurrentUser()
+    if (!actor || (actor.role !== 'SUPER_ADMIN' && !actor.organizationId)) return NextResponse.json({ error: 'School assignment required' }, { status: 403 })
+    if (actor.role !== 'SUPER_ADMIN' && body.organizationId && body.organizationId !== actor.organizationId) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    const organizationId = actor.role === 'SUPER_ADMIN' ? body.organizationId || null : actor.organizationId
 
     if (!title || !String(title).trim() || !startDate) {
       return NextResponse.json({ error: 'Title and Start Date are required' }, { status: 400 })

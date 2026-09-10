@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server'
 import prisma from '@/lib/prisma'
+import {transportMessage} from '@/lib/notification-delivery'
 import { getUserFromSession } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
@@ -15,7 +16,8 @@ export async function GET(request: NextRequest) {
             take: 50
         })
 
-        return NextResponse.json({ notifications })
+        const profile = await prisma.user.findUnique({where:{id:user.id},select:{locale:true}})
+        return NextResponse.json({ notifications: notifications.map(n=>{try{const meta=JSON.parse(n.metadata || '{}');return meta.studentName && ['PICKED_UP','DROPPED_OFF','ABSENT','BUS_ETA_5_MIN'].includes(n.type) ? {...n,...transportMessage(profile?.locale || 'en',n.type,meta.studentName,meta.stopName || '',meta.actorName || '')}:n}catch{return n}}) })
     } catch (error) {
         console.error('Notifications GET Error:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -28,7 +30,7 @@ export async function PATCH(request: NextRequest) {
         if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
         const data = await request.json()
-        if (!data.id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+        if (typeof data.id !== 'string' || typeof data.read !== 'boolean') return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
         const notification = await prisma.notification.findUnique({ where: { id: data.id } })
         if (notification?.userId !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

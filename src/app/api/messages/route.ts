@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
         // Find all messages involving this user (either sent or received)
         const messages = await prisma.message.findMany({
-            where: { OR: [{ senderId: user.id }, { recipientId: user.id }] },
+            where: { OR: [{ senderId: user.id, senderDeletedAt: null }, { recipientId: user.id, recipientDeletedAt: null }] },
             orderBy: { createdAt: 'asc' },
             include: {
                 sender: { select: { id: true, name: true, role: true } },
@@ -89,4 +89,15 @@ export async function POST(request: NextRequest) {
         console.error('Messages POST Error:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
+}
+
+export async function DELETE(request: NextRequest) {
+  const user = await getUserFromSession()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { id } = await request.json().catch(() => ({}))
+  if (typeof id !== 'string') return NextResponse.json({ error: 'Message ID required' }, { status: 400 })
+  const message = await prisma.message.findUnique({ where: { id } })
+  if (!message || (message.senderId !== user.id && message.recipientId !== user.id)) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  await prisma.message.update({ where: { id }, data: { ...(message.senderId === user.id && { senderDeletedAt: new Date() }), ...(message.recipientId === user.id && { recipientDeletedAt: new Date() }) } })
+  return NextResponse.json({ success: true })
 }

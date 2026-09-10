@@ -5,7 +5,7 @@
     "users": "用户",
     "students": "学生",
     "fleet": "车队与路线",
-    "liveTrips": "实时行程",
+    "liveTrips": "实时追踪",
     "analytics": "数据分析",
     "messages": "消息",
     "history": "行程历史",
@@ -64,8 +64,8 @@
     "schedule": "校车时刻表",
     "tripHistory": "行程历史",
     "greenScore": "环保分数",
-    "ePass": "电子通行证"
-    ,"home": "首页",
+    "ePass": "电子通行证",
+    "home": "首页",
     "myChild": "我的孩子",
     "profile": "个人资料",
     "secureSetup": "安全设置",
@@ -108,13 +108,6 @@
     "allUsers": "所有用户（全局）",
     "logoutQuestion": "确定要退出登录吗？",
     "loadingDashboard": "正在加载管理面板…"
-  },
-  "leaderboard": {
-    "title": "🌿 绿色排行榜",
-    "rank": "排名",
-    "student": "学生",
-    "score": "环保分数",
-    "badge": "徽章"
   },
   "settings": {
     "language": "语言",

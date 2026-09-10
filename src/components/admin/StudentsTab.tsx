@@ -1,4 +1,7 @@
 'use client'
+import {csvCell} from '@/lib/csv'
+import { useTranslation as useLocaleText } from '@/i18n/provider'
+import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, AlertTriangle, UserPlus, Bus, Check, X, Download, Plus, Pencil, Trash2 } from 'lucide-react'
@@ -53,6 +56,8 @@ function validateStudentForm(form: typeof defaultForm): Record<string, string> {
 }
 
 export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string }) {
+ const {tx:translateUi}=useLocaleText()
+
   const [students, setStudents] = useState<Student[]>([])
   const [routes, setRoutes] = useState<Route[]>([])
   const [parents, setParents] = useState<Parent[]>([])
@@ -186,7 +191,7 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
       ['#', 'Name', 'Grade', 'Level', 'Contact1', 'Status', 'Route'],
       ...students.map((s, i) => [i + 1, s.name, s.grade, s.level, s.parentContact1, s.status, s.route?.name || ''])
     ]
-    const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n')
+    const csv = rows.map(r => r.map(csvCell).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob)
     a.download = `students_${new Date().toISOString().split('T')[0]}.csv`; a.click()
@@ -254,7 +259,7 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
               border: `1px solid ${toastType === 'success' ? 'var(--success)' : 'var(--danger)'}`,
               borderRadius:12, color:'var(--text-main)', fontWeight:500, backdropFilter:'blur(12px)' }}>
             {toastType === 'error' ? <AlertTriangle size={18} color="var(--danger)"/> : <CheckCircle size={18} color="var(--success)"/>}
-            {toast}
+            <TranslatedText text={toast}/>
           </motion.div>
         )}
       </AnimatePresence>
@@ -263,22 +268,19 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
       <div className="glass-panel" style={{ padding:'2rem' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem', flexWrap:'wrap', gap:'1rem' }}>
           <div>
-            <h3 style={{ margin:0, fontSize:'1.3rem' }}>Student Roster</h3>
-            <div style={{ fontSize:'0.85rem', color:'var(--text-muted)', marginTop:4 }}>{students.length} students enrolled</div>
+            <h3 style={{ margin:0, fontSize:'1.3rem' }}><TranslatedText text={"Student Roster"}/></h3>
+            <div style={{ fontSize:'0.85rem', color:'var(--text-muted)', marginTop:4 }}>{students.length}<TranslatedText text={" students enrolled"}/></div>
           </div>
           <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap' }}>
             <button className="btn" style={{ background:'rgba(255,255,255,0.06)', border:'1px solid var(--surface-border)', display:'flex', alignItems:'center', gap:6 }}
               onClick={exportCSV}>
-              <Download size={16}/> Export CSV
-            </button>
+              <Download size={16}/><TranslatedText text={" Export CSV "}/></button>
             <button className="btn" style={{ background:'rgba(255,255,255,0.06)', border:'1px solid var(--surface-border)', display:'flex', alignItems:'center', gap:6 }}
               onClick={exportPDF}>
-              <Download size={16}/> Export PDF
-            </button>
+              <Download size={16}/><TranslatedText text={" Export PDF "}/></button>
             <motion.button whileHover={{ scale:1.04 }} whileTap={{ scale:0.96 }}
               className="btn btn-primary" onClick={openAddModal} style={{ display:'flex', alignItems:'center', gap:6 }}>
-              <Plus size={16}/> Add Student
-            </motion.button>
+              <Plus size={16}/><TranslatedText text={" Add Student "}/></motion.button>
           </div>
         </div>
 
@@ -303,9 +305,9 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
                 <div>
                   <div style={{ fontWeight:600 }}>{s.name} {s.studentCode && <span style={{ color:'var(--text-muted)', fontSize:11 }}>({s.studentCode})</span>}</div>
                   <div style={{ fontSize:'0.82rem', color:'var(--text-muted)' }}>
-                    {s.grade}{s.className ? ` · ${s.className}` : ''}{s.section ? `-${s.section}` : ''} · {s.level}
-                    {s.parent && <span> · Parent: {s.parent.name}</span>}
-                    {s.parentContact1 && <span> · 📞 {s.parentContact1}</span>}
+                    {s.grade}{s.className ? ` · ${s.className}` : ''}{s.section ? `-${s.section}` : ''} · <TranslatedText text={s.level}/>
+                    {s.parent && <span><TranslatedText text={" · Parent: "}/>{s.parent.name}</span>}
+                    {s.parentContact1 && <span> · 📞 <TranslatedText text={s.parentContact1}/></span>}
                   </div>
                 </div>
               </div>
@@ -315,19 +317,19 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
                 {s.isSelfPickup ? (
                   <span style={{ color:'var(--info)', display:'flex', alignItems:'center', gap:4 }}>
                     <Check size={14}/>
-                    {s.selfPickupSession === 'MORNING' ? 'Morning Pickup' : s.selfPickupSession === 'PM' ? 'PM Pickup' : s.selfPickupSession === 'AFTER_SCHOOL' ? 'After School' : 'Self Pickup'}
+                    <TranslatedText text={s.selfPickupSession === 'MORNING' ? 'Morning Pickup' : s.selfPickupSession === 'PM' ? 'PM Pickup' : s.selfPickupSession === 'AFTER_SCHOOL' ? 'After School' : 'Self Pickup'}/>
                   </span>
                 ) : <span style={{ color:'var(--bus-yellow)', display:'flex', alignItems:'center', gap:4 }}><Bus size={14}/> {s.busId ? s.bus?.plateNumber : 'No Bus'}</span>}
                 <span className={`badge ${s.status === 'CHECKED_OUT' ? 'badge-success' : 'badge-pending'}`}>
-                  {s.isActive ? s.status.replace('_',' ') : 'INACTIVE'}
+                  <TranslatedText text={s.isActive ? s.status.replace('_',' ') : 'INACTIVE'}/>
                 </span>
                 <motion.button whileTap={{ scale:0.92 }} onClick={() => openEditModal(s)}
-                  title="Edit student"
+                  title={translateUi("Edit student")}
                   style={{ background:'none', border:'1px solid var(--surface-border)', borderRadius:8, padding:'4px 7px', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}>
                   <Pencil size={13} />
                 </motion.button>
                 <motion.button whileTap={{ scale:0.92 }} onClick={() => handleDelete(s)}
-                  title="Deactivate student" disabled={deletingId === s.id || !s.isActive}
+                  title={translateUi("Deactivate student")} disabled={deletingId === s.id || !s.isActive}
                   style={{ background:'none', border:'1px solid rgba(255,69,58,0.3)', borderRadius:8, padding:'4px 7px', cursor:'pointer', color:'var(--danger)', display:'flex' }}>
                   <Trash2 size={13} />
                 </motion.button>
@@ -336,7 +338,7 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
           ))}
           {filtered.length === 0 && (
             <div style={{ textAlign:'center', padding:'3rem', color:'var(--text-muted)' }}>
-              {q ? `No students match "${searchQuery}".` : 'No students registered yet. Click "Add Student" to get started.'}
+              <TranslatedText text={q ? `No students match "${searchQuery}".` : 'No students registered yet. Click "Add Student" to get started.'}/>
             </div>
           )}
         </div>
@@ -349,77 +351,75 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
             onClick={e => { if (e.target === e.currentTarget) { setShowModal(false); setEditingStudent(null) } }}>
             <motion.div className="modal-box" initial={{ opacity:0, scale:0.9, y:30 }} animate={{ opacity:1, scale:1, y:0 }} exit={{ opacity:0, scale:0.9 }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem' }}>
-                <h3 style={{ margin:0, display:'flex', alignItems:'center', gap:8 }}><UserPlus size={20}/> {editingStudent ? 'Edit Student' : 'Register Student'}</h3>
+                <h3 style={{ margin:0, display:'flex', alignItems:'center', gap:8 }}><UserPlus size={20}/> <TranslatedText text={editingStudent ? 'Edit Student' : 'Register Student'}/></h3>
                 <button onClick={() => { setShowModal(false); setEditingStudent(null); setFormErrors({}) }} style={{ background:'none', border:'none', color:'var(--text-muted)', fontSize:'1.5rem', cursor:'pointer' }}><X size={20}/></button>
               </div>
 
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem' }}>
                 {currentRole === 'SUPER_ADMIN' && (
                   <div className="input-group" style={{ gridColumn:'1/-1' }}>
-                    <label className="input-label">School *</label>
+                    <label className="input-label"><TranslatedText text={"School *"}/></label>
                     <select className="select-field" value={form.organizationId} onChange={e => setForm(p => ({...p, organizationId:e.target.value, routeId:'', busId:'', parentId:'', pickupStopId:'', dropoffStopId:''}))}>
-                      <option value="">Select school</option>
+                      <option value=""><TranslatedText text={"Select school"}/></option>
                       {organizations.map(org => <option key={org.id} value={org.id}>{org.name}</option>)}
                     </select>
-                    {formErrors.organizationId && <div style={{color:'var(--danger)',fontSize:'0.75rem',marginTop:3}}>{formErrors.organizationId}</div>}
+                    {formErrors.organizationId && <div style={{color:'var(--danger)',fontSize:'0.75rem',marginTop:3}}><TranslatedText text={formErrors.organizationId}/></div>}
                   </div>
                 )}
                 <div className="input-group" style={{ gridColumn:'1/-1' }}>
-                  <label className="input-label">Full Name *</label>
-                  <input className="input-field" placeholder="Student full name" minLength={2} maxLength={100}
+                  <label className="input-label"><TranslatedText text={"Full Name *"}/></label>
+                  <input className="input-field" placeholder={translateUi("Student full name")} minLength={2} maxLength={100}
                     value={form.name} onChange={e => setForm(p => ({...p, name:e.target.value}))}
                     style={{ borderColor: formErrors.name ? 'var(--danger)' : undefined }} />
                   {formErrors.name && <div style={{ color:'var(--danger)', fontSize:'0.75rem', marginTop:3 }}>{formErrors.name}</div>}
                 </div>
                 <div className="input-group">
-                  <label className="input-label">Student ID</label>
-                  <input className="input-field" placeholder="e.g. STU-2026-001" maxLength={50} value={form.studentCode} onChange={e => setForm(p => ({...p, studentCode:e.target.value}))}/>
+                  <label className="input-label"><TranslatedText text={"Student ID"}/></label>
+                  <input className="input-field" placeholder={translateUi("e.g. STU-2026-001")} maxLength={50} value={form.studentCode} onChange={e => setForm(p => ({...p, studentCode:e.target.value}))}/>
                 </div>
                 <div className="input-group">
-                  <label className="input-label">Class &amp; Section</label>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr .6fr',gap:8}}><input className="input-field" placeholder="Class" maxLength={30} value={form.className} onChange={e=>setForm(p=>({...p,className:e.target.value}))}/><input className="input-field" placeholder="Sec" maxLength={10} value={form.section} onChange={e=>setForm(p=>({...p,section:e.target.value}))}/></div>
+                  <label className="input-label"><TranslatedText text={"Class & Section"}/></label>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr .6fr',gap:8}}><input className="input-field" placeholder={translateUi("Class")} maxLength={30} value={form.className} onChange={e=>setForm(p=>({...p,className:e.target.value}))}/><input className="input-field" placeholder={translateUi("Sec")} maxLength={10} value={form.section} onChange={e=>setForm(p=>({...p,section:e.target.value}))}/></div>
                 </div>
                 <div className="input-group">
-                  <label className="input-label">Grade *</label>
-                  <input className="input-field" placeholder="e.g. Grade 3" maxLength={20}
+                  <label className="input-label"><TranslatedText text={"Grade *"}/></label>
+                  <input className="input-field" placeholder={translateUi("e.g. Grade 3")} maxLength={20}
                     value={form.grade} onChange={e => setForm(p => ({...p, grade:e.target.value}))}
                     style={{ borderColor: formErrors.grade ? 'var(--danger)' : undefined }} />
                   {formErrors.grade && <div style={{ color:'var(--danger)', fontSize:'0.75rem', marginTop:3 }}>{formErrors.grade}</div>}
                 </div>
                 <div className="input-group">
-                  <label className="input-label">Level</label>
+                  <label className="input-label"><TranslatedText text={"Level"}/></label>
                   <select className="select-field" value={form.level} onChange={e => setForm(p => ({...p, level:e.target.value}))}>
-                    <option value="">Select level</option>
-                    {['Nursery','KG','Primary','Middle','High'].map(l => <option key={l} value={l}>{l}</option>)}
+                    <option value=""><TranslatedText text={"Select level"}/></option>
+                    {['Nursery','KG','Primary','Middle','High'].map(l => <option key={l} value={l}><TranslatedText text={l}/></option>)}
                   </select>
                 </div>
                 {/* type="tel" enforces numeric keyboard on mobile; sanitizePhone strips letters */}
                 <div className="input-group">
-                  <label className="input-label">Primary Contact *</label>
+                  <label className="input-label"><TranslatedText text={"Primary Contact *"}/></label>
                   <input type="tel" className="input-field" placeholder="+60 12-345 6789" maxLength={20}
                     value={form.parentContact1} onChange={e => setForm(p => ({...p, parentContact1: sanitizePhone(e.target.value)}))}
                     style={{ borderColor: formErrors.parentContact1 ? 'var(--danger)' : undefined }} />
-                  {formErrors.parentContact1 && <div style={{ color:'var(--danger)', fontSize:'0.75rem', marginTop:3 }}>{formErrors.parentContact1}</div>}
+                  {formErrors.parentContact1 && <div style={{ color:'var(--danger)', fontSize:'0.75rem', marginTop:3 }}><TranslatedText text={formErrors.parentContact1}/></div>}
                 </div>
                 <div className="input-group">
-                  <label className="input-label">Secondary Contact</label>
+                  <label className="input-label"><TranslatedText text={"Secondary Contact"}/></label>
                   <input type="tel" className="input-field" placeholder="+60 12-345 6789" maxLength={20}
                     value={form.parentContact2} onChange={e => setForm(p => ({...p, parentContact2: sanitizePhone(e.target.value)}))}
                     style={{ borderColor: formErrors.parentContact2 ? 'var(--danger)' : undefined }} />
-                  {formErrors.parentContact2 && <div style={{ color:'var(--danger)', fontSize:'0.75rem', marginTop:3 }}>{formErrors.parentContact2}</div>}
+                  {formErrors.parentContact2 && <div style={{ color:'var(--danger)', fontSize:'0.75rem', marginTop:3 }}><TranslatedText text={formErrors.parentContact2}/></div>}
                 </div>
                 <div className="input-group" style={{ gridColumn:'1/-1' }}>
-                  <label className="input-label">Parent / Guardian</label>
+                  <label className="input-label"><TranslatedText text={"Parent / Guardian"}/></label>
                   <select className="select-field" value={form.parentId} onChange={e => setForm(p => ({...p, parentId:e.target.value}))}>
-                    <option value="">No parent account linked</option>
+                    <option value=""><TranslatedText text={"No parent account linked"}/></option>
                     {availableParents.map(parent => <option key={parent.id} value={parent.id}>{parent.name} — {parent.email}</option>)}
                   </select>
-                  <div style={{ color:'var(--text-muted)', fontSize:'0.75rem', marginTop:4 }}>
-                    Linking the parent makes this student visible in that parent dashboard.
-                  </div>
+                  <div style={{ color:'var(--text-muted)', fontSize:'0.75rem', marginTop:4 }}><TranslatedText text={" Linking the parent makes this student visible in that parent dashboard. "}/></div>
                 </div>
                 <div className="input-group" style={{ gridColumn:'1/-1' }}>
-                  <label className="input-label">Assign Route</label>
+                  <label className="input-label"><TranslatedText text={"Assign Route"}/></label>
                   <select className="select-field" value={form.routeId} onChange={async e => {
                     const routeId = e.target.value
                     setForm(p => ({...p, routeId, busId:'', pickupStopId:'', dropoffStopId:''}))
@@ -428,61 +428,61 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
                     const data = await response.json()
                     setRouteStops(data.stops || [])
                   }}>
-                    <option value="">No route (self-pickup)</option>
+                    <option value=""><TranslatedText text={"No route (self-pickup)"}/></option>
                     {availableRoutes.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                   </select>
                 </div>
                 <div className="input-group" style={{ gridColumn:'1/-1' }}>
-                  <label className="input-label">Assign Bus</label>
+                  <label className="input-label"><TranslatedText text={"Assign Bus"}/></label>
                   <select className="select-field" value={form.busId} onChange={e=>setForm(p=>({...p,busId:e.target.value}))}>
-                    <option value="">No bus assigned</option>
+                    <option value=""><TranslatedText text={"No bus assigned"}/></option>
                     {availableBuses.map(bus=><option key={bus.id} value={bus.id}>{bus.busNumber ? `${bus.busNumber} · ` : ''}{bus.plateNumber}</option>)}
                   </select>
                 </div>
                 {form.routeId && (
                   <>
                     <div className="input-group">
-                      <label className="input-label">Pickup Stop</label>
+                      <label className="input-label"><TranslatedText text={"Pickup Stop"}/></label>
                       <select className="select-field" value={form.pickupStopId} onChange={e => setForm(p => ({...p, pickupStopId:e.target.value}))}>
-                        <option value="">Select pickup stop</option>
+                        <option value=""><TranslatedText text={"Select pickup stop"}/></option>
                         {routeStops.map(stop => <option key={stop.id} value={stop.id}>{stop.name}</option>)}
                       </select>
                     </div>
                     <div className="input-group">
-                      <label className="input-label">Drop-off Stop</label>
+                      <label className="input-label"><TranslatedText text={"Drop-off Stop"}/></label>
                       <select className="select-field" value={form.dropoffStopId} onChange={e => setForm(p => ({...p, dropoffStopId:e.target.value}))}>
-                        <option value="">Select drop-off stop</option>
+                        <option value=""><TranslatedText text={"Select drop-off stop"}/></option>
                         {routeStops.map(stop => <option key={stop.id} value={stop.id}>{stop.name}</option>)}
                       </select>
                     </div>
                   </>
                 )}
                 <div className="input-group">
-                  <label className="input-label">Pickup Location / Address</label>
+                  <label className="input-label"><TranslatedText text={"Pickup Location / Address"}/></label>
                   <textarea className="input-field" rows={2} maxLength={300} value={form.pickupAddress} onChange={e=>setForm(p=>({...p,pickupAddress:e.target.value}))}/>
                 </div>
                 <div className="input-group">
-                  <label className="input-label">Drop Location / Address</label>
+                  <label className="input-label"><TranslatedText text={"Drop Location / Address"}/></label>
                   <textarea className="input-field" rows={2} maxLength={300} value={form.dropoffAddress} onChange={e=>setForm(p=>({...p,dropoffAddress:e.target.value}))}/>
                 </div>
-                <label style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:9,fontSize:13}}><input type="checkbox" checked={form.isActive} onChange={e=>setForm(p=>({...p,isActive:e.target.checked}))}/> Student active</label>
+                <label style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:9,fontSize:13}}><input type="checkbox" checked={form.isActive} onChange={e=>setForm(p=>({...p,isActive:e.target.checked}))}/><TranslatedText text={" Student active"}/></label>
                 <div className="input-group" style={{ gridColumn:'1/-1' }}>
-                  <label className="input-label">Pickup Method</label>
+                  <label className="input-label"><TranslatedText text={"Pickup Method"}/></label>
                   <select className="select-field" value={form.selfPickupSession}
                     onChange={e => setForm(p => ({...p, selfPickupSession: e.target.value}))}>
                     {SELF_PICKUP_OPTIONS.map(o => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
+                      <option key={o.value} value={o.value}><TranslatedText text={o.label}/></option>
                     ))}
                   </select>
                 </div>
               </div>
 
               <div style={{ display:'flex', gap:'1rem', marginTop:'1.5rem' }}>
-                <button className="btn" style={{ flex:1, background:'rgba(255,255,255,0.06)' }} onClick={() => { setShowModal(false); setEditingStudent(null) }}>Cancel</button>
+                <button className="btn" style={{ flex:1, background:'rgba(255,255,255,0.06)' }} onClick={() => { setShowModal(false); setEditingStudent(null) }}><TranslatedText text={"Cancel"}/></button>
                 <motion.button whileHover={{ scale:1.02 }} whileTap={{ scale:0.98 }}
                   className="btn btn-primary" style={{ flex:2 }}
                   onClick={handleSave} disabled={saving}>
-                  {saving ? 'Saving…' : editingStudent ? '✓  Save Changes' : '✓  Save Student'}
+                  <TranslatedText text={saving ? 'Saving…' : editingStudent ? '✓  Save Changes' : '✓  Save Student'}/>
                 </motion.button>
               </div>
             </motion.div>
