@@ -1,0 +1,13 @@
+ALTER TABLE "Bus" ADD COLUMN "maintainerId" TEXT;
+ALTER TABLE "Bus" ADD CONSTRAINT "Bus_maintainerId_fkey" FOREIGN KEY ("maintainerId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Trip" ADD COLUMN "maintainerId" TEXT;
+ALTER TABLE "Trip" ADD CONSTRAINT "Trip_maintainerId_fkey" FOREIGN KEY ("maintainerId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Attendance" ADD COLUMN "recordedById" TEXT, ADD COLUMN "dedupeKey" TEXT;
+CREATE UNIQUE INDEX "Attendance_dedupeKey_key" ON "Attendance"("dedupeKey");
+ALTER TABLE "Notification" ADD COLUMN "metadata" TEXT;
+ALTER TABLE "Announcement" ADD COLUMN "deletedAt" TIMESTAMP(3);
+ALTER TABLE "Message" ADD COLUMN "senderDeletedAt" TIMESTAMP(3), ADD COLUMN "recipientDeletedAt" TIMESTAMP(3);
+CREATE TABLE "PushSubscription" ("id" TEXT NOT NULL, "userId" TEXT NOT NULL, "endpoint" TEXT NOT NULL, "p256dh" TEXT NOT NULL, "auth" TEXT NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "PushSubscription_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "PushSubscription_endpoint_key" ON "PushSubscription"("endpoint");
+CREATE INDEX "PushSubscription_userId_idx" ON "PushSubscription"("userId");
+ALTER TABLE "PushSubscription" ADD CONSTRAINT "PushSubscription_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

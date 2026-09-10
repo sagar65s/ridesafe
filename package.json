@@ -14,11 +14,14 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "check": "npm run typecheck && npm run lint && npm test && npm run build",
-    "deploy": "docker compose up --build -d",
+    "deploy": "docker compose --env-file .env.production up --build -d",
     "admin:create": "node scripts/bootstrap-admin.mjs",
     "tracking:worker": "node --env-file=.env scripts/tracking-worker.mjs",
     "push:keys": "node scripts/generate-push-keys.mjs",
-    "transport:check": "node --env-file=.env scripts/check-transport.mjs"
+    "transport:check": "node --env-file=.env scripts/check-transport.mjs",
+    "prebuild": "node scripts/verify-source.mjs",
+    "source:check": "node scripts/verify-source.mjs",
+    "setup:docker": "node scripts/setup-docker.mjs"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",

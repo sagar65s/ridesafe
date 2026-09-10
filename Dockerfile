@@ -1,10 +1,11 @@
 # Build Stage
 FROM node:20-slim AS builder
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY package*.json ./
 RUN npm ci --no-audit --no-fund --fetch-retries=5
 COPY . .
+RUN node scripts/verify-source.mjs
 ENV NEXT_TELEMETRY_DISABLED=1 \
     DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build \
     JWT_SECRET=build-only-secret-with-at-least-32-characters
@@ -18,7 +19,7 @@ RUN npm prune --omit=dev
 # Production Stage
 FROM node:20-slim AS runner
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1
 # Uncomment if you need a specific port
 # ENV PORT=3000

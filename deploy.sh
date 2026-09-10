@@ -10,6 +10,6 @@ command -v docker >/dev/null 2>&1 || { echo "Docker is required."; exit 1; }
 docker compose version >/dev/null
 [[ -f .env.production ]] || { echo ".env.production is required."; exit 1; }
 
-docker compose config --quiet
-docker compose up --build -d
-docker compose ps
+docker compose --env-file .env.production config --quiet
+docker compose --env-file .env.production up --build -d
+docker compose --env-file .env.production ps

@@ -1,0 +1,134 @@
+{
+  "release": "RideSafe Complete Docker Fixed \u2014 2026-09-10",
+  "stack": {
+    "next": "16.3.4",
+    "prisma": "5.22.0",
+    "exceljs": "4.4.0",
+    "exceljs_uuid_override": "11.1.1"
+  },
+  "checks": {
+    "prisma_schema": "passed",
+    "typescript": "passed",
+    "eslint": "passed",
+    "jest": {
+      "suites": 12,
+      "tests": 91,
+      "failed": 0
+    },
+    "production_build": "webpack passed",
+    "http_smoke": {
+      "passed": 15,
+      "checks": [
+        {
+          "path": "/",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/parent",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/driver",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/admin",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/student-form",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/bus-horn.mp3",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/ridesafe-sw.js",
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "path": "/api/students",
+          "method": "GET",
+          "status": 401
+        },
+        {
+          "path": "/api/location",
+          "method": "GET",
+          "status": 401
+        },
+        {
+          "path": "/api/location/stream",
+          "method": "GET",
+          "status": 401
+        },
+        {
+          "path": "/api/calendar/import",
+          "method": "GET",
+          "status": 401
+        },
+        {
+          "path": "/api/driver/status",
+          "method": "GET",
+          "status": 401
+        },
+        {
+          "path": "/api/notifications",
+          "method": "GET",
+          "status": 401
+        },
+        {
+          "path": "/api/internal/tracking",
+          "method": "GET",
+          "status": 401
+        },
+        {
+          "path": "/api/messages",
+          "method": "POST",
+          "status": 403
+        }
+      ]
+    },
+    "production_dependency_audit": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "fresh_extraction": {
+      "local_imports": 292,
+      "missing_imports": 0,
+      "npm_ci": "793 packages installed from supplied lockfile",
+      "build": "passed from freshly extracted source and installed dependencies",
+      "missing_module_detection": "passed",
+      "setup_environment_generation": "passed",
+      "existing_environment_preserved": "passed",
+      "compose_yaml": "parsed; port and worker references validated"
+    }
+  },
+  "not_verified": [
+    "Migrations applied to a real PostgreSQL copy",
+    "Authenticated full workflow against real PostgreSQL/Redis",
+    "Physical GPS hardware and parent phones",
+    "Actual Web Push/payment/email provider delivery",
+    "Actual Docker image build/container startup (Docker engine unavailable)",
+    "Actual Vercel deployment"
+  ],
+  "runtime_requirements": [
+    "PostgreSQL",
+    "Production REDIS_URL",
+    "JWT_SECRET",
+    "HTTPS for phone GPS and push",
+    "VAPID keys for Web Push",
+    "Independent worker for unattended hardware GPS alerts"
+  ]
+}

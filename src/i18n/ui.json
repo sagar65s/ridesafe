@@ -1,0 +1,1686 @@
+{
+  "Your child's journey": {
+    "ms": "Perjalanan anak anda",
+    "zh": "孩子的行程"
+  },
+  "Parent workspace": {
+    "ms": "Ruang ibu bapa",
+    "zh": "家长中心"
+  },
+  "Crew workspace": {
+    "ms": "Ruang petugas bas",
+    "zh": "乘务中心"
+  },
+  "Today's route": {
+    "ms": "Laluan hari ini",
+    "zh": "今日路线"
+  },
+  "Live Tracking": {
+    "ms": "Penjejakan Langsung",
+    "zh": "实时追踪"
+  },
+  "Children": {
+    "ms": "Anak-anak",
+    "zh": "孩子"
+  },
+  "Alerts": {
+    "ms": "Makluman",
+    "zh": "提醒"
+  },
+  "Messages": {
+    "ms": "Mesej",
+    "zh": "消息"
+  },
+  "History": {
+    "ms": "Sejarah",
+    "zh": "历史"
+  },
+  "My account": {
+    "ms": "Akaun saya",
+    "zh": "我的账户"
+  },
+  "Boarded": {
+    "ms": "Sudah naik",
+    "zh": "已上车"
+  },
+  "Dropped off": {
+    "ms": "Sudah turun",
+    "zh": "已下车"
+  },
+  "Absent": {
+    "ms": "Tidak hadir",
+    "zh": "缺席"
+  },
+  "Waiting": {
+    "ms": "Menunggu",
+    "zh": "待上车"
+  },
+  "On board": {
+    "ms": "Dalam bas",
+    "zh": "在车上"
+  },
+  "Start trip": {
+    "ms": "Mulakan perjalanan",
+    "zh": "开始行程"
+  },
+  "Complete trip": {
+    "ms": "Tamatkan perjalanan",
+    "zh": "结束行程"
+  },
+  "No assigned bus": {
+    "ms": "Tiada bas ditetapkan",
+    "zh": "尚未分配校车"
+  },
+  "Ask your School Admin to assign a bus, route and students.": {
+    "ms": "Minta Pentadbir Sekolah menetapkan bas, laluan dan pelajar.",
+    "zh": "请联系学校管理员分配校车、路线和学生。"
+  },
+  "Bus details": {
+    "ms": "Maklumat bas",
+    "zh": "校车详情"
+  },
+  "Bus Maintainer": {
+    "ms": "Pengiring bas",
+    "zh": "随车管理员"
+  },
+  "Maintainer": {
+    "ms": "Pengiring",
+    "zh": "随车管理员"
+  },
+  "Select maintainer": {
+    "ms": "Pilih pengiring",
+    "zh": "选择随车管理员"
+  },
+  "Driver": {
+    "ms": "Pemandu",
+    "zh": "司机"
+  },
+  "Capacity": {
+    "ms": "Kapasiti",
+    "zh": "载客量"
+  },
+  "Route stops": {
+    "ms": "Hentian laluan",
+    "zh": "路线站点"
+  },
+  "Student attendance": {
+    "ms": "Kehadiran pelajar",
+    "zh": "学生出勤"
+  },
+  "Search students": {
+    "ms": "Cari pelajar",
+    "zh": "搜索学生"
+  },
+  "All stops": {
+    "ms": "Semua hentian",
+    "zh": "全部站点"
+  },
+  "Confirm boarding": {
+    "ms": "Sahkan naik bas",
+    "zh": "确认上车"
+  },
+  "Confirm drop-off": {
+    "ms": "Sahkan turun bas",
+    "zh": "确认下车"
+  },
+  "The bus is at the assigned stop.": {
+    "ms": "Bas berada di hentian yang ditetapkan.",
+    "zh": "校车已到达指定站点。"
+  },
+  "Parents receive a notification after confirmation.": {
+    "ms": "Ibu bapa menerima pemberitahuan selepas pengesahan.",
+    "zh": "确认后将通知家长。"
+  },
+  "Mark absent": {
+    "ms": "Tandakan tidak hadir",
+    "zh": "标记缺席"
+  },
+  "GPS sharing": {
+    "ms": "Perkongsian GPS",
+    "zh": "GPS位置共享"
+  },
+  "Share bus GPS": {
+    "ms": "Kongsi GPS bas",
+    "zh": "共享校车位置"
+  },
+  "Stop sharing": {
+    "ms": "Henti perkongsian",
+    "zh": "停止共享"
+  },
+  "Sharing location": {
+    "ms": "Sedang berkongsi lokasi",
+    "zh": "正在共享位置"
+  },
+  "Location permission is required on HTTPS.": {
+    "ms": "Kebenaran lokasi diperlukan melalui HTTPS.",
+    "zh": "请通过HTTPS授予位置权限。"
+  },
+  "Broadcast to parents": {
+    "ms": "Hebahan kepada ibu bapa",
+    "zh": "向家长广播"
+  },
+  "Type a message": {
+    "ms": "Tulis mesej",
+    "zh": "输入消息"
+  },
+  "Send broadcast": {
+    "ms": "Hantar hebahan",
+    "zh": "发送广播"
+  },
+  "Broadcast sent": {
+    "ms": "Hebahan dihantar",
+    "zh": "广播已发送"
+  },
+  "Send": {
+    "ms": "Hantar",
+    "zh": "发送"
+  },
+  "Sent": {
+    "ms": "Dihantar",
+    "zh": "已发送"
+  },
+  "Delete": {
+    "ms": "Padam",
+    "zh": "删除"
+  },
+  "Delete this item?": {
+    "ms": "Padam item ini?",
+    "zh": "删除此项目？"
+  },
+  "Deleted": {
+    "ms": "Dipadam",
+    "zh": "已删除"
+  },
+  "Save": {
+    "ms": "Simpan",
+    "zh": "保存"
+  },
+  "Saved": {
+    "ms": "Disimpan",
+    "zh": "已保存"
+  },
+  "Cancel": {
+    "ms": "Batal",
+    "zh": "取消"
+  },
+  "Close": {
+    "ms": "Tutup",
+    "zh": "关闭"
+  },
+  "Refresh": {
+    "ms": "Muat semula",
+    "zh": "刷新"
+  },
+  "Retry": {
+    "ms": "Cuba semula",
+    "zh": "重试"
+  },
+  "Loading…": {
+    "ms": "Memuatkan…",
+    "zh": "加载中…"
+  },
+  "Unable to load data": {
+    "ms": "Tidak dapat memuatkan data",
+    "zh": "无法加载数据"
+  },
+  "Network error": {
+    "ms": "Ralat rangkaian",
+    "zh": "网络错误"
+  },
+  "Please sign in again": {
+    "ms": "Sila log masuk semula",
+    "zh": "请重新登录"
+  },
+  "Log out": {
+    "ms": "Log keluar",
+    "zh": "退出登录"
+  },
+  "No active journey": {
+    "ms": "Tiada perjalanan aktif",
+    "zh": "暂无进行中的行程"
+  },
+  "Your assigned bus will appear when its trip starts.": {
+    "ms": "Bas anda akan dipaparkan apabila perjalanan bermula.",
+    "zh": "校车开始行程后会显示在这里。"
+  },
+  "No recent GPS signal": {
+    "ms": "Tiada isyarat GPS terkini",
+    "zh": "暂无最新GPS信号"
+  },
+  "Updated": {
+    "ms": "Dikemas kini",
+    "zh": "更新于"
+  },
+  "Estimated arrival": {
+    "ms": "Anggaran ketibaan",
+    "zh": "预计到达"
+  },
+  "min": {
+    "ms": "minit",
+    "zh": "分钟"
+  },
+  "Waiting for movement": {
+    "ms": "Menunggu pergerakan",
+    "zh": "等待车辆移动"
+  },
+  "Pickup stop": {
+    "ms": "Hentian naik",
+    "zh": "上车站点"
+  },
+  "Drop-off stop": {
+    "ms": "Hentian turun",
+    "zh": "下车站点"
+  },
+  "Choose your child's assigned stops": {
+    "ms": "Pilih hentian yang ditetapkan untuk anak anda",
+    "zh": "选择孩子的乘车站点"
+  },
+  "Save stops": {
+    "ms": "Simpan hentian",
+    "zh": "保存站点"
+  },
+  "Choose a stop": {
+    "ms": "Pilih hentian",
+    "zh": "选择站点"
+  },
+  "School assignment pending": {
+    "ms": "Menunggu penetapan sekolah",
+    "zh": "等待学校分配"
+  },
+  "Contact the school to assign a bus and route.": {
+    "ms": "Hubungi sekolah untuk menetapkan bas dan laluan.",
+    "zh": "请联系学校分配校车和路线。"
+  },
+  "Enable arrival horn": {
+    "ms": "Aktifkan hon ketibaan",
+    "zh": "开启到站喇叭提醒"
+  },
+  "Horn enabled": {
+    "ms": "Hon diaktifkan",
+    "zh": "喇叭提醒已开启"
+  },
+  "Test horn": {
+    "ms": "Uji hon",
+    "zh": "测试喇叭"
+  },
+  "Plays three times when the bus is about five minutes from your stop.": {
+    "ms": "Berbunyi tiga kali apabila bas kira-kira lima minit dari hentian anda.",
+    "zh": "校车距离站点约五分钟时，喇叭响三次。"
+  },
+  "Keep this page open for the horn. Background notifications depend on device support.": {
+    "ms": "Biarkan halaman ini terbuka untuk hon. Pemberitahuan latar bergantung pada peranti.",
+    "zh": "请保持页面打开以播放喇叭。后台通知取决于设备支持。"
+  },
+  "Enable background alerts": {
+    "ms": "Aktifkan makluman latar",
+    "zh": "开启后台通知"
+  },
+  "Background alerts enabled": {
+    "ms": "Makluman latar diaktifkan",
+    "zh": "后台通知已开启"
+  },
+  "Background alerts unavailable": {
+    "ms": "Makluman latar tidak tersedia",
+    "zh": "后台通知暂不可用"
+  },
+  "Bus arriving soon": {
+    "ms": "Bas hampir tiba",
+    "zh": "校车即将到达"
+  },
+  "No alerts yet": {
+    "ms": "Belum ada makluman",
+    "zh": "暂无提醒"
+  },
+  "Mark read": {
+    "ms": "Tandakan dibaca",
+    "zh": "标记已读"
+  },
+  "School contact": {
+    "ms": "Hubungan sekolah",
+    "zh": "联系学校"
+  },
+  "No messages yet": {
+    "ms": "Belum ada mesej",
+    "zh": "暂无消息"
+  },
+  "Invoices": {
+    "ms": "Invois",
+    "zh": "账单"
+  },
+  "No invoices": {
+    "ms": "Tiada invois",
+    "zh": "暂无账单"
+  },
+  "Paid": {
+    "ms": "Dibayar",
+    "zh": "已支付"
+  },
+  "Pending": {
+    "ms": "Belum selesai",
+    "zh": "待处理"
+  },
+  "Report an issue": {
+    "ms": "Laporkan masalah",
+    "zh": "报告问题"
+  },
+  "Subject": {
+    "ms": "Subjek",
+    "zh": "主题"
+  },
+  "Details": {
+    "ms": "Butiran",
+    "zh": "详情"
+  },
+  "Submit issue": {
+    "ms": "Hantar masalah",
+    "zh": "提交问题"
+  },
+  "Issue submitted": {
+    "ms": "Masalah dihantar",
+    "zh": "问题已提交"
+  },
+  "Your school": {
+    "ms": "Sekolah anda",
+    "zh": "你的学校"
+  },
+  "School Settings": {
+    "ms": "Tetapan Sekolah",
+    "zh": "学校设置"
+  },
+  "Academic Calendar": {
+    "ms": "Kalendar Akademik",
+    "zh": "校历"
+  },
+  "Notifications": {
+    "ms": "Pemberitahuan",
+    "zh": "通知"
+  },
+  "Safety alerts": {
+    "ms": "Makluman keselamatan",
+    "zh": "安全提醒"
+  },
+  "Emergency SOS": {
+    "ms": "SOS Kecemasan",
+    "zh": "紧急求助"
+  },
+  "Send an emergency alert to the school?": {
+    "ms": "Hantar makluman kecemasan kepada sekolah?",
+    "zh": "向学校发送紧急求助？"
+  },
+  "Emergency alert sent": {
+    "ms": "Makluman kecemasan dihantar",
+    "zh": "紧急求助已发送"
+  },
+  "No attendance records": {
+    "ms": "Tiada rekod kehadiran",
+    "zh": "暂无出勤记录"
+  },
+  "Date and time": {
+    "ms": "Tarikh dan masa",
+    "zh": "日期和时间"
+  },
+  "Stop": {
+    "ms": "Hentian",
+    "zh": "站点"
+  },
+  "Status": {
+    "ms": "Status",
+    "zh": "状态"
+  },
+  "Student": {
+    "ms": "Pelajar",
+    "zh": "学生"
+  },
+  "Recorded by": {
+    "ms": "Direkod oleh",
+    "zh": "记录人"
+  },
+  "Trip started": {
+    "ms": "Perjalanan bermula",
+    "zh": "行程已开始"
+  },
+  "Trip completed": {
+    "ms": "Perjalanan selesai",
+    "zh": "行程已结束"
+  },
+  "Start a trip to record attendance.": {
+    "ms": "Mulakan perjalanan untuk merekod kehadiran.",
+    "zh": "请先开始行程再记录出勤。"
+  },
+  "All students must be dropped off or marked absent before completion.": {
+    "ms": "Semua pelajar mesti turun atau ditandakan tidak hadir sebelum tamat.",
+    "zh": "所有学生下车或标记缺席后才能结束行程。"
+  },
+  "Traffic": {
+    "ms": "Kesesakan",
+    "zh": "交通拥堵"
+  },
+  "Delay": {
+    "ms": "Kelewatan",
+    "zh": "延误"
+  },
+  "Breakdown": {
+    "ms": "Kerosakan",
+    "zh": "车辆故障"
+  },
+  "Other": {
+    "ms": "Lain-lain",
+    "zh": "其他"
+  },
+  "No students assigned": {
+    "ms": "Tiada pelajar ditetapkan",
+    "zh": "尚未分配学生"
+  },
+  "Seats": {
+    "ms": "Tempat duduk",
+    "zh": "座位"
+  },
+  "Contact": {
+    "ms": "Hubungi",
+    "zh": "联系"
+  },
+  "School": {
+    "ms": "Sekolah",
+    "zh": "学校"
+  },
+  "Live": {
+    "ms": "Langsung",
+    "zh": "实时"
+  },
+  "No data available": {
+    "ms": "Tiada data tersedia",
+    "zh": "暂无数据"
+  },
+  "Confirm": {
+    "ms": "Sahkan",
+    "zh": "确认"
+  },
+  "All buses": {
+    "ms": "Semua bas",
+    "zh": "所有校车"
+  },
+  "Bus": {
+    "ms": "Bas",
+    "zh": "校车"
+  },
+  "Buses": {
+    "ms": "Bas",
+    "zh": "校车"
+  },
+  "Attendance": {
+    "ms": "Kehadiran",
+    "zh": "出勤"
+  },
+  "Students": {
+    "ms": "Pelajar",
+    "zh": "学生"
+  },
+  "Users": {
+    "ms": "Pengguna",
+    "zh": "用户"
+  },
+  "Active": {
+    "ms": "Aktif",
+    "zh": "启用"
+  },
+  "Inactive": {
+    "ms": "Tidak aktif",
+    "zh": "停用"
+  },
+  "Academic Year": {
+    "ms": "Tahun Akademik",
+    "zh": "学年"
+  },
+  "Account active": {
+    "ms": "Akaun aktif",
+    "zh": "启用账户"
+  },
+  "Active Drivers / Maintainers": {
+    "ms": "Pemandu / Pengiring Aktif",
+    "zh": "在职司机／随车员"
+  },
+  "Add Event": {
+    "ms": "Tambah Acara",
+    "zh": "添加活动"
+  },
+  "Add Organisation": {
+    "ms": "Tambah Organisasi",
+    "zh": "添加学校"
+  },
+  "Add User": {
+    "ms": "Tambah Pengguna",
+    "zh": "添加用户"
+  },
+  "Admin Inbox": {
+    "ms": "Peti Masuk Pentadbir",
+    "zh": "管理员收件箱"
+  },
+  "After School Activity": {
+    "ms": "Aktiviti Selepas Sekolah",
+    "zh": "课后活动"
+  },
+  "All Users": {
+    "ms": "Semua Pengguna",
+    "zh": "所有用户"
+  },
+  "Amount Due": {
+    "ms": "Jumlah Perlu Dibayar",
+    "zh": "应付金额"
+  },
+  "Arrival times are estimates based on fresh GPS and route stops.": {
+    "ms": "Masa ketibaan ialah anggaran berdasarkan GPS terkini dan hentian laluan.",
+    "zh": "到达时间根据最新GPS和路线站点估算。"
+  },
+  "Assign Bus": {
+    "ms": "Tetapkan Bas",
+    "zh": "分配校车"
+  },
+  "Audit Logs": {
+    "ms": "Log Audit",
+    "zh": "审计日志"
+  },
+  "Background push notifications": {
+    "ms": "Pemberitahuan tolak latar belakang",
+    "zh": "后台推送通知"
+  },
+  "Bus Number": {
+    "ms": "Nombor Bas",
+    "zh": "校车编号"
+  },
+  "Bus Status": {
+    "ms": "Status Bas",
+    "zh": "校车状态"
+  },
+  "Bus Transport (no self-pickup)": {
+    "ms": "Pengangkutan Bas (bukan ambil sendiri)",
+    "zh": "校车接送（非自行接送）"
+  },
+  "Calendar file (.xlsx / .csv)": {
+    "ms": "Fail kalendar (.xlsx / .csv)",
+    "zh": "日历文件（.xlsx／.csv）"
+  },
+  "Camera Unavailable": {
+    "ms": "Kamera Tidak Tersedia",
+    "zh": "相机不可用"
+  },
+  "Capacity:": {
+    "ms": "Kapasiti:",
+    "zh": "容量："
+  },
+  "Checked In": {
+    "ms": "Telah Daftar Masuk",
+    "zh": "已签到"
+  },
+  "Class": {
+    "ms": "Kelas",
+    "zh": "班级"
+  },
+  "Class & Section": {
+    "ms": "Kelas & Bahagian",
+    "zh": "班级及分班"
+  },
+  "Comma-separated list of times": {
+    "ms": "Senarai masa dipisahkan koma",
+    "zh": "用逗号分隔时间"
+  },
+  "Complete": {
+    "ms": "Selesai",
+    "zh": "完成"
+  },
+  "Completion Rate": {
+    "ms": "Kadar Penyelesaian",
+    "zh": "完成率"
+  },
+  "Compose": {
+    "ms": "Karang",
+    "zh": "撰写"
+  },
+  "Configured": {
+    "ms": "Dikonfigurasi",
+    "zh": "已配置"
+  },
+  "Cost (RM)": {
+    "ms": "Kos (RM)",
+    "zh": "费用（RM）"
+  },
+  "Create a Bukku invoice for": {
+    "ms": "Cipta invois Bukku untuk",
+    "zh": "创建Bukku发票："
+  },
+  "Created": {
+    "ms": "Dicipta",
+    "zh": "已创建"
+  },
+  "Deactivate bus": {
+    "ms": "Nyahaktifkan bas",
+    "zh": "停用校车"
+  },
+  "Deactivate organisation": {
+    "ms": "Nyahaktifkan organisasi",
+    "zh": "停用学校"
+  },
+  "Deactivate route": {
+    "ms": "Nyahaktifkan laluan",
+    "zh": "停用路线"
+  },
+  "Deactivate student": {
+    "ms": "Nyahaktifkan pelajar",
+    "zh": "停用学生"
+  },
+  "Deactivate user": {
+    "ms": "Nyahaktifkan pengguna",
+    "zh": "停用用户"
+  },
+  "Description (optional)": {
+    "ms": "Penerangan (pilihan)",
+    "zh": "说明（选填）"
+  },
+  "Driver / Maintainer": {
+    "ms": "Pemandu / Pengiring",
+    "zh": "司机／随车员"
+  },
+  "Driver:": {
+    "ms": "Pemandu:",
+    "zh": "司机："
+  },
+  "Drivers Only": {
+    "ms": "Pemandu Sahaja",
+    "zh": "仅司机"
+  },
+  "Drop Location / Address": {
+    "ms": "Lokasi / Alamat Turun",
+    "zh": "下车地点／地址"
+  },
+  "Drop-off Stop": {
+    "ms": "Hentian Turun",
+    "zh": "下车站点"
+  },
+  "Dropped Off": {
+    "ms": "Sudah Turun",
+    "zh": "已下车"
+  },
+  "ETA unavailable": {
+    "ms": "Anggaran ketibaan tidak tersedia",
+    "zh": "暂无预计到达时间"
+  },
+  "Edit": {
+    "ms": "Sunting",
+    "zh": "编辑"
+  },
+  "Edit bus": {
+    "ms": "Sunting bas",
+    "zh": "编辑校车"
+  },
+  "Edit organisation": {
+    "ms": "Sunting organisasi",
+    "zh": "编辑学校"
+  },
+  "Edit route": {
+    "ms": "Sunting laluan",
+    "zh": "编辑路线"
+  },
+  "Edit student": {
+    "ms": "Sunting pelajar",
+    "zh": "编辑学生"
+  },
+  "Edit user": {
+    "ms": "Sunting pengguna",
+    "zh": "编辑用户"
+  },
+  "Email Address *": {
+    "ms": "Alamat E-mel *",
+    "zh": "电子邮箱 *"
+  },
+  "Emergency": {
+    "ms": "Kecemasan",
+    "zh": "紧急情况"
+  },
+  "Emergency / SOS": {
+    "ms": "Kecemasan / SOS",
+    "zh": "紧急求助／SOS"
+  },
+  "Employment Status": {
+    "ms": "Status Pekerjaan",
+    "zh": "在职状态"
+  },
+  "Excel / CSV columns:": {
+    "ms": "Lajur Excel / CSV:",
+    "zh": "Excel／CSV列："
+  },
+  "Export CSV": {
+    "ms": "Eksport CSV",
+    "zh": "导出CSV"
+  },
+  "Export PDF": {
+    "ms": "Eksport PDF",
+    "zh": "导出PDF"
+  },
+  "For drivers, assign them to a bus in Fleet & Routes after creation.": {
+    "ms": "Selepas mencipta akaun pemandu, tetapkan bas dalam Armada & Laluan.",
+    "zh": "创建司机后，请在车队及路线中分配校车。"
+  },
+  "Full address": {
+    "ms": "Alamat penuh",
+    "zh": "完整地址"
+  },
+  "GPS Status": {
+    "ms": "Status GPS",
+    "zh": "GPS状态"
+  },
+  "GPS Tracker IDs (optional — leave blank if not using)": {
+    "ms": "ID Penjejak GPS (pilihan — kosongkan jika tidak digunakan)",
+    "zh": "GPS设备ID（选填，未使用可留空）"
+  },
+  "Go to login": {
+    "ms": "Pergi ke log masuk",
+    "zh": "前往登录"
+  },
+  "Import Academic Calendar": {
+    "ms": "Import Kalendar Akademik",
+    "zh": "导入校历"
+  },
+  "In": {
+    "ms": "Naik",
+    "zh": "上车"
+  },
+  "In-app attendance and emergency records remain available.": {
+    "ms": "Rekod kehadiran dan kecemasan dalam aplikasi kekal tersedia.",
+    "zh": "应用内出勤与紧急记录仍然保留。"
+  },
+  "Last update": {
+    "ms": "Kemas kini terakhir",
+    "zh": "上次更新"
+  },
+  "Last:": {
+    "ms": "Terakhir:",
+    "zh": "上次："
+  },
+  "License Expiry": {
+    "ms": "Tarikh Tamat Lesen",
+    "zh": "驾照到期日"
+  },
+  "License Number": {
+    "ms": "Nombor Lesen",
+    "zh": "驾照号码"
+  },
+  "Linking the parent makes this student visible in that parent dashboard.": {
+    "ms": "Pautkan ibu bapa supaya pelajar dipaparkan pada papan pemuka mereka.",
+    "zh": "关联家长后，该学生将显示在家长界面中。"
+  },
+  "Live ·": {
+    "ms": "Langsung ·",
+    "zh": "实时 ·"
+  },
+  "Loading audit logs…": {
+    "ms": "Memuatkan log audit…",
+    "zh": "正在加载审计日志…"
+  },
+  "Loading...": {
+    "ms": "Memuatkan...",
+    "zh": "加载中…"
+  },
+  "Location:": {
+    "ms": "Lokasi:",
+    "zh": "位置："
+  },
+  "Logout": {
+    "ms": "Log keluar",
+    "zh": "退出登录"
+  },
+  "Maintenance": {
+    "ms": "Penyelenggaraan",
+    "zh": "维修保养"
+  },
+  "Manage Organisations": {
+    "ms": "Urus Organisasi",
+    "zh": "学校管理"
+  },
+  "Manage organisations, users, and settings in the respective tabs.": {
+    "ms": "Urus organisasi, pengguna dan tetapan dalam tab masing-masing.",
+    "zh": "在相应标签页中管理学校、用户和设置。"
+  },
+  "Mark Found": {
+    "ms": "Tandakan Dijumpai",
+    "zh": "标记已找到"
+  },
+  "Morning Self-Pickup": {
+    "ms": "Ambil Sendiri Pagi",
+    "zh": "早上自行接送"
+  },
+  "Morning:": {
+    "ms": "Pagi:",
+    "zh": "早上："
+  },
+  "New Message": {
+    "ms": "Mesej Baharu",
+    "zh": "新消息"
+  },
+  "Next stop": {
+    "ms": "Hentian seterusnya",
+    "zh": "下一站"
+  },
+  "Next →": {
+    "ms": "Seterusnya →",
+    "zh": "下一页 →"
+  },
+  "No academic events scheduled yet.": {
+    "ms": "Belum ada acara akademik.",
+    "zh": "暂无校历活动。"
+  },
+  "No active buses currently sharing location": {
+    "ms": "Tiada bas aktif berkongsi lokasi sekarang",
+    "zh": "目前没有校车正在共享位置"
+  },
+  "No announcements sent yet.": {
+    "ms": "Belum ada pengumuman dihantar.",
+    "zh": "暂无已发送公告。"
+  },
+  "No audit activity yet.": {
+    "ms": "Belum ada aktiviti audit.",
+    "zh": "暂无审计记录。"
+  },
+  "No bus assigned": {
+    "ms": "Tiada bas ditetapkan",
+    "zh": "尚未分配校车"
+  },
+  "No drivers or parents registered yet.": {
+    "ms": "Belum ada pemandu atau ibu bapa berdaftar.",
+    "zh": "尚无注册司机或家长。"
+  },
+  "No students assigned to this route.": {
+    "ms": "Tiada pelajar ditetapkan pada laluan ini.",
+    "zh": "此路线尚未分配学生。"
+  },
+  "No students registered yet. Go to the Students tab to add some.": {
+    "ms": "Belum ada pelajar berdaftar. Tambah melalui tab Pelajar.",
+    "zh": "暂无学生，请在学生页面添加。"
+  },
+  "No transport issues.": {
+    "ms": "Tiada isu pengangkutan.",
+    "zh": "暂无交通问题。"
+  },
+  "No trip recorded on": {
+    "ms": "Tiada perjalanan direkodkan pada",
+    "zh": "此日期无行程记录："
+  },
+  "No upcoming events scheduled.": {
+    "ms": "Tiada acara akan datang.",
+    "zh": "暂无即将举行的活动。"
+  },
+  "Not Marked": {
+    "ms": "Belum Ditandakan",
+    "zh": "未记录"
+  },
+  "Not configured": {
+    "ms": "Belum dikonfigurasi",
+    "zh": "未配置"
+  },
+  "Notifications tell parents when their child boards, gets off, or the bus approaches their stop. They also deliver school broadcasts and emergency alerts.": {
+    "ms": "Pemberitahuan memaklumkan ibu bapa apabila anak naik, turun atau bas menghampiri hentian. Siaran sekolah dan amaran kecemasan turut dihantar.",
+    "zh": "通知会告知家长孩子上车、下车及校车接近站点的情况，也会传达学校广播和紧急警报。"
+  },
+  "Offboarding Date": {
+    "ms": "Tarikh Tamat Perkhidmatan",
+    "zh": "离职日期"
+  },
+  "Offboarding Reason": {
+    "ms": "Sebab Tamat Perkhidmatan",
+    "zh": "离职原因"
+  },
+  "On-Time Rate": {
+    "ms": "Kadar Tepat Masa",
+    "zh": "准点率"
+  },
+  "Onboarding Date": {
+    "ms": "Tarikh Mula Perkhidmatan",
+    "zh": "入职日期"
+  },
+  "Online": {
+    "ms": "Dalam talian",
+    "zh": "在线"
+  },
+  "Open menu": {
+    "ms": "Buka menu",
+    "zh": "打开菜单"
+  },
+  "Optional details...": {
+    "ms": "Butiran pilihan...",
+    "zh": "补充详情（选填）…"
+  },
+  "Organisation": {
+    "ms": "Organisasi",
+    "zh": "学校"
+  },
+  "Out": {
+    "ms": "Turun",
+    "zh": "下车"
+  },
+  "PM Self-Pickup": {
+    "ms": "Ambil Sendiri Petang",
+    "zh": "下午自行接送"
+  },
+  "Page": {
+    "ms": "Halaman",
+    "zh": "页"
+  },
+  "Parent complaints and school resolution workflow": {
+    "ms": "Aduan ibu bapa dan penyelesaian oleh sekolah",
+    "zh": "家长反馈及学校处理进度"
+  },
+  "Payer:": {
+    "ms": "Pembayar:",
+    "zh": "付款人："
+  },
+  "Personnel Type": {
+    "ms": "Jenis Kakitangan",
+    "zh": "人员类型"
+  },
+  "Pick another date, or a route with a completed run.": {
+    "ms": "Pilih tarikh lain atau laluan dengan perjalanan selesai.",
+    "zh": "请选择其他日期或已有完成行程的路线。"
+  },
+  "Picked Up": {
+    "ms": "Sudah Naik",
+    "zh": "已上车"
+  },
+  "Pickup Location / Address": {
+    "ms": "Lokasi / Alamat Ambil",
+    "zh": "上车地点／地址"
+  },
+  "Pickup Stop": {
+    "ms": "Hentian Ambil",
+    "zh": "上车站点"
+  },
+  "Registration Number": {
+    "ms": "Nombor Pendaftaran",
+    "zh": "注册编号"
+  },
+  "Remove stop": {
+    "ms": "Buang hentian",
+    "zh": "移除站点"
+  },
+  "Reported by": {
+    "ms": "Dilaporkan oleh",
+    "zh": "报告人"
+  },
+  "Resolve": {
+    "ms": "Selesaikan",
+    "zh": "解决"
+  },
+  "RideSafe Registration Fee": {
+    "ms": "Yuran Pendaftaran RideSafe",
+    "zh": "RideSafe注册费"
+  },
+  "Role *": {
+    "ms": "Peranan *",
+    "zh": "角色 *"
+  },
+  "Route active": {
+    "ms": "Laluan aktif",
+    "zh": "启用路线"
+  },
+  "Running Buses": {
+    "ms": "Bas Beroperasi",
+    "zh": "运行中的校车"
+  },
+  "Save Settings": {
+    "ms": "Simpan Tetapan",
+    "zh": "保存设置"
+  },
+  "School *": {
+    "ms": "Sekolah *",
+    "zh": "学校 *"
+  },
+  "School Calendar": {
+    "ms": "Kalendar Sekolah",
+    "zh": "学校日历"
+  },
+  "Sec": {
+    "ms": "Bahagian",
+    "zh": "分班"
+  },
+  "Select drop-off stop": {
+    "ms": "Pilih hentian turun",
+    "zh": "选择下车站点"
+  },
+  "Select pickup stop": {
+    "ms": "Pilih hentian ambil",
+    "zh": "选择上车站点"
+  },
+  "Select school": {
+    "ms": "Pilih sekolah",
+    "zh": "选择学校"
+  },
+  "Sent to": {
+    "ms": "Dihantar kepada",
+    "zh": "已发送至"
+  },
+  "Start handling": {
+    "ms": "Mula kendalikan",
+    "zh": "开始处理"
+  },
+  "Stop Name": {
+    "ms": "Nama Hentian",
+    "zh": "站点名称"
+  },
+  "Student ID": {
+    "ms": "ID Pelajar",
+    "zh": "学生编号"
+  },
+  "Student active": {
+    "ms": "Pelajar aktif",
+    "zh": "启用学生"
+  },
+  "Student full name": {
+    "ms": "Nama penuh pelajar",
+    "zh": "学生全名"
+  },
+  "Successfully sent to": {
+    "ms": "Berjaya dihantar kepada",
+    "zh": "已成功发送至"
+  },
+  "System Overview": {
+    "ms": "Gambaran Sistem",
+    "zh": "系统概览"
+  },
+  "System-wide security and management activity": {
+    "ms": "Aktiviti keselamatan dan pengurusan sistem",
+    "zh": "系统安全及管理活动"
+  },
+  "This date is in the past — use this to log a historical event.": {
+    "ms": "Tarikh ini telah berlalu — gunakan untuk merekod acara lalu.",
+    "zh": "此日期已过去，可用于记录历史活动。"
+  },
+  "Today's Trips": {
+    "ms": "Perjalanan Hari Ini",
+    "zh": "今日行程"
+  },
+  "Total Buses": {
+    "ms": "Jumlah Bas",
+    "zh": "校车总数"
+  },
+  "Total Schools": {
+    "ms": "Jumlah Sekolah",
+    "zh": "学校总数"
+  },
+  "Total Students": {
+    "ms": "Jumlah Pelajar",
+    "zh": "学生总数"
+  },
+  "Transport Issues": {
+    "ms": "Isu Pengangkutan",
+    "zh": "交通问题"
+  },
+  "Triggered:": {
+    "ms": "Dicetuskan:",
+    "zh": "触发时间："
+  },
+  "Trips (7d)": {
+    "ms": "Perjalanan (7 hari)",
+    "zh": "行程（7天）"
+  },
+  "Try again": {
+    "ms": "Cuba lagi",
+    "zh": "重试"
+  },
+  "Type your announcement...": {
+    "ms": "Taip pengumuman anda...",
+    "zh": "输入公告…"
+  },
+  "Type your message here…": {
+    "ms": "Taip mesej anda di sini…",
+    "zh": "在此输入消息…"
+  },
+  "Upcoming key dates": {
+    "ms": "Tarikh penting akan datang",
+    "zh": "即将到来的重要日期"
+  },
+  "View full calendar": {
+    "ms": "Lihat kalendar penuh",
+    "zh": "查看完整日历"
+  },
+  "When would you like transport to begin? Leave blank if unsure.": {
+    "ms": "Bilakah pengangkutan perlu bermula? Kosongkan jika belum pasti.",
+    "zh": "希望何时开始接送？不确定可留空。"
+  },
+  "Your parent account login will be created at this email after payment.": {
+    "ms": "Akaun ibu bapa akan dicipta dengan e-mel ini selepas pembayaran.",
+    "zh": "付款后将使用此邮箱创建家长账户。"
+  },
+  "absent": {
+    "ms": "tidak hadir",
+    "zh": "缺席"
+  },
+  "dropped": {
+    "ms": "turun",
+    "zh": "已下车"
+  },
+  "events ·": {
+    "ms": "acara ·",
+    "zh": "项活动 ·"
+  },
+  "for:": {
+    "ms": "untuk:",
+    "zh": "为："
+  },
+  "maintenance task": {
+    "ms": "tugas penyelenggaraan",
+    "zh": "维修任务"
+  },
+  "more. See the Students tab for the full list.": {
+    "ms": "lagi. Lihat senarai penuh dalam tab Pelajar.",
+    "zh": "更多。完整名单请查看学生页面。"
+  },
+  "of": {
+    "ms": "daripada",
+    "zh": "共"
+  },
+  "on": {
+    "ms": "pada",
+    "zh": "于"
+  },
+  "open reports": {
+    "ms": "laporan terbuka",
+    "zh": "待处理报告"
+  },
+  "organisation": {
+    "ms": "organisasi",
+    "zh": "学校"
+  },
+  "overdue": {
+    "ms": "lewat",
+    "zh": "逾期"
+  },
+  "picked": {
+    "ms": "naik",
+    "zh": "已上车"
+  },
+  "records": {
+    "ms": "rekod",
+    "zh": "条记录"
+  },
+  "registered · Super Admin view": {
+    "ms": "berdaftar · Paparan Pentadbir Utama",
+    "zh": "已注册 · 超级管理员视图"
+  },
+  "students across": {
+    "ms": "pelajar di",
+    "zh": "名学生，分布于"
+  },
+  "students enrolled": {
+    "ms": "pelajar berdaftar",
+    "zh": "名在读学生"
+  },
+  "total messages": {
+    "ms": "jumlah mesej",
+    "zh": "条消息"
+  },
+  "trip": {
+    "ms": "perjalanan",
+    "zh": "行程"
+  },
+  "users registered": {
+    "ms": "pengguna berdaftar",
+    "zh": "名注册用户"
+  },
+  "| Afternoon:": {
+    "ms": "| Petang:",
+    "zh": "| 下午："
+  },
+  "| Driver:": {
+    "ms": "| Pemandu:",
+    "zh": "| 司机："
+  },
+  "| GPS:": {
+    "ms": "| GPS:",
+    "zh": "| GPS："
+  },
+  "| Maintainer:": {
+    "ms": "| Pengiring:",
+    "zh": "| 随车员："
+  },
+  "| Route:": {
+    "ms": "| Laluan:",
+    "zh": "| 路线："
+  },
+  "· Parent:": {
+    "ms": "· Ibu bapa:",
+    "zh": "· 家长："
+  },
+  "· Student:": {
+    "ms": "· Pelajar:",
+    "zh": "· 学生："
+  },
+  "ℹ️ Info": {
+    "ms": "ℹ️ Maklumat",
+    "zh": "ℹ️ 信息"
+  },
+  "✅ Confirm": {
+    "ms": "✅ Sahkan",
+    "zh": "✅ 确认"
+  },
+  "💰 Generate Invoice": {
+    "ms": "💰 Jana Invois",
+    "zh": "💰 生成发票"
+  },
+  "💰 Invoice": {
+    "ms": "💰 Invois",
+    "zh": "💰 发票"
+  },
+  "📡 Katsana Vehicle ID": {
+    "ms": "📡 ID Kenderaan Katsana",
+    "zh": "📡 Katsana车辆ID"
+  },
+  "🔄 Retake": {
+    "ms": "🔄 Ambil Semula",
+    "zh": "🔄 重拍"
+  },
+  "🛰️ Wialon Unit ID": {
+    "ms": "🛰️ ID Unit Wialon",
+    "zh": "🛰️ Wialon设备ID"
+  },
+  "️ Admins Only": {
+    "ms": "️ Pentadbir Sahaja",
+    "zh": "️ 仅管理员"
+  },
+  "️ Warning": {
+    "ms": "️ Amaran",
+    "zh": "️ 警告"
+  },
+  "School notifications": {
+    "ms": "Pemberitahuan sekolah",
+    "zh": "学校通知"
+  },
+  "System notifications": {
+    "ms": "Pemberitahuan sistem",
+    "zh": "系统通知"
+  },
+  "These settings apply only to your school.": {
+    "ms": "Tetapan ini hanya untuk sekolah anda.",
+    "zh": "这些设置仅适用于您的学校。"
+  },
+  "These are the default settings. Each school can set its own preference.": {
+    "ms": "Ini tetapan lalai. Setiap sekolah boleh menetapkan pilihannya.",
+    "zh": "这是默认设置，每所学校可单独调整。"
+  },
+  "Settings saved": {
+    "ms": "Tetapan disimpan",
+    "zh": "设置已保存"
+  },
+  "Live GPS": {
+    "ms": "GPS langsung",
+    "zh": "实时GPS"
+  },
+  "Waiting for GPS": {
+    "ms": "Menunggu GPS",
+    "zh": "等待GPS"
+  },
+  "+ Log Maintenance": {
+    "ms": "+ Rekod Penyelenggaraan",
+    "zh": "+ 记录维修"
+  },
+  "+ Report Item": {
+    "ms": "+ Laporkan Barang",
+    "zh": "+ 报告物品"
+  },
+  "A parent account has been created for you.": {
+    "ms": "Akaun ibu bapa telah dicipta untuk anda.",
+    "zh": "已为您创建家长账户。"
+  },
+  "ACTIVE EMERGENCIES (": {
+    "ms": "KECEMASAN AKTIF (",
+    "zh": "当前紧急事件（"
+  },
+  "Describe the lost item (e.g., blue water bottle, left on Bus WKA1234)...": {
+    "ms": "Terangkan barang hilang (cth. botol air biru di Bas WKA1234)...",
+    "zh": "描述失物（例如遗留在WKA1234校车上的蓝色水瓶）…"
+  },
+  ". Dates: YYYY-MM-DD. Maximum 2 MB and 2000 events.": {
+    "ms": ". Tarikh: YYYY-MM-DD. Maksimum 2 MB dan 2000 acara.",
+    "zh": "。日期：YYYY-MM-DD。最大2MB及2000项活动。"
+  },
+  "... and": {
+    "ms": "... dan",
+    "zh": "…以及"
+  },
+  "ID:": {
+    "ms": "ID:",
+    "zh": "编号："
+  },
+  "Recent attendance": {
+    "ms": "Kehadiran terkini",
+    "zh": "最近出勤"
+  },
+  "Show less": {
+    "ms": "Tunjukkan kurang",
+    "zh": "收起"
+  },
+  "Min. 12 characters": {
+    "ms": "Minimum 12 aksara",
+    "zh": "至少12个字符"
+  },
+  "Password must be at least 12 characters": {
+    "ms": "Kata laluan mesti sekurang-kurangnya 12 aksara",
+    "zh": "密码至少需要12个字符"
+  },
+  "Click \"Add Organisation\" to create the first one.": {
+    "ms": "Klik \"Tambah Organisasi\" untuk mencipta yang pertama.",
+    "zh": "点击“添加学校”创建第一所学校。"
+  },
+  "No reports yet — that's great!": {
+    "ms": "Belum ada laporan.",
+    "zh": "暂无报告。"
+  },
+  "Save this now — it won't be shown again. You can change it after logging in.": {
+    "ms": "Simpan sekarang — ia tidak akan dipaparkan lagi. Anda boleh menukarnya selepas log masuk.",
+    "zh": "请立即保存，此信息不会再次显示。登录后可以修改。"
+  },
+  "This usually only takes a few seconds. Please don't close this page.": {
+    "ms": "Biasanya hanya beberapa saat. Jangan tutup halaman ini.",
+    "zh": "通常只需几秒钟，请勿关闭此页面。"
+  },
+  "We're still waiting for payment confirmation. If you completed payment, check your email shortly — otherwise contact the transport office.": {
+    "ms": "Kami masih menunggu pengesahan bayaran. Jika sudah membayar, semak e-mel sebentar lagi; jika tidak, hubungi pejabat pengangkutan.",
+    "zh": "仍在等待付款确认。如果已付款，请稍后查收邮件，否则请联系交通办公室。"
+  },
+  "Your registration wasn't completed. No account was created. You can try registering again.": {
+    "ms": "Pendaftaran tidak selesai. Tiada akaun dicipta. Anda boleh mencuba lagi.",
+    "zh": "注册未完成，尚未创建账户。请重新注册。"
+  },
+  "'s registration is complete.": {
+    "ms": " telah selesai didaftarkan.",
+    "zh": "的注册已完成。"
+  },
+  "Simulate Failed Payment": {
+    "ms": "Simulasikan Bayaran Gagal",
+    "zh": "模拟付款失败"
+  },
+  "Simulated Billplz Checkout (test mode — no real payment provider configured)": {
+    "ms": "Pembayaran Billplz Simulasi (mod ujian — tiada penyedia bayaran sebenar)",
+    "zh": "模拟Billplz付款（测试模式，未配置真实支付服务）"
+  },
+  "Parents Only": {
+    "ms": "Ibu Bapa Sahaja",
+    "zh": "仅家长"
+  },
+  "Choose an Excel or CSV file and enter the academic year": {
+    "ms": "Pilih fail Excel atau CSV dan masukkan tahun akademik",
+    "zh": "请选择Excel或CSV文件并填写学年"
+  },
+  "Calendar import failed": {
+    "ms": "Import kalendar gagal",
+    "zh": "日历导入失败"
+  },
+  "Title and Start Date are required": {
+    "ms": "Tajuk dan Tarikh Mula diperlukan",
+    "zh": "请填写标题及开始日期"
+  },
+  "Event updated!": {
+    "ms": "Acara dikemas kini!",
+    "zh": "活动已更新！"
+  },
+  "Event added!": {
+    "ms": "Acara ditambah!",
+    "zh": "活动已添加！"
+  },
+  "Importing…": {
+    "ms": "Mengimport…",
+    "zh": "正在导入…"
+  },
+  "Import": {
+    "ms": "Import",
+    "zh": "导入"
+  },
+  "Settings updated successfully!": {
+    "ms": "Tetapan berjaya dikemas kini!",
+    "zh": "设置已更新！"
+  },
+  "Failed to update settings": {
+    "ms": "Gagal mengemas kini tetapan",
+    "zh": "无法更新设置"
+  },
+  "School assignment required": {
+    "ms": "Penetapan sekolah diperlukan",
+    "zh": "请先分配学校"
+  },
+  "Choose a stop on your assigned route": {
+    "ms": "Pilih hentian pada laluan yang ditetapkan",
+    "zh": "请选择所分配路线上的站点"
+  },
+  "Stop preferences cannot change during an active trip": {
+    "ms": "Hentian tidak boleh diubah semasa perjalanan aktif",
+    "zh": "行程进行中不能修改站点"
+  },
+  "Start your assigned trip before sharing GPS": {
+    "ms": "Mulakan perjalanan sebelum berkongsi GPS",
+    "zh": "请先开始所分配的行程，再共享GPS"
+  },
+  "Complete parent, route and stop assignments for every bus student before starting": {
+    "ms": "Lengkapkan penetapan ibu bapa, laluan dan hentian semua pelajar sebelum bermula",
+    "zh": "开始前请完善车上每位学生的家长、路线和站点分配"
+  },
+  "Correct bus, route, stop and parent school assignments before starting": {
+    "ms": "Betulkan penetapan bas, laluan, hentian dan sekolah ibu bapa sebelum bermula",
+    "zh": "开始前请检查校车、路线、站点与家长所属学校"
+  },
+  "Driver or bus already has an active trip": {
+    "ms": "Pemandu atau bas sudah mempunyai perjalanan aktif",
+    "zh": "司机或校车已有正在进行的行程"
+  },
+  "An assigned bus and driver are required": {
+    "ms": "Bas dan pemandu perlu ditetapkan",
+    "zh": "请先分配校车及司机"
+  },
+  "This trip is closed": {
+    "ms": "Perjalanan ini telah ditutup",
+    "zh": "此行程已结束"
+  },
+  "Invalid attendance transition": {
+    "ms": "Urutan kehadiran tidak sah",
+    "zh": "出勤操作顺序不正确"
+  },
+  "Use the assigned student stop": {
+    "ms": "Gunakan hentian pelajar yang ditetapkan",
+    "zh": "请使用该学生指定的站点"
+  },
+  "Confirm that the bus is at the assigned stop": {
+    "ms": "Sahkan bas berada di hentian yang ditetapkan",
+    "zh": "请确认校车已到达指定站点"
+  },
+  "GPS is more than 300 metres from the assigned stop": {
+    "ms": "GPS melebihi 300 meter dari hentian yang ditetapkan",
+    "zh": "GPS位置距离指定站点超过300米"
+  },
+  "Live tracking is temporarily unavailable": {
+    "ms": "Penjejakan langsung tidak tersedia buat sementara",
+    "zh": "实时定位暂不可用"
+  },
+  "Too many requests. Please slow down.": {
+    "ms": "Terlalu banyak permintaan. Sila tunggu sebentar.",
+    "zh": "请求过多，请稍后再试。"
+  },
+  "HOLIDAY": {
+    "ms": "CUTI",
+    "zh": "假期"
+  },
+  "WORKING DAY": {
+    "ms": "HARI PERSEKOLAHAN",
+    "zh": "上课日"
+  },
+  "SPECIAL HOLIDAY": {
+    "ms": "CUTI KHAS",
+    "zh": "特殊假期"
+  },
+  "EXAM": {
+    "ms": "PEPERIKSAAN",
+    "zh": "考试"
+  },
+  "EVENT": {
+    "ms": "ACARA",
+    "zh": "活动"
+  },
+  "TERM START": {
+    "ms": "MULA PENGGAL",
+    "zh": "学期开始"
+  },
+  "TERM END": {
+    "ms": "AKHIR PENGGAL",
+    "zh": "学期结束"
+  },
+  "ASSEMBLY": {
+    "ms": "PERHIMPUNAN",
+    "zh": "集会"
+  },
+  "SUPER_ADMIN": {
+    "ms": "Pentadbir Utama",
+    "zh": "超级管理员"
+  },
+  "SCHOOL_ADMIN": {
+    "ms": "Pentadbir Sekolah",
+    "zh": "学校管理员"
+  },
+  "ADMIN": {
+    "ms": "Pentadbir",
+    "zh": "管理员"
+  },
+  "DRIVER": {
+    "ms": "Pemandu",
+    "zh": "司机"
+  },
+  "MAINTAINER": {
+    "ms": "Pengiring",
+    "zh": "随车员"
+  },
+  "PARENT": {
+    "ms": "Ibu Bapa",
+    "zh": "家长"
+  },
+  "ACTIVE": {
+    "ms": "Aktif",
+    "zh": "启用"
+  },
+  "INACTIVE": {
+    "ms": "Tidak aktif",
+    "zh": "停用"
+  },
+  "PENDING": {
+    "ms": "Menunggu",
+    "zh": "待处理"
+  },
+  "COMPLETED": {
+    "ms": "Selesai",
+    "zh": "已完成"
+  },
+  "PAID": {
+    "ms": "Dibayar",
+    "zh": "已付款"
+  },
+  "NOT_CONFIGURED": {
+    "ms": "Belum dikonfigurasi",
+    "zh": "未配置"
+  },
+  "CONFIGURED": {
+    "ms": "Dikonfigurasi",
+    "zh": "已配置"
+  },
+  "ONLINE": {
+    "ms": "Dalam talian",
+    "zh": "在线"
+  },
+  "OFFLINE": {
+    "ms": "Luar talian",
+    "zh": "离线"
+  },
+  "ONBOARDING": {
+    "ms": "Mula perkhidmatan",
+    "zh": "入职中"
+  },
+  "OFFBOARDING": {
+    "ms": "Tamat perkhidmatan",
+    "zh": "离职处理中"
+  },
+  "OFFBOARDED": {
+    "ms": "Tamat perkhidmatan",
+    "zh": "已离职"
+  },
+  "OPEN": {
+    "ms": "Terbuka",
+    "zh": "待处理"
+  },
+  "IN_PROGRESS": {
+    "ms": "Sedang diproses",
+    "zh": "处理中"
+  },
+  "RESOLVED": {
+    "ms": "Diselesaikan",
+    "zh": "已解决"
+  },
+  "CLOSED": {
+    "ms": "Ditutup",
+    "zh": "已关闭"
+  },
+  "INFO": {
+    "ms": "Maklumat",
+    "zh": "信息"
+  },
+  "WARNING": {
+    "ms": "Amaran",
+    "zh": "警告"
+  },
+  "EMERGENCY": {
+    "ms": "Kecemasan",
+    "zh": "紧急情况"
+  },
+  "TRIP_CREATED": {
+    "ms": "Dicipta",
+    "zh": "已创建"
+  },
+  "DRIVER_STARTED_ROUTE": {
+    "ms": "Perjalanan bermula",
+    "zh": "行程已开始"
+  },
+  "BUS_EN_ROUTE": {
+    "ms": "Bas dalam perjalanan",
+    "zh": "校车行驶中"
+  },
+  "TRIP_COMPLETED": {
+    "ms": "Perjalanan selesai",
+    "zh": "行程已完成"
+  },
+  "CANCELLED": {
+    "ms": "Dibatalkan",
+    "zh": "已取消"
+  },
+  "SCHEDULED": {
+    "ms": "Dirancang",
+    "zh": "已安排"
+  },
+  "OVERDUE": {
+    "ms": "Lewat",
+    "zh": "逾期"
+  },
+  "PICKED_UP": {
+    "ms": "Sudah naik",
+    "zh": "已上车"
+  },
+  "DROPPED_OFF": {
+    "ms": "Sudah turun",
+    "zh": "已下车"
+  },
+  "ABSENT": {
+    "ms": "Tidak hadir",
+    "zh": "缺席"
+  },
+  "NOT_MARKED": {
+    "ms": "Belum ditandakan",
+    "zh": "未记录"
+  },
+  "Leave blank to keep current": {
+    "ms": "Kosongkan untuk mengekalkan yang sedia ada",
+    "zh": "留空保留当前密码"
+  },
+  "‍‍Parents Only": {
+    "ms": "Ibu Bapa Sahaja",
+    "zh": "仅家长"
+  }
+}

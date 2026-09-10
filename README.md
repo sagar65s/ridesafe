@@ -1,3 +1,5 @@
+> Windows Docker: follow **START-HERE-WINDOWS.md** first. This complete release includes every source file plus an extraction integrity check.
+
 # RideSafe — School Bus Transport Management
 
 Complete source rebuild: Next.js 16 / React 19 / TypeScript / Prisma **5.22.0** / PostgreSQL. English, Bahasa Malaysia and Simplified Chinese. Keep the supplied `package-lock.json`; do not upgrade Prisma independently to v7.
