@@ -1,0 +1,3 @@
+-- Compatibility marker for an earlier packaged migration directory.
+-- The additive Payment.checkoutUrl change is applied by
+-- 20260910120000_payment_checkout_url/migration.sql.

@@ -7,8 +7,6 @@ import { writeAuditLog } from '@/lib/audit'
 export const dynamic = 'force-dynamic'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const permissionSession = await getUserFromSession()
-  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
   try {
     const auth = await getUserFromSession()
     if (!auth || !['ADMIN', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(auth.role)) {
@@ -73,7 +71,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (!route || !route.isActive || route.organizationId !== existing.organizationId || !canAccessOrganization(actor, route.organizationId)) return NextResponse.json({ error: 'Invalid or inactive route assignment' }, { status: 400 })
     }
 
-    if ((maintainerId !== undefined && maintainerId !== existing.maintainerId || driverId !== undefined && driverId !== existing.driverId || routeId !== undefined && routeId !== existing.routeId || status !== undefined && status !== existing.status) && await prisma.trip.count({ where: { busId: id, status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } } })) return NextResponse.json({ error: 'Complete or cancel active trips before reassigning this bus' }, { status: 409 })
+    if ((maintainerId !== undefined && maintainerId !== existing.maintainerId || driverId !== undefined && driverId !== existing.driverId || routeId !== undefined && routeId !== existing.routeId || status !== undefined && status !== existing.status) && await prisma.trip.count({ where: { busId: id, status: { in: ['DRIVER_STARTED_ROUTE','BUS_EN_ROUTE'] } } })) return NextResponse.json({ error: 'Complete or cancel active trips before reassigning this bus' }, { status: 409 })
 
     const bus = await prisma.$transaction(async tx => {
       if (driverId !== undefined && existing.driverId && driverId !== existing.driverId) await tx.driverAssignmentHistory.create({ data: { driverId: existing.driverId, busId: id, routeId: existing.routeId, action: 'UNASSIGNED', reason: driverId ? 'Bus reassigned' : 'Bus assignment removed' } })
@@ -99,8 +97,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const permissionSession = await getUserFromSession()
-  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
   try {
     const auth = await getUserFromSession()
     if (!auth || !['ADMIN', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(auth.role)) {
@@ -115,7 +111,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const actor = await getCurrentUser()
     if (!actor || !canAccessOrganization(actor, existing.organizationId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    if (await prisma.trip.count({ where: { busId: id, status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } } })) return NextResponse.json({ error: 'Complete or cancel active trips before deactivating this bus' }, { status: 409 })
+    if (await prisma.trip.count({ where: { busId: id, status: { in: ['DRIVER_STARTED_ROUTE','BUS_EN_ROUTE'] } } })) return NextResponse.json({ error: 'Complete or cancel active trips before deactivating this bus' }, { status: 409 })
 
     const bus = await prisma.$transaction(async tx => {
       if (existing.driverId) await tx.driverAssignmentHistory.create({ data: { driverId: existing.driverId, busId: id, routeId: existing.routeId, action: 'UNASSIGNED', reason: 'Bus deactivated' } })

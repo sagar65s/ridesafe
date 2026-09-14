@@ -3,7 +3,8 @@ import { useTranslation as useLocaleText } from '@/i18n/provider'
 import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Wrench, CircleDashed, ShieldAlert, Search, Settings } from 'lucide-react'
+import { Wrench, CircleDashed, ShieldAlert, Search, Settings, Trash2 } from 'lucide-react'
+import { formatRideSafeDate } from '@/lib/date-format'
 
 interface MaintenanceLog {
   id: string; busId: string; type: string; description: string; scheduledDate: string
@@ -17,7 +18,7 @@ const TYPE_ICON: Record<string, React.ReactNode> = { OIL_CHANGE: <Wrench size={1
 
 interface Bus { id: string; plateNumber: string }
 
-export default function MaintenanceTab() {
+export default function MaintenanceTab({ currentRole }: { currentRole: string }) {
  const {tx:translateUi}=useLocaleText()
 
   const [logs, setLogs] = useState<MaintenanceLog[]>([])
@@ -32,7 +33,7 @@ export default function MaintenanceTab() {
   const reload = () => {
     Promise.all([
       fetch('/api/maintenance').then(r => r.json()),
-      fetch('/api/admin/buses').then(r => r.json()),
+      currentRole === 'DRIVER' ? fetch('/api/driver/status').then(r => r.json()).then(d => ({ buses: d.bus ? [d.bus] : [] })) : fetch('/api/admin/buses').then(r => r.json()),
     ]).then(([m, b]) => {
       setLogs(m.logs || [])
       setBuses(b.buses || [])
@@ -52,6 +53,13 @@ export default function MaintenanceTab() {
   const updateStatus = async (id: string, status: string) => {
     await fetch('/api/maintenance', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status, completedDate: status === 'COMPLETED' ? new Date().toISOString() : null }) })
     reload()
+  }
+
+  const remove = async (id: string) => {
+    if (!window.confirm(translateUi('Delete this maintenance log?'))) return
+    const response = await fetch('/api/maintenance', { method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id}) })
+    if (response.ok) { setLogs(items => items.filter(item => item.id !== id)); showToast('Maintenance log deleted') }
+    else showToast((await response.json()).error || 'Delete failed')
   }
 
   if (loading) return <div className="glass-panel" style={{ padding: '2rem' }}>{[1,2,3].map(i => <div key={i} className="skeleton" style={{ height: 50, marginBottom: 12, borderRadius: 10 }} />)}</div>
@@ -74,7 +82,7 @@ export default function MaintenanceTab() {
             <h3 style={{ margin:0, fontSize:'1.3rem' }}><TranslatedText text={"Fleet Maintenance"}/></h3>
             <div style={{ fontSize:'0.85rem', color:'var(--text-muted)', marginTop:4 }}>{logs.length}<TranslatedText text={" records"}/></div>
           </div>
-          <motion.button whileHover={{ scale:1.04 }} whileTap={{ scale:0.96 }} className="btn btn-primary" onClick={() => setShowModal(true)}><TranslatedText text={"+ Log Maintenance"}/></motion.button>
+          {currentRole === 'DRIVER' && <motion.button whileHover={{ scale:1.04 }} whileTap={{ scale:0.96 }} className="btn btn-primary" onClick={() => setShowModal(true)}><TranslatedText text={"+ Log Maintenance"}/></motion.button>}
         </div>
 
         <div style={{ display:'grid', gap:'0.75rem' }}>
@@ -86,7 +94,7 @@ export default function MaintenanceTab() {
                 <div>
                   <div style={{ fontWeight:600 }}>{log.bus.plateNumber} — <TranslatedText text={log.type.replace('_',' ')}/></div>
                   <div style={{ fontSize:'0.8rem', color:'var(--text-muted)' }}>
-                    {new Date(log.scheduledDate).toLocaleDateString()}
+                    {formatRideSafeDate(log.scheduledDate)}
                     {log.description && ` · ${log.description}`}
                     {log.cost && ` · RM ${log.cost.toFixed(2)}`}
                   </div>
@@ -96,10 +104,11 @@ export default function MaintenanceTab() {
                 <span className="badge" style={{ background:`${STATUS_COLOR[log.status]}22`, color:STATUS_COLOR[log.status], border:`1px solid ${STATUS_COLOR[log.status]}44` }}>
                   <TranslatedText text={log.status.replace('_',' ')}/>
                 </span>
-                {log.status !== 'COMPLETED' && (
+                {currentRole === 'DRIVER' && log.status !== 'COMPLETED' && (
                   <motion.button whileTap={{ scale:0.9 }} className="btn" onClick={() => updateStatus(log.id, 'COMPLETED')}
                     style={{ padding:'0.4rem 0.7rem', fontSize:'0.75rem', background:'rgba(16,185,129,0.1)', color:'var(--success)', border:'1px solid var(--success)' }}><TranslatedText text={" Complete "}/></motion.button>
                 )}
+                <button className="btn btn-danger" aria-label={translateUi('Delete')} onClick={() => void remove(log.id)} style={{padding:'0.42rem'}}><Trash2 size={15}/></button>
               </div>
             </motion.div>
           ))}
@@ -108,7 +117,7 @@ export default function MaintenanceTab() {
       </div>
 
       <AnimatePresence>
-        {showModal && (
+        {showModal && currentRole === 'DRIVER' && (
           <motion.div className="modal-overlay" initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }} onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}>
             <motion.div className="modal-box" initial={{ scale:0.9 }} animate={{ scale:1 }} exit={{ scale:0.9 }}>
               <h3 style={{ marginBottom:'1.5rem' }}><TranslatedText text={"Log Maintenance"}/></h3>

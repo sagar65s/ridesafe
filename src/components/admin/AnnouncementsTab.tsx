@@ -3,6 +3,7 @@ import { useTranslation as useLocaleText } from '@/i18n/provider'
 import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { formatRideSafeDateTime } from '@/lib/date-format'
 
 interface Announcement {
   id: string; title: string; body: string; targetRole: string; type: string
@@ -136,7 +137,7 @@ export default function AnnouncementsTab() {
                     <span className="badge" style={{ background: `${typeColor}22`, color: typeColor, fontSize: '0.68rem', flexShrink: 0 }}><TranslatedText text={a.type}/></span>
                   </div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 4 }}>{a.body}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 6 }}><TranslatedText text={" Sent to "}/>{a.sentCount} <TranslatedText text={a.targetRole === 'ALL' ? 'users' : a.targetRole.toLowerCase() + 's'}/> · {new Date(a.createdAt).toLocaleString()}
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: 6 }}><TranslatedText text={" Sent to "}/>{a.sentCount} <TranslatedText text={a.targetRole === 'ALL' ? 'users' : a.targetRole.toLowerCase() + 's'}/> · {formatRideSafeDateTime(a.createdAt)}
                   </div>
                 </div>
               )

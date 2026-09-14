@@ -1,0 +1,6 @@
+ALTER TABLE "Trip"
+ADD COLUMN "currentStopOrder" INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE "Attendance"
+ADD COLUMN "gpsOverride" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN "gpsDistanceM" INTEGER;

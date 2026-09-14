@@ -3,6 +3,7 @@ import { useTranslation, TranslatedText } from '@/i18n/provider'
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, ChevronRight } from 'lucide-react'
+import { formatRideSafeDate } from '@/lib/date-format'
 
 interface AcademicEvent {
   id: string
@@ -14,7 +15,7 @@ interface AcademicEvent {
 }
 
 export default function CalendarCard() {
-  const {locale,tx}=useTranslation()
+  const {tx}=useTranslation()
   const [expanded,setExpanded]=useState(false)
   const [events, setEvents] = useState<AcademicEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -63,7 +64,7 @@ export default function CalendarCard() {
                 display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' 
               }}>
                 <span style={{ fontSize:'0.6rem', fontWeight:800, color: event.color || 'var(--primary)', textTransform:'uppercase' }}>
-                  {new Date(event.startDate).toLocaleDateString(locale === 'ms' ? 'ms-MY' : locale === 'zh' ? 'zh-CN' : 'en-MY', { month: 'short' })}
+                  {formatRideSafeDate(event.startDate)}
                 </span>
                 <span style={{ fontSize:'0.9rem', fontWeight:800, color: event.color || 'var(--primary)', marginTop:-2 }}>
                   {new Date(event.startDate).getDate()}

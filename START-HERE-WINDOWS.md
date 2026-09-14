@@ -68,7 +68,7 @@ For a new database, create a temporary file named .env.bootstrap in the project 
 
 ```dotenv
 BOOTSTRAP_ADMIN_EMAIL="your-real-email@example.com"
-BOOTSTRAP_ADMIN_PASSWORD="choose-your-own-unique-password-at-least-12-characters"
+BOOTSTRAP_ADMIN_PASSWORD="choose-your-own-unique-password-at-least-8-characters"
 BOOTSTRAP_ADMIN_NAME="Super Admin"
 ```
 
@@ -96,7 +96,11 @@ docker compose -p ridesafe --env-file .env.production --profile tracking up --bu
 
 The optional worker calls the app through its internal Docker address. APP_URL must stay the browser-visible address.
 
-Localhost is suitable for testing on this computer. To use GPS/push on other phones, serve the site over HTTPS and set APP_URL accordingly; a plain http://LAN-IP URL is insufficient for those browser features. Push keys must be present before building. Real provider/GPS/device testing is still required. The three-horn alert works on an active page after the parent enables audio; locked/background phones cannot be guaranteed custom horn playback.
+Localhost is suitable for testing on this computer. To use GPS/push on other phones, serve the site over HTTPS and set APP_URL accordingly; a plain http://LAN-IP URL is insufficient for those browser features. Push keys must be present before building. Real provider/GPS/device testing is still required. The Parent page auto-arms the three-horn alert after its first tap/click; locked/background phones cannot be guaranteed custom horn playback and instead use the Web Push notification sound plus three-pulse vibration where supported.
+
+Before Start Trip, assign the crew account to an ACTIVE bus, assign that bus an active route and driver, and assign at least one active student to the same bus/route with parent, pickup stop and drop-off stop. The Driver sidebar now lists whichever of these setup items is missing. Admin/Transport Coordinator can add and edit these students only inside its assigned school.
+
+The Parent **Payments** page opens **Pay invoice** only when your invoice/payment provider returns a safe HTTPS checkout URL. Until the Malaysian payment provider is connected, invoices show **Payment setup pending** and are not falsely marked as paid.
 
 ## 7. Normal restarts
 

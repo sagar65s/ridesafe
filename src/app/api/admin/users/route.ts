@@ -67,8 +67,8 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
         }
         // Validate password
-        if (!password || password.length < 12) {
-            return NextResponse.json({ error: 'Password must be at least 12 characters' }, { status: 400 })
+        if (typeof password !== 'string' || password.length < 8 || Buffer.byteLength(password, 'utf8') > 72) {
+            return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
         }
         // Validate role
         if (!isUserRole(role)) {
@@ -101,10 +101,9 @@ export async function POST(request: Request) {
             resolvedOrgId = organizationId
         }
 
-        if (role !== 'SUPER_ADMIN' && !resolvedOrgId) {
+        if (!resolvedOrgId) {
             return NextResponse.json({ error: 'A school assignment is required for this role' }, { status: 400 })
         }
-        if (role === 'SUPER_ADMIN') resolvedOrgId = null
         if (role === 'DRIVER' && personnelType && !['DRIVER', 'MAINTAINER'].includes(personnelType)) {
             return NextResponse.json({ error: 'Invalid personnel type' }, { status: 400 })
         }

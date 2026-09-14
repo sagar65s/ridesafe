@@ -6,8 +6,6 @@ import { canAccessOrganization, getCurrentUser } from '@/lib/authorization'
 export const dynamic = 'force-dynamic'
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const permissionSession = await getUserFromSession()
-  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
   try {
     const user = await getUserFromSession()
     if (!user || user.role === 'PARENT' || user.role === 'DRIVER') {

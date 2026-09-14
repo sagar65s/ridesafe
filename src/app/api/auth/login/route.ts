@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     if (!isUserRole(user.role)) {
       return NextResponse.json({ error: 'This account has an unsupported role. Contact support.' }, { status: 403 })
     }
-    if (user.organization?.isActive === false) {
+    if (user.role !== 'SUPER_ADMIN' && user.organization?.isActive === false) {
       return NextResponse.json({ error: 'Your organization is inactive. Contact support.' }, { status: 403 })
     }
 

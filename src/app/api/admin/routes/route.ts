@@ -13,8 +13,9 @@ export async function GET(request: Request) {
         }
 
         const actor = await prisma.user.findUnique({ where: { id: auth.id }, select: { organizationId: true } })
+        const requestedOrganizationId=new URL(request.url).searchParams.get('organizationId')
         const routes = await prisma.route.findMany({
-            where: auth.role === 'SUPER_ADMIN' ? {} : { organizationId: actor?.organizationId || '__none__' },
+            where: auth.role === 'SUPER_ADMIN' ? (requestedOrganizationId ? {organizationId:requestedOrganizationId}:{}) : { organizationId: actor?.organizationId || '__none__' },
             include: {
                 _count: {
                     select: { students: true, buses: true }
@@ -31,8 +32,6 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const permissionSession = await getUserFromSession()
-  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
     try {
         const auth = await getUserFromSession()
         if (!auth || !['ADMIN', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(auth.role)) {
@@ -46,6 +45,7 @@ export async function POST(request: Request) {
         }
 
         const actor = await prisma.user.findUnique({ where: { id: auth.id }, select: { organizationId: true } })
+        if (auth.role !== 'SUPER_ADMIN' && organizationId && organizationId !== actor?.organizationId) return NextResponse.json({error:'Cannot manage another school'},{status:403})
         const resolvedOrganizationId = auth.role === 'SUPER_ADMIN' ? (organizationId || null) : actor?.organizationId || null
         if (!resolvedOrganizationId) return NextResponse.json({ error: 'School assignment is required' }, { status: 400 })
         const organization = await prisma.organization.findUnique({ where: { id: resolvedOrganizationId }, select: { isActive: true } })

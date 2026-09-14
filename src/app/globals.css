@@ -403,3 +403,21 @@ div::-webkit-scrollbar { height: 0; }
 .stat-card.green { border-left: 3px solid var(--hc-success); }
 
 .toast { z-index: 10000 !important; }
+
+.chat-layout { display:grid; grid-template-columns:minmax(210px,30%) 1fr; min-height:560px; border:1px solid var(--surface-border); border-radius:14px; overflow:hidden; }
+.chat-contacts { border-right:1px solid var(--surface-border); overflow-y:auto; }
+.chat-contacts > button { width:100%; padding:12px 14px; border:0; border-bottom:1px solid var(--surface-border); background:transparent; color:var(--text-main); text-align:left; cursor:pointer; display:grid; gap:3px; }
+.chat-contacts > button.selected { background:rgba(255,214,10,.12); }
+.chat-contacts span,.chat-contacts small,.chat-thread header span { color:var(--text-muted); font-size:11px; }
+.chat-contacts small { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.chat-thread { display:flex; flex-direction:column; min-width:0; }
+.chat-thread > header { padding:14px; border-bottom:1px solid var(--surface-border); display:grid; }
+.chat-thread > .message-list { flex:1; padding:16px; overflow-y:auto; max-height:470px; }
+.chat-thread > .message-compose { padding:14px; border-top:1px solid var(--surface-border); }
+@media(max-width:700px){.chat-layout{grid-template-columns:1fr;}.chat-contacts{border-right:0;border-bottom:1px solid var(--surface-border);max-height:190px}.chat-thread{min-height:430px}}
+.chat-search{display:flex;align-items:center;gap:7px;margin:0 10px 10px;padding:8px 10px;border:1px solid var(--hc-line);border-radius:10px;background:var(--hc-surface-2);color:var(--hc-text-3)}
+.chat-search input{width:100%;border:0;outline:0;background:transparent;color:var(--hc-text);font:inherit;font-size:12px}
+.nav-new-dot{width:8px;height:8px;border-radius:50%;background:#ff453a;box-shadow:0 0 0 3px rgba(255,69,58,.16);margin-left:auto;flex:0 0 auto}
+.bulk-file{max-width:220px;cursor:pointer;overflow:hidden}.bulk-file span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bulk-file input{position:absolute;inline-size:1px;block-size:1px;opacity:0;pointer-events:none}
+.history-delete{display:inline-flex;align-items:center;gap:6px;margin:9px 0;padding:6px 9px;border:1px solid rgba(255,69,58,.3);border-radius:8px;background:rgba(255,69,58,.08);color:var(--hc-danger);cursor:pointer}
+.transport-shell .glass-panel,.transport-shell .modal-box{background:var(--hc-surface);color:var(--hc-text);border-color:var(--hc-line)}

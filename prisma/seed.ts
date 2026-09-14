@@ -55,8 +55,8 @@ async function main() {
 
   // Seed Users
   const testPassword = process.env.TEST_USER_PASSWORD
-  if (!testPassword || testPassword.length < 12) {
-    throw new Error('TEST_USER_PASSWORD must contain at least 12 characters.')
+  if (!testPassword || testPassword.length < 8) {
+    throw new Error('TEST_USER_PASSWORD must contain at least 8 characters.')
   }
   const passwordHash = await bcrypt.hash(testPassword, 12)
 
@@ -64,7 +64,7 @@ async function main() {
     data: {
       name: 'School Admin',
       email: 'admin@ridesafe.com',
-      password: 'password123',
+      password: passwordHash,
       role: 'SUPER_ADMIN',
       phone: '+1 555-000-0001'
     }

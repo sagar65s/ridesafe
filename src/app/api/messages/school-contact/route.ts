@@ -20,16 +20,17 @@ export async function GET() {
     if (!organizationId) return NextResponse.json({ error: 'No assigned school contact found' }, { status: 404 })
 
     // Never fall back to another school's administrator.
-    const admin = await prisma.user.findFirst({
+    const contacts = await prisma.user.findMany({
       where: { role: { in: ['ADMIN', 'SCHOOL_ADMIN'] }, organizationId, isActive: true },
-      select: { id: true, name: true },
+      select: { id: true, name: true, role: true },
+      orderBy: [{ role: 'desc' }, { name: 'asc' }],
     })
 
-    if (!admin) {
+    if (!contacts.length) {
       return NextResponse.json({ error: 'No school contact found' }, { status: 404 })
     }
 
-    return NextResponse.json({ admin })
+    return NextResponse.json({ admin: contacts[0], contacts })
   } catch (error) {
     console.error('School contact lookup error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

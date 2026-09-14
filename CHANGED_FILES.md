@@ -1,22 +1,40 @@
 # Changes compared with the uploaded archive
 
-31 added, 90 modified, 6 removed/excluded files.
+## 14 September 2026 release
+
+- `prisma/schema.prisma` and the new migration add school-shared message threads plus per-user message/trip-history visibility.
+- Message APIs and Parent/Driver/Admin UIs now provide shared, role-labelled, school-isolated chat; Driver has Messages.
+- Notification API, inbox component and all role workspaces provide unread navigation indicators and read/delete controls.
+- New student and attendance import APIs provide School Admin/Super Admin-only, school-scoped CSV/XLSX imports.
+- Calendar, attendance and student tabs and `public/templates/*` implement richer import/export based on the supplied samples.
+- Trip history delete hides a record only for the requesting user and preserves the transport audit trail.
+- Translation and dark-theme styles cover the new controls and Driver maintenance screen.
+
+35 added, 90 modified, 6 removed/excluded files.
 
 ## Added
 
 - `CHANGED_FILES.md`
+- `__tests__/final-modifications.test.ts`
+- `src/lib/date-format.ts`
 - `FIXES_AND_VERIFICATION.md`
 - `RELEASE_VERIFICATION.json`
 - `__tests__/csv.test.ts`
 - `__tests__/live-tracking-rebuild.test.ts`
 - `__tests__/proxy-regression.test.ts`
 - `__tests__/redis-regression.test.ts`
+- `__tests__/revision-admin-students.test.ts`
+- `__tests__/revision-assigned-edit.test.ts`
 - `__tests__/regression-routes.test.ts`
 - `__tests__/stream-regression.test.ts`
 - `__tests__/transport-rebuild.test.ts`
 - `__tests__/worker.test.ts`
 - `prisma/migrations/20260909000000_notification_deduplication/migration.sql`
 - `prisma/migrations/20260910000000_transport_rebuild/migration.sql`
+- `prisma/migrations/20260910000000_payment_checkout_url/migration.sql`
+- `prisma/migrations/20260910120000_payment_checkout_url/migration.sql`
+- `prisma/migrations/20260911140000_trip_service_attendance_requests/migration.sql`
+- `prisma/migrations/20260912090000_driver_trip_progress_gps_override/migration.sql`
 - `prisma/migrations/migration_lock.toml`
 - `samples/academic-calendar.csv`
 - `samples/academic-calendar.xlsx`
@@ -137,3 +155,5 @@
 - `src/app/page.module.css`
 - `src/components/CameraCapture.tsx`
 - `src/components/admin/ScheduleTab.tsx`
+- `src/components/admin/LostFoundTab.tsx`
+- `src/app/api/lost-found/route.ts`

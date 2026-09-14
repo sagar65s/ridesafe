@@ -1,6 +1,7 @@
 import { bukkuAdapter } from '../adapters/bukku'
 import prisma from '../prisma'
 import { Resend } from 'resend'
+import { formatRideSafeDate } from '@/lib/date-format'
 
 export class PaymentService {
   /**
@@ -21,10 +22,10 @@ export class PaymentService {
     const status = providerReady ? (bukkuRes.status || 'PENDING') : 'PENDING_PROVIDER';
     if (!providerReady) console.warn('Bukku unavailable; invoice queued locally for parent', parentId);
 
-    const dueLabel = dueDate ? dueDate.toLocaleDateString('en-MY') : 'the stated due date';
+    const dueLabel = dueDate ? formatRideSafeDate(dueDate) : 'the stated due date';
     const result = await prisma.$transaction(async tx => {
       const payment = await tx.payment.create({
-        data: { parentId, amount, bukkuInvoiceId: providerInvoiceId, status, dueDate }
+        data: { parentId, amount, bukkuInvoiceId: providerInvoiceId, checkoutUrl: bukkuRes.url || null, status, dueDate }
       });
       await tx.notification.create({
         data: {

@@ -7,7 +7,7 @@ async function main() {
   const email = process.env.RESET_EMAIL?.trim().toLowerCase();
   const password = process.env.RESET_PASSWORD;
   if (!email || !password) throw new Error('Set RESET_EMAIL and RESET_PASSWORD explicitly.');
-  if (password.length < 12) throw new Error('RESET_PASSWORD must contain at least 12 characters.');
+  if (password.length < 8) throw new Error('RESET_PASSWORD must contain at least 8 characters.');
   if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PASSWORD_RESET !== 'true') {
     throw new Error('Production password reset blocked. Set ALLOW_PASSWORD_RESET=true only for an approved operation.');
   }

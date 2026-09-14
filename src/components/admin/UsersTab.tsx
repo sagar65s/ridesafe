@@ -4,6 +4,7 @@ import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, AlertTriangle, UserPlus, Bus, AlertCircle, Pencil, Trash2 } from 'lucide-react'
+import { formatRideSafeDate } from '@/lib/date-format'
 
 interface User { id: string; name: string; email: string; role: string; phone?: string; buses?: { plateNumber: string }[]; organizationId?: string; isActive:boolean; personnelType?:string; licenseNumber?:string; licenseExpiry?:string; onboardingDate?:string; offboardingDate?:string; offboardingReason?:string; employmentStatus?:string; assignmentHistory?:{id:string;action:string;reason?:string;effectiveAt:string;bus?:{plateNumber:string};route?:{name:string}}[] }
 interface Org { id: string; name: string }
@@ -25,9 +26,9 @@ function validateForm(form: typeof defaultForm, isEdit = false): Record<string, 
   if (!form.name.trim() || form.name.trim().length < 2) errs.name = 'Name must be at least 2 characters'
   if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Enter a valid email address'
   if (isEdit) {
-    if (form.password && form.password.length < 12) errs.password = 'Password must be at least 12 characters'
-  } else if (!form.password || form.password.length < 12) {
-    errs.password = 'Password must be at least 12 characters'
+    if (form.password && form.password.length < 8) errs.password = 'Password must be at least 8 characters'
+  } else if (!form.password || form.password.length < 8) {
+    errs.password = 'Password must be at least 8 characters'
   }
   if (form.phone && !/^[+0-9\s()\-]{7,20}$/.test(form.phone)) errs.phone = 'Enter a valid phone number'
   return errs
@@ -85,7 +86,7 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
     setToast(msg); setToastType(type); setTimeout(() => setToast(''), 3500)
   }
 
-  const openAddModal = () => { setEditingUser(null); setForm(defaultForm); setFormErrors({}); setShowModal(true) }
+  const openAddModal = () => { setEditingUser(null); setForm({ ...defaultForm, organizationId: !superAdminView ? orgs[0]?.id || '' : '' }); setFormErrors({}); setShowModal(true) }
 
   const openEditModal = (u: User) => {
     setEditingUser(u)
@@ -96,6 +97,7 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
 
   const handleSave = async () => {
     const errs = validateForm(form, !!editingUser)
+    if (!form.organizationId && !(editingUser?.role === 'SUPER_ADMIN' && !editingUser.organizationId)) errs.organizationId = 'Select a school'
     setFormErrors(errs)
     if (Object.keys(errs).length > 0) return
 
@@ -108,10 +110,13 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
             body: JSON.stringify({
               name: form.name, email: form.email, phone: form.phone || null,
               role: form.role, organizationId: form.organizationId || null,
-              isActive:form.isActive, personnelType:form.personnelType, licenseNumber:form.licenseNumber || null,
-              licenseExpiry:form.licenseExpiry || null, onboardingDate:form.onboardingDate || null,
-              offboardingDate:form.offboardingDate || null, offboardingReason:form.offboardingReason || null,
-              employmentStatus:form.employmentStatus,
+              isActive:form.isActive,
+              ...(form.role === 'DRIVER' ? {
+                personnelType:form.personnelType, licenseNumber:form.licenseNumber || null,
+                licenseExpiry:form.licenseExpiry || null, onboardingDate:form.onboardingDate || null,
+                offboardingDate:form.offboardingDate || null, offboardingReason:form.offboardingReason || null,
+                employmentStatus:form.employmentStatus,
+              } : {}),
               ...(form.password ? { password: form.password } : {}),
             }),
           })
@@ -122,7 +127,7 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
           })
       if (res.ok) {
         showToast(editingUser ? 'User updated!' : 'User created successfully!')
-        setShowModal(false); setForm(defaultForm); setFormErrors({}); setEditingUser(null); loadUsers()
+        setShowModal(false); setForm({ ...defaultForm, organizationId: !superAdminView ? orgs[0]?.id || '' : '' }); setFormErrors({}); setEditingUser(null); loadUsers()
       } else {
         const err = await res.json()
         showToast(err.error || (editingUser ? 'Failed to update user' : 'Failed to create user'), 'error')
@@ -277,7 +282,7 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
                   </span>
                 )}
                 {u.role === 'DRIVER' && <span className="badge badge-info"><TranslatedText text={u.personnelType || 'DRIVER'}/> · <TranslatedText text={u.employmentStatus || 'ACTIVE'}/></span>}
-                {u.role === 'DRIVER' && u.assignmentHistory?.[0] && <span className="badge badge-pending" title={u.assignmentHistory[0].reason || ''}><TranslatedText text={"Last: "}/><TranslatedText text={u.assignmentHistory[0].action}/> · {new Date(u.assignmentHistory[0].effectiveAt).toLocaleDateString()}</span>}
+                {u.role === 'DRIVER' && u.assignmentHistory?.[0] && <span className="badge badge-pending" title={u.assignmentHistory[0].reason || ''}><TranslatedText text={"Last: "}/><TranslatedText text={u.assignmentHistory[0].action}/> · {formatRideSafeDate(u.assignmentHistory[0].effectiveAt)}</span>}
                 <span className={`badge ${u.isActive ? (ROLE_COLORS[u.role] || 'badge-pending') : 'badge-pending'}`}><TranslatedText text={u.role.replaceAll('_', ' ')}/> · <TranslatedText text={u.isActive ? 'ACTIVE' : 'INACTIVE'}/></span>
                 <motion.button whileTap={{ scale: 0.92 }} onClick={() => openEditModal(u)}
                   title={translateUi("Edit user")}
@@ -337,9 +342,9 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
                   <div style={{gridColumn:'1/-1'}}><Field label="Offboarding Reason"><textarea className="input-field" rows={2} maxLength={500} value={form.offboardingReason} onChange={e=>setForm(p=>({...p,offboardingReason:e.target.value}))}/></Field></div>
                 </>}
 
-                {superAdminView && <Field label="Organisation">
+                {<Field label="Organisation *" error={formErrors.organizationId}>
                   <select className="select-field" value={form.organizationId} onChange={e => setForm(p => ({ ...p, organizationId: e.target.value }))}>
-                    <option value=""><TranslatedText text={form.role === 'SUPER_ADMIN' ? 'Global platform access' : 'Select a school'}/></option>
+                    <option value=""><TranslatedText text={'Select a school'}/></option>
                     {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                   </select>
                 </Field>}
@@ -365,8 +370,8 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
                 </Field>
 
                 <Field label={editingUser ? 'New Password' : 'Password *'} error={formErrors.password}>
-                  <input type="password" className="input-field" placeholder={editingUser ? 'Leave blank to keep current' : translateUi('Min. 12 characters')} value={form.password}
-                    minLength={editingUser ? undefined : 12} maxLength={128}
+                  <input type="password" className="input-field" placeholder={editingUser ? 'Leave blank to keep current' : translateUi('Min. 8 characters')} value={form.password}
+                    minLength={editingUser ? undefined : 8} maxLength={128}
                     onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
                     style={{ borderColor: formErrors.password ? 'var(--danger)' : undefined }}
                   />

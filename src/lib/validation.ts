@@ -25,7 +25,7 @@ export const locationSchema = z.object({
 export const createUserSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100).trim(),
   email: z.string().email().max(255).transform(v => v.toLowerCase().trim()),
-  password: z.string().min(6, 'Password must be at least 6 characters').max(128),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(128),
   phone: z.string().max(20).optional().default(''),
   role: z.enum(USER_ROLES),
 })

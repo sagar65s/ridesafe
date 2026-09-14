@@ -39,7 +39,7 @@ export async function getUserFromSession() {
     where: { id: session.id },
     select: { id: true, role: true, isActive: true, organization: { select: { isActive: true } } },
   })
-  if (!user || !isUserRole(user.role) || !user.isActive || user.organization?.isActive === false) return null
+  if (!user || !isUserRole(user.role) || !user.isActive || user.role !== 'SUPER_ADMIN' && user.organization?.isActive === false) return null
   return { id: user.id, role: user.role }
 }
 

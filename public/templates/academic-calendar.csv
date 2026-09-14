@@ -1,0 +1,4 @@
+Title,Type,Start date,End date,Days,Weekday,Buses running,Reason,Visible to parents,Description,Color
+Hari Raya Aidilfitri,HOLIDAY,20/03/2026,24/03/2026,5,Friday,No,School closure,Yes,"School closed, no transport",#F59E0B
+Ujian Semester 1,EXAM,21/09/2026,25/09/2026,5,Monday,Yes,,Yes,Semester assessment,#3B82F6
+Sports Day,EVENT,11/10/2026,11/10/2026,1,Sunday,Yes,,Yes,Annual school sports day,#10B981

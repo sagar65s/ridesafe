@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, Bus, AlertTriangle, GraduationCap, Settings } from 'lucide-react'
 import { useAudio } from '@/hooks/useAudio'
+import { formatRideSafeDateTime } from '@/lib/date-format'
 
 interface StudentRecord { id: string; name: string; grade: string; level: string; parentContact1: string; status: string; isSelfPickup: boolean }
 interface TripRecord { id: string; status: string; date?: string; busId?: string | null }
@@ -203,7 +204,7 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
                                     <div>
                                         <strong style={{ display: 'block', fontSize: '1.05rem' }}><TranslatedText text={" Driver: "}/>{e.driver?.name || 'Unknown'} {e.driver?.phone ? `(${e.driver.phone})` : ''}
                                         </strong>
-                                        <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginTop: 4 }}><TranslatedText text={" Triggered: "}/>{new Date(e.timestamp).toLocaleString()}<br /><TranslatedText text={" Location: "}/><TranslatedText text={e.latitude && e.longitude ? `${e.latitude.toFixed(5)}, ${e.longitude.toFixed(5)}` : 'Unknown'}/>
+                                        <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginTop: 4 }}><TranslatedText text={" Triggered: "}/>{formatRideSafeDateTime(e.timestamp)}<br /><TranslatedText text={" Location: "}/><TranslatedText text={e.latitude && e.longitude ? `${e.latitude.toFixed(5)}, ${e.longitude.toFixed(5)}` : 'Unknown'}/>
                                         </div>
                                     </div>
                                     <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}

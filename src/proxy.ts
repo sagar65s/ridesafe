@@ -39,6 +39,7 @@ const PUBLIC_PATHS = [
   '/api/auth/me',        // Used for logout POST
   '/api/health',
   '/api/internal/tracking',
+  '/api/internal/calendar',
   '/api/public/',        // Public forms (e.g. student self-registration)
 ]
 

@@ -1,3 +1,7 @@
+> Latest changes and scheduled calendar reminders: read **UPDATE-NOTES.md**.
+
+The 14 September release adds school-shared Admin/School Admin chat for parents and drivers, all-role notification inboxes with unread badges, non-destructive history removal, and school-scoped Calendar/Attendance/Student CSV/XLSX imports with downloadable templates.
+
 > Windows Docker: follow **START-HERE-WINDOWS.md** first. This complete release includes every source file plus an extraction integrity check.
 
 # RideSafe — School Bus Transport Management
@@ -34,7 +38,7 @@ For a **new database only**, create the first Super Admin:
 ```bat
 set "BOOTSTRAP_ADMIN_EMAIL=your-email@example.com"
 set "BOOTSTRAP_ADMIN_NAME=Super Admin"
-set "BOOTSTRAP_ADMIN_PASSWORD=YOUR_UNIQUE_PASSWORD_AT_LEAST_12_CHARACTERS"
+set "BOOTSTRAP_ADMIN_PASSWORD=YOUR_UNIQUE_PASSWORD_AT_LEAST_8_CHARACTERS"
 node --env-file=.env scripts/bootstrap-admin.mjs
 set "BOOTSTRAP_ADMIN_PASSWORD="
 ```
@@ -65,11 +69,11 @@ Production requires reachable PostgreSQL **and a valid REDIS_URL**. Set the host
 | --- | --- |
 | Super Admin | All schools, school/user creation, platform control, all transport operations, calendar Excel/CSV import, audit |
 | School Admin | Full management of its assigned school's users, buses, routes, stops, students, calendar, reports, notifications and issues |
-| Admin / Transport Coordinator | Assigned school only: overview, attendance monitoring, live tracking, trip history, announcements, messages and issues |
+| Admin / Transport Coordinator | Assigned school only: fleet, routes, stops, student add/edit/access, overview, attendance monitoring, live tracking, trip history, announcements, messages and issues |
 | Driver / Maintainer | Assigned bus roster, dated boarding/drop-off/absence, trip start/finish, GPS **publishing**, broadcast and emergency SOS; no live tracking map |
-| Parent | Own children, assigned bus tracking, valid route stops, own alerts/messages/attendance/invoices and issue reporting |
+| Parent | Own children, assigned bus tracking, valid route stops, own alerts/messages/attendance, separate Payments/invoices section and issue reporting |
 
-There are exactly five roles. A maintainer uses role `DRIVER` with `personnelType=MAINTAINER`; the bus has separate driver and maintainer assignments. A Super Admin must choose a school when creating a normal Admin, School Admin, driver or parent.
+There are exactly five roles. A maintainer uses role `DRIVER` with `personnelType=MAINTAINER`; the bus has separate driver and maintainer assignments. Every account created through the user-management UI requires an active school, including additional Super Admins. Super Admin authorization remains global. Initial bootstrap is the exception because it precedes school creation.
 
 ## Configure one school, step by step
 
@@ -80,10 +84,16 @@ There are exactly five roles. A maintainer uses role `DRIVER` with `personnelTyp
 5. Create/link the parent's account and the student in the same school. Assign the student to the exact bus and route.
 6. Set the student's pickup and drop-off stops on that route. Parents can select from their child's assigned route only. The application does not infer a home address or invent coordinates.
 7. A trip follows the configured route and pickup → drop-off assignments. Configure the appropriate directional route/assignments for the run; closed-trip history is retained. Do not change a route or student assignment during a live trip.
-8. The driver/maintainer starts the assigned trip. The roster appears automatically. The GPS permission prompt starts mobile tracking; dedicated GPS can be configured instead.
-9. At the student's pickup stop, confirm boarding. At the destination stop, confirm drop-off. Each action records date/time and staff ID and creates the linked parent's notification. Repeated taps do not duplicate attendance/alerts.
+8. The driver/maintainer selects `Morning`, `PM` or `After School Activity`, then starts the assigned trip. The roster applies each student's four-mode transport setting: Bus Transport (no self-pickup), Morning Self-Pickup, PM Self-Pickup or After School Activity. A self-pickup student is excluded only from that selected service and can still use the bus for the other services.
+9. A parent may report that their child boarded. This creates a pending confirmation for the assigned maintainer (or driver when no maintainer is assigned); it does not create official attendance. At the assigned stop, crew verifies the child and confirms boarding. Drop-off works the same crew-controlled way. Each official action records date/time and staff ID and creates the linked parent's notification.
 10. The crew explicitly confirms the assigned stop. When fresh device GPS is supplied, the server rejects locations more than 300 metres away. Without GPS, this is staff confirmation, not independent proof of physical presence.
 11. Every student must be absent or boarded **and** dropped off before the trip can finish. Dated events are retained; the management attendance screen monitors and exports them.
+
+The Crew screen lists the exact missing setup item when Start Trip is disabled (bus, route, assigned crew, students, parent or stops). A Maintainer assigned to a bus may operate the trip even when no separate driver is assigned. Old `TRIP_CREATED` setup rows no longer block a real trip, start uses database row locks to prevent two active trips, and the UI/API use the same active-status definition. Notification/push delivery is best-effort after trip or attendance commit, so a temporary notification provider failure no longer turns a successful action into an Internal Server Error. The driver phone starts GPS sharing automatically for an active trip and stops when the trip closes; HTTPS and browser location permission are still required. Existing deployments must run `npm run db:migrate` (Docker runs it automatically at container start) before using this release.
+
+## Parent payments
+
+School-generated invoices appear in the Parent workspace under **Payments**. If the configured invoice provider supplies a safe HTTPS checkout URL, **Pay invoice** opens it. Without a provider URL the invoice remains visible as **Payment setup pending**; the application does not pretend money was collected. The included `checkoutUrl` migration prepares existing databases for a later Malaysian payment-gateway connection.
 
 ## Parent horn and background notifications
 
@@ -97,9 +107,9 @@ Copy the generated public/private keys into the corresponding environment variab
 
 Parent flow:
 
-- Open the Parent workspace and select **Enable arrival horn**. The test plays three horn sounds and unlocks audio for the current page.
+- Open the Parent workspace and tap/click anywhere once. This browser-required first interaction silently arms the custom horn. **Arm horn now** remains available if the browser blocked that first attempt; **Test horn** plays the three-sound sequence.
 - Select **Enable background alerts** and allow browser notifications. HTTPS and browser/device support are required.
-- Fresh moving GPS estimates arrival through the pending route stops. When the estimate first reaches five minutes or less, RideSafe creates one alert per trip/student/boarding-or-drop-off stage. The open page plays three horn sounds. No extra 2-minute/1-minute horn stages remain.
+- Fresh moving GPS estimates arrival through upcoming route stops. When a particular child's bus first enters the 1–5 minute window for that child's assigned next stop, RideSafe creates one alert per trip/student/boarding-or-drop-off stage. The armed open page plays three horn sounds automatically. ETAs above five minutes, completed stops, stale GPS and stationary buses do not trigger it; no extra 2-minute/1-minute stages remain.
 - A stopped bus or GPS older than 90 seconds shows an unavailable ETA; it does not invent an arrival time. The displayed ETA is based on distance and speed, not traffic-aware road routing, and is approximate.
 
 **Important device limitation:** a website cannot guarantee custom horn audio when the browser is closed, suspended, muted or the phone is locked. Background Web Push uses the device's notification sound/vibration and permission settings. Some phones require installing the website to the Home Screen. For guaranteed background custom audio, a separately built native mobile app and platform-specific testing are necessary. Physical GPS/device delivery was not available to test in this workspace.
@@ -114,7 +124,7 @@ It calls the bearer-protected hardware tracking endpoint every 15 seconds. Deplo
 
 ## Academic calendar: Excel and CSV
 
-Only **Super Admin and School Admin** can create, edit, delete or import calendar events. School Admin imports are forced to its own school. Super Admin can choose a school or global calendar; School Admin cannot modify global events.
+Only **Super Admin and School Admin** can create, edit, delete or import calendar events. School Admin operations are forced to its own school. Super Admin must select one school before viewing, creating or importing; global/all-school calendars are not allowed. Parents see their own school's aligned 12-month calendar; Driver/Maintainer calendar access is intentionally removed. Publishing, importing or editing calendar content creates a school-scoped parent alert; parents also receive deduplicated today/tomorrow reminders for public holidays, festivals and events.
 
 Working examples are in `samples/academic-calendar.xlsx` and `samples/academic-calendar.csv`. These contain clearly labelled example dates, not an official school calendar.
 

@@ -1355,13 +1355,13 @@
     "ms": "Tunjukkan kurang",
     "zh": "收起"
   },
-  "Min. 12 characters": {
-    "ms": "Minimum 12 aksara",
-    "zh": "至少12个字符"
+  "Min. 8 characters": {
+    "ms": "Minimum 8 aksara",
+    "zh": "至少8个字符"
   },
-  "Password must be at least 12 characters": {
-    "ms": "Kata laluan mesti sekurang-kurangnya 12 aksara",
-    "zh": "密码至少需要12个字符"
+  "Password must be at least 8 characters": {
+    "ms": "Kata laluan mesti sekurang-kurangnya 8 aksara",
+    "zh": "密码至少需要8个字符"
   },
   "Click \"Add Organisation\" to create the first one.": {
     "ms": "Klik \"Tambah Organisasi\" untuk mencipta yang pertama.",
@@ -1682,5 +1682,125 @@
   "‍‍Parents Only": {
     "ms": "Ibu Bapa Sahaja",
     "zh": "仅家长"
-  }
+  },
+  "Download Excel template": {
+    "ms": "Muat turun templat Excel",
+    "zh": "下载Excel模板"
+  },
+  "Download CSV template": {
+    "ms": "Muat turun templat CSV",
+    "zh": "下载CSV模板"
+  },
+  "School holidays, festivals and events": {
+    "ms": "Cuti sekolah, perayaan dan acara",
+    "zh": "学校假期、节日和活动"
+  },
+  "Month": {
+    "ms": "Bulan",
+    "zh": "月份"
+  },
+  "FESTIVAL": {
+    "ms": "Perayaan",
+    "zh": "节日"
+  },
+  "Festival": {
+    "ms": "Perayaan",
+    "zh": "节日"
+  },
+  "Organisation *": {
+    "ms": "Organisasi *",
+    "zh": "学校 *"
+  },
+  "Active buses": { "ms": "Bas aktif", "zh": "运行中的校车" },
+  "Automatic 5-minute arrival horn": { "ms": "Hon ketibaan automatik 5 minit", "zh": "到站前5分钟自动鸣笛" },
+  "Automatic live location": { "ms": "Lokasi langsung automatik", "zh": "自动实时位置" },
+  "Before Work Commences": { "ms": "Sebelum Perkhidmatan Bermula", "zh": "服务开始前" },
+  "Broadcast to parents and school": { "ms": "Hebahan kepada ibu bapa dan sekolah", "zh": "向家长和学校广播" },
+  "Broadcast type": { "ms": "Jenis hebahan", "zh": "广播类型" },
+  "Change of Mind": { "ms": "Perubahan Fikiran", "zh": "改变主意" },
+  "Chat with": { "ms": "Berbual dengan", "zh": "聊天对象" },
+  "Complete stop": { "ms": "Selesaikan hentian", "zh": "完成站点" },
+  "Crew dashboard": { "ms": "Papan pemuka petugas", "zh": "乘务仪表板" },
+  "Driver details": { "ms": "Maklumat pemandu", "zh": "司机详情" },
+  "Due": { "ms": "Tarikh akhir", "zh": "到期" },
+  "Duplicate Payments": { "ms": "Bayaran Pendua", "zh": "重复付款" },
+  "Emergency / issue": { "ms": "Kecemasan / isu", "zh": "紧急情况 / 问题" },
+  "Exceptional Cases": { "ms": "Kes Luar Biasa", "zh": "特殊情况" },
+  "GPS stop mismatch": { "ms": "GPS tidak sepadan dengan hentian", "zh": "GPS与站点不匹配" },
+  "Issued": { "ms": "Dikeluarkan", "zh": "开具日期" },
+  "Morning": { "ms": "Pagi", "zh": "早上" },
+  "Parent attendance confirmation": { "ms": "Pengesahan kehadiran ibu bapa", "zh": "家长考勤确认" },
+  "Parent dashboard": { "ms": "Papan pemuka ibu bapa", "zh": "家长仪表板" },
+  "Pay invoice": { "ms": "Bayar invois", "zh": "支付发票" },
+  "Payment setup pending": { "ms": "Persediaan pembayaran belum selesai", "zh": "付款设置待完成" },
+  "Payments and invoices": { "ms": "Bayaran dan invois", "zh": "付款与发票" },
+  "Pending confirmations": { "ms": "Pengesahan belum selesai", "zh": "待确认" },
+  "Refund Policy": { "ms": "Polisi Bayaran Balik", "zh": "退款政策" },
+  "Refund Processing": { "ms": "Pemprosesan Bayaran Balik", "zh": "退款处理" },
+  "Reject": { "ms": "Tolak", "zh": "拒绝" },
+  "Route stop progress": { "ms": "Kemajuan hentian laluan", "zh": "路线站点进度" },
+  "School details": { "ms": "Maklumat sekolah", "zh": "学校详情" },
+  "School transport, safety and payments in one place": { "ms": "Pengangkutan sekolah, keselamatan dan bayaran di satu tempat", "zh": "校车、安全和付款集中管理" },
+  "Send emergency SOS": { "ms": "Hantar SOS kecemasan", "zh": "发送紧急求救" },
+  "Service-Based Refunds": { "ms": "Bayaran Balik Berdasarkan Perkhidmatan", "zh": "基于服务的退款" },
+  "Today": { "ms": "Hari ini", "zh": "今天" },
+  "Transport service": { "ms": "Perkhidmatan pengangkutan", "zh": "接送服务" },
+  "Trip and attendance history": { "ms": "Sejarah perjalanan dan kehadiran", "zh": "行程与考勤记录" },
+  "Unread alerts": { "ms": "Makluman belum dibaca", "zh": "未读提醒" },
+  "Weekend": { "ms": "Hujung minggu", "zh": "周末" },
+  "Parent boarding": { "ms": "Pengesahan naik oleh ibu bapa", "zh": "家长上车确认" },
+  "Parent arrival": { "ms": "Pengesahan tiba oleh ibu bapa", "zh": "家长到家确认" },
+  "NOT SUBMITTED": { "ms": "TIDAK DIHANTAR", "zh": "未提交" },
+  "Recent first": { "ms": "Terkini dahulu", "zh": "最新优先" },
+  "Oldest first": { "ms": "Terlama dahulu", "zh": "最早优先" },
+  "Student name": { "ms": "Nama pelajar", "zh": "学生姓名" },
+  "Attendance status": { "ms": "Status kehadiran", "zh": "考勤状态" },
+  "Chats": { "ms": "Perbualan", "zh": "聊天" },
+  "Admin reply": { "ms": "Balasan pentadbir", "zh": "管理员回复" },
+  "School Admin reply": { "ms": "Balasan pentadbir sekolah", "zh": "学校管理员回复" },
+  "You": { "ms": "Anda", "zh": "你" },
+  "Start a conversation": { "ms": "Mulakan perbualan", "zh": "开始聊天" },
+  "Choose a chat": { "ms": "Pilih perbualan", "zh": "选择聊天" },
+  "No school users available": { "ms": "Tiada pengguna sekolah tersedia", "zh": "暂无学校用户" },
+  "Bus maintenance": { "ms": "Penyelenggaraan bas", "zh": "校车维护" },
+  "stops": { "ms": "hentian", "zh": "站点" },
+  "PM": { "ms": "Petang", "zh": "下午" },
+  "All route stops completed. Finish attendance and complete the trip.": { "ms": "Semua hentian laluan selesai. Lengkapkan kehadiran dan tamatkan perjalanan.", "zh": "所有路线站点已完成。请完成考勤并结束行程。" },
+  "Location starts automatically with the trip and stops automatically when the trip is completed.": { "ms": "Lokasi bermula secara automatik bersama perjalanan dan berhenti apabila perjalanan selesai.", "zh": "行程开始时自动共享位置，行程完成后自动停止。" },
+  "recipients": { "ms": "penerima", "zh": "收件人" },
+  "Use this only for an urgent transport or safety issue. The school, Super Admin and affected parents will be alerted.": { "ms": "Gunakan ini hanya untuk isu pengangkutan atau keselamatan yang mendesak. Sekolah, Pentadbir Utama dan ibu bapa terlibat akan dimaklumkan.", "zh": "仅用于紧急交通或安全问题。学校、超级管理员和受影响的家长将收到通知。" },
+  "The bus location is outside the stop radius.": { "ms": "Lokasi bas berada di luar radius hentian.", "zh": "校车位置不在站点范围内。" },
+  "Visually verified — confirm anyway": { "ms": "Telah disahkan secara visual — teruskan pengesahan", "zh": "已现场确认—继续确认" },
+  "Route": { "ms": "Laluan", "zh": "路线" },
+  "After your first tap on this page, the horn is armed automatically and plays three times only when live tracking shows the bus is within five minutes of your child's assigned stop.": { "ms": "Selepas sentuhan pertama pada halaman ini, hon diaktifkan secara automatik dan berbunyi tiga kali apabila penjejakan langsung menunjukkan bas berada dalam lima minit dari hentian anak anda.", "zh": "首次点击此页面后，鸣笛会自动启用；仅当实时追踪显示校车距孩子站点五分钟以内时响三次。" },
+  "Keep this page open for the custom horn. If the browser is closed or the phone is locked, the background push uses the phone's notification sound and a three-pulse vibration instead.": { "ms": "Pastikan halaman ini terbuka untuk bunyi hon khas. Jika pelayar ditutup atau telefon dikunci, pemberitahuan latar menggunakan bunyi telefon dan tiga denyutan getaran.", "zh": "请保持页面打开以播放自定义鸣笛。浏览器关闭或手机锁屏时，将使用通知声音和三次振动。" },
+  "Confirm boarding after placing your child on the assigned bus. Confirm arrival after the child reaches home. Assigned crew verifies the official bus attendance, and your school receives your confirmation.": { "ms": "Sahkan naik selepas anak menaiki bas yang ditetapkan. Sahkan ketibaan selepas anak sampai di rumah. Petugas akan mengesahkan kehadiran rasmi dan sekolah menerima pengesahan anda.", "zh": "孩子登上指定校车后确认上车，到家后确认到达。乘务人员核验正式考勤，学校会收到您的确认。" },
+  "The crew rejected the previous report. Check the child and submit again if needed.": { "ms": "Petugas menolak laporan terdahulu. Periksa keadaan anak dan hantar semula jika perlu.", "zh": "乘务人员拒绝了之前的报告。请核实孩子情况，必要时重新提交。" },
+  "Your school-issued transport invoices appear here. Malaysian online payment checkout can be connected without changing this page.": { "ms": "Invois pengangkutan yang dikeluarkan sekolah dipaparkan di sini. Pembayaran dalam talian Malaysia boleh disambungkan tanpa mengubah halaman ini.", "zh": "学校开具的校车发票会显示在此。无需更改页面即可接入马来西亚在线支付。" },
+  "The school has not connected a payment checkout yet.": { "ms": "Sekolah belum menyambungkan pembayaran dalam talian.", "zh": "学校尚未接入在线支付。" },
+  "All payments are generally non-refundable once service has commenced. A two month notice period is required for termination of service.": { "ms": "Semua bayaran biasanya tidak boleh dikembalikan selepas perkhidmatan bermula. Notis dua bulan diperlukan untuk menamatkan perkhidmatan.", "zh": "服务开始后付款通常不予退还。终止服务须提前两个月通知。" },
+  "Refund requests made before any work begins may be eligible for a partial or full refund, subject to administrative and processing fees.": { "ms": "Permohonan sebelum kerja bermula mungkin layak mendapat bayaran balik separa atau penuh, tertakluk pada yuran pentadbiran dan pemprosesan.", "zh": "工作开始前提出的退款申请，扣除行政和处理费用后，可能获得部分或全额退款。" },
+  "Refunds will not be provided for change of mind, delays caused by clients, or misunderstandings of the service scope.": { "ms": "Bayaran balik tidak diberikan kerana perubahan fikiran, kelewatan oleh pelanggan atau salah faham skop perkhidmatan.", "zh": "因改变主意、客户造成的延误或对服务范围的误解，不予退款。" },
+  "Duplicate payments will be refunded after verification.": { "ms": "Bayaran pendua akan dikembalikan selepas pengesahan.", "zh": "重复付款核实后将予以退款。" },
+  "Refunds may be considered on a case-by-case basis if the service cannot be delivered due to our fault.": { "ms": "Bayaran balik boleh dipertimbangkan mengikut kes jika perkhidmatan gagal diberikan kerana kesalahan kami.", "zh": "如因我方原因无法提供服务，可视个案考虑退款。" },
+  "Approved refunds will be processed within 7–14 working days.": { "ms": "Bayaran balik yang diluluskan akan diproses dalam 7–14 hari bekerja.", "zh": "获批退款将在7至14个工作日内处理。" },
+  "Contact us by email or WhatsApp. You can also use the Messages section to contact your school.": { "ms": "Hubungi kami melalui e-mel atau WhatsApp. Anda juga boleh menggunakan bahagian Mesej untuk menghubungi sekolah.", "zh": "请通过电子邮件或WhatsApp联系我们，也可在消息页面联系学校。" },
+  "Filter event list by month": { "ms": "Tapis senarai acara mengikut bulan", "zh": "按月份筛选活动" },
+  "Previous year": { "ms": "Tahun sebelumnya", "zh": "上一年" },
+  "Next year": { "ms": "Tahun berikutnya", "zh": "下一年" },
+  "Event": { "ms": "Acara", "zh": "活动" },
+  "New activity": { "ms": "Aktiviti baharu", "zh": "新动态" },
+  "Delete from history": { "ms": "Padam daripada paparan sejarah", "zh": "从历史视图中删除" },
+  "Filter chats": { "ms": "Tapis perbualan", "zh": "筛选聊天" },
+  "Filter parents or drivers": { "ms": "Tapis ibu bapa atau pemandu", "zh": "筛选家长或司机" },
+  "No parent or driver chats found": { "ms": "Tiada perbualan ibu bapa atau pemandu ditemui", "zh": "未找到家长或司机聊天" },
+  "Choose import file": { "ms": "Pilih fail import", "zh": "选择导入文件" },
+  "Export Calendar": { "ms": "Eksport Kalendar", "zh": "导出校历" },
+  "Template": { "ms": "Templat", "zh": "模板" },
+  "Excel Template": { "ms": "Templat Excel", "zh": "Excel 模板" },
+  "CSV Template": { "ms": "Templat CSV", "zh": "CSV 模板" },
+  "Import": { "ms": "Import", "zh": "导入" },
+  "Importing…": { "ms": "Sedang mengimport…", "zh": "正在导入…" },
+  "School transport team": { "ms": "Pasukan pengangkutan sekolah", "zh": "学校交通团队" },
+  "unread": { "ms": "belum dibaca", "zh": "未读" }
 }

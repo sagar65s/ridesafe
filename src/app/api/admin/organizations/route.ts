@@ -24,10 +24,12 @@ function validateOrgFields(name: string | undefined, address: string | undefined
 export async function GET() {
   try {
     const auth = await getUserFromSession()
-    if (!auth || auth.role !== 'SUPER_ADMIN') {
+    if (!auth || !['SUPER_ADMIN', 'SCHOOL_ADMIN', 'ADMIN'].includes(auth.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    const actor = auth.role === 'SUPER_ADMIN' ? null : await prisma.user.findUnique({where:{id:auth.id},select:{organizationId:true}})
     const orgs = await prisma.organization.findMany({
+      where: auth.role === 'SUPER_ADMIN' ? {} : {id:actor?.organizationId || '__none__'},
       include: {
         _count: { select: { users: true, students: true, buses: true, routes: true } }
       },

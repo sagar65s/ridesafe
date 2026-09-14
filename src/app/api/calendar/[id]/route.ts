@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getUserFromSession } from '@/lib/auth'
 import { getCurrentUser, canAccessOrganization } from '@/lib/authorization'
+import { after } from 'next/server'
+import { notifyCalendarPublished } from '@/lib/calendar-notifications'
 
 // Next.js 15: params is now a Promise
 type RouteContext = { params: Promise<{ id: string }> }
@@ -27,7 +29,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     }
     const existing = await prisma.academicEvent.findUnique({ where:{ id }, select:{ startDate:true,endDate:true } })
     if (!existing) return NextResponse.json({ error:'Event not found' }, { status:404 })
-    const validTypes = ['HOLIDAY', 'WORKING_DAY', 'SPECIAL_HOLIDAY', 'EXAM', 'EVENT', 'TERM_START', 'TERM_END', 'ASSEMBLY']
+    const validTypes = ['HOLIDAY', 'FESTIVAL', 'WORKING_DAY', 'SPECIAL_HOLIDAY', 'EXAM', 'EVENT', 'TERM_START', 'TERM_END', 'ASSEMBLY']
     if (type !== undefined && !validTypes.includes(type)) return NextResponse.json({ error:'Invalid academic event type' }, { status:400 })
     const parsedStart = startDate ? new Date(startDate) : existing.startDate
     const parsedEnd = endDate ? new Date(endDate) : endDate === null ? null : existing.endDate
@@ -45,6 +47,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         color,
       },
     })
+    after(async () => { try { await notifyCalendarPublished(updatedEvent.organizationId, `updated:${updatedEvent.id}:${updatedEvent.updatedAt.toISOString()}`) } catch (error) { console.error('Calendar updated; parent alert failed', error) } })
 
     return NextResponse.json({ event: updatedEvent })
   } catch (error) {

@@ -2,6 +2,7 @@
 import { TranslatedText } from '@/i18n/provider'
 import { useEffect, useState } from 'react'
 import { RefreshCw, ShieldCheck } from 'lucide-react'
+import { formatRideSafeDateTime } from '@/lib/date-format'
 
 interface AuditLog {
   id: string; action: string; entityType: string; entityId?: string | null; details?: string | null; createdAt: string
@@ -30,7 +31,7 @@ export default function AuditLogsTab() {
     <div style={{ overflowX:'auto' }}><table style={{ width:'100%', borderCollapse:'collapse', minWidth:760 }}>
       <thead><tr>{['Time','Actor','School','Action','Entity','Details'].map(h => <th key={h} style={{ textAlign:'left', padding:'10px', borderBottom:'1px solid var(--surface-border)', fontSize:12, color:'var(--text-muted)' }}><TranslatedText text={h}/></th>)}</tr></thead>
       <tbody>{logs.map(log => <tr key={log.id}>
-        <td style={{ padding:10, borderBottom:'1px solid var(--surface-border)', whiteSpace:'nowrap', fontSize:12 }}>{new Date(log.createdAt).toLocaleString()}</td>
+        <td style={{ padding:10, borderBottom:'1px solid var(--surface-border)', whiteSpace:'nowrap', fontSize:12 }}>{formatRideSafeDateTime(log.createdAt)}</td>
         <td style={{ padding:10, borderBottom:'1px solid var(--surface-border)', fontSize:12 }}>{log.actor?.name || 'System'}<div style={{ color:'var(--text-muted)' }}><TranslatedText text={log.actor?.role || ''}/></div></td>
         <td style={{ padding:10, borderBottom:'1px solid var(--surface-border)', fontSize:12 }}>{log.organization?.name || 'Global'}</td>
         <td style={{ padding:10, borderBottom:'1px solid var(--surface-border)' }}><span className="badge badge-info"><TranslatedText text={log.action}/></span></td>

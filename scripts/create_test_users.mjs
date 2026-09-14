@@ -9,8 +9,8 @@ async function main() {
   }
   console.log('Creating/Updating test development accounts...');
   const testPassword = process.env.TEST_USER_PASSWORD;
-  if (!testPassword || testPassword.length < 12) {
-    throw new Error('TEST_USER_PASSWORD must contain at least 12 characters.');
+  if (!testPassword || testPassword.length < 8) {
+    throw new Error('TEST_USER_PASSWORD must contain at least 8 characters.');
   }
   const passwordHash = await bcrypt.hash(testPassword, 12);
   const organization = await prisma.organization.upsert({

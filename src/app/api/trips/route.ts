@@ -3,7 +3,8 @@ import prisma from '@/lib/prisma'
 import { getUserFromSession } from '@/lib/auth'
 import { canAccessOrganization, getCurrentUser } from '@/lib/authorization'
 import { writeAuditLog } from '@/lib/audit'
-import { crewWhere } from '@/lib/transport'
+import { ACTIVE_TRIP_STATUSES, crewWhere, isServiceType, studentUsesBus } from '@/lib/transport'
+import { pushNotification } from '@/lib/notification-delivery'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
             const students = await prisma.student.findMany({ where: { parentId: user.id, isActive: true }, select: { routeId: true, busId: true } })
             const assignments = students.filter(student => student.routeId && student.busId).map(student => ({ routeId: student.routeId as string, ...(student.busId ? { busId: student.busId } : {}) }))
             const trips = await prisma.trip.findMany({
-                where: { OR: assignments, status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } },
+                where: { OR: assignments, status: { in: ACTIVE_TRIP_STATUSES } },
                 include: { route: true, driver: { select: { name: true, phone: true } } }
             })
             return NextResponse.json({ trips })
@@ -58,10 +59,11 @@ export async function POST(request: NextRequest) {
         if (user.role === 'PARENT') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         if (!['DRIVER', 'ADMIN', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(user.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
+        const serviceType = isServiceType(data.serviceType) ? data.serviceType : 'MORNING'
         const assignedCrewBus = user.role === 'DRIVER' ? await prisma.bus.findFirst({ where: { ...crewWhere(user.id), status: 'ACTIVE', ...(data.busId ? { id: data.busId } : {}) } }) : null
-        if (user.role === 'DRIVER' && !assignedCrewBus?.driverId) return NextResponse.json({ error: 'An assigned bus and driver are required' }, { status: 400 })
+        if (user.role === 'DRIVER' && !assignedCrewBus) return NextResponse.json({ error: 'An assigned active bus and crew assignment are required' }, { status: 400 })
         if (assignedCrewBus) { data.busId = assignedCrewBus.id; data.routeId = assignedCrewBus.routeId }
-        const driverId = assignedCrewBus?.driverId || data.driverId
+        const driverId = assignedCrewBus?.driverId || (assignedCrewBus?.maintainerId === user.id ? user.id : data.driverId)
         if (!driverId || !data.routeId) {
             return NextResponse.json({ error: 'Missing driverId or routeId' }, { status: 400 })
         }
@@ -77,7 +79,7 @@ export async function POST(request: NextRequest) {
         if (data.busId && !bus) {
             return NextResponse.json({ error: 'Invalid bus assignment' }, { status: 400 })
         }
-        if (bus && (bus.driverId !== driverId || bus.status !== 'ACTIVE' || bus.organizationId !== route.organizationId || bus.routeId !== data.routeId || (user.role === 'DRIVER' && bus.driverId !== user.id && bus.maintainerId !== user.id))) {
+        if (bus && ((bus.driverId && bus.driverId !== driverId) || bus.status !== 'ACTIVE' || bus.organizationId !== route.organizationId || bus.routeId !== data.routeId || (user.role === 'DRIVER' && bus.driverId !== user.id && bus.maintainerId !== user.id))) {
             return NextResponse.json({ error: 'Invalid bus assignment' }, { status: 400 })
         }
         if (user.role === 'DRIVER') {
@@ -88,34 +90,55 @@ export async function POST(request: NextRequest) {
         if (route._count.stops === 0) return NextResponse.json({ error: 'Add at least one stop before starting this route' }, { status: 400 })
 
         if (!data.busId) return NextResponse.json({ error: 'Select a bus' }, { status: 400 })
-        const incomplete = await prisma.student.count({ where: { busId: data.busId, isActive: true, isSelfPickup: false, OR: [{ parentId: null }, { pickupStopId: null }, { dropoffStopId: null }, { routeId: null }] } })
+        const assignedStudents = await prisma.student.findMany({
+            where: { busId: data.busId, isActive: true },
+            select: { id: true, organizationId: true, routeId: true, parentId: true, pickupStopId: true, dropoffStopId: true, isSelfPickup: true, selfPickupSession: true, pickupStop: { select: { routeId: true } }, dropoffStop: { select: { routeId: true } }, parent: { select: { organizationId: true } } },
+        })
+        const serviceStudents = assignedStudents.filter(student => studentUsesBus(student, serviceType))
+        if (!serviceStudents.length) return NextResponse.json({ error: `No students use bus transport for the ${serviceType.toLowerCase().replace('_', ' ')} service` }, { status: 409 })
+        const incomplete = serviceStudents.filter(student => !student.parentId || !student.pickupStopId || !student.dropoffStopId || !student.routeId).length
         if (incomplete) return NextResponse.json({ error: 'Complete parent, route and stop assignments for every bus student before starting' }, { status: 409 })
-        const invalidAssignment = await prisma.student.findFirst({where:{busId:data.busId,isActive:true,isSelfPickup:false,OR:[{routeId:{not:data.routeId}},{organizationId:{not:route.organizationId}},{pickupStop:{routeId:{not:data.routeId}}},{dropoffStop:{routeId:{not:data.routeId}}},{parent:{organizationId:{not:route.organizationId}}}]},select:{id:true}})
+        const invalidAssignment = serviceStudents.find(student => student.routeId !== data.routeId || student.organizationId !== route.organizationId || student.pickupStop?.routeId !== data.routeId || student.dropoffStop?.routeId !== data.routeId || student.parent?.organizationId !== route.organizationId)
         if(invalidAssignment) return NextResponse.json({error:'Correct bus, route, stop and parent school assignments before starting'},{status:409})
         const trip = await prisma.$transaction(async tx => {
-            await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`trip-driver:${driverId}`}))`
-            if (data.busId) await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`trip-bus:${data.busId}`}))`
+            await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${driverId} FOR UPDATE`
+            await tx.$queryRaw`SELECT id FROM "Bus" WHERE id = ${data.busId} FOR UPDATE`
             const existingTrip = await tx.trip.findFirst({
-                where: { status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] }, OR: [{ driverId }, ...(data.busId ? [{ busId: data.busId }] : [])] },
+                where: { status: { in: ACTIVE_TRIP_STATUSES }, OR: [{ driverId }, { busId: data.busId }] },
                 select: { id: true },
             })
             if (existingTrip) return null
-            return tx.trip.create({ data: { routeId: data.routeId, driverId, maintainerId: bus?.maintainerId, busId: data.busId, status: 'DRIVER_STARTED_ROUTE' } })
+            return tx.trip.create({ data: { routeId: data.routeId, driverId, maintainerId: bus?.maintainerId, busId: data.busId, serviceType, status: 'DRIVER_STARTED_ROUTE' } })
         })
         if (!trip) return NextResponse.json({ error: 'Driver or bus already has an active trip' }, { status: 409 })
 
         const parentIds = (await prisma.student.findMany({
-            where: { routeId: data.routeId, isActive: true, parentId: { not: null }, busId: data.busId, isSelfPickup: false },
+            where: { id: { in: serviceStudents.map(student => student.id) }, parentId: { not: null } },
             select: { parentId: true },
         })).map(student => student.parentId).filter((id): id is string => Boolean(id))
-        if (parentIds.length) await prisma.notification.createMany({
-            data: [...new Set(parentIds)].map(parentId => ({ userId: parentId, title: 'Bus started', body: 'Your child’s assigned bus has started the trip.', type: 'INFO' })),
-        })
-        await writeAuditLog({ actorId: user.id, organizationId: route.organizationId, action: 'START', entityType: 'TRIP', entityId: trip.id, details: { driverId, routeId: data.routeId, busId: data.busId || null } })
+        // Trip start must remain successful even when an optional delivery
+        // provider is temporarily unavailable. Persist/push alerts best-effort.
+        try {
+            const notifications = parentIds.length ? await prisma.$transaction(
+                [...new Set(parentIds)].map(parentId => prisma.notification.create({
+                    data: { userId: parentId, title: 'Bus started', body: 'Your child’s assigned bus has started the trip.', type: 'INFO', dedupeKey: `trip-start:${trip.id}:${parentId}` },
+                }))
+            ) : []
+            await Promise.allSettled(notifications.map(pushNotification))
+        } catch (notificationError) {
+            console.error('Trip started but parent notification delivery failed:', notificationError)
+        }
+        try {
+            await writeAuditLog({ actorId: user.id, organizationId: route.organizationId, action: 'START', entityType: 'TRIP', entityId: trip.id, details: { driverId, routeId: data.routeId, busId: data.busId || null, serviceType } })
+        } catch (auditError) {
+            console.error('Trip started but audit logging failed:', auditError)
+        }
 
         return NextResponse.json({ trip })
     } catch (error) {
         console.error('Trips POST Error:', error)
+        const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : ''
+        if (code === 'P2021' || code === 'P2022' || code === '42703' || code === '42P01') return NextResponse.json({ error: 'Database update is pending. Run npx prisma migrate deploy and try again.' }, { status: 503 })
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }

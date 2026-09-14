@@ -4,9 +4,10 @@ import { useTranslation as useLocaleText } from '@/i18n/provider'
 import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle, AlertTriangle, UserPlus, Bus, Check, X, Download, Plus, Pencil, Trash2 } from 'lucide-react'
+import { CheckCircle, AlertTriangle, UserPlus, Bus, Check, X, Download, Upload, Plus, Pencil, Trash2 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { formatRideSafeDateTime } from '@/lib/date-format'
 
 interface Student {
   id: string; name: string; grade: string; level: string;
@@ -74,6 +75,9 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
   const [toastType, setToastType] = useState<'success'|'error'>('success')
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [importFile,setImportFile]=useState<File|null>(null)
+  const [importOrganizationId,setImportOrganizationId]=useState('')
+  const [importing,setImporting]=useState(false)
 
   const loadStudents = () => {
     Promise.all([
@@ -188,8 +192,8 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
 
   const exportCSV = () => {
     const rows = [
-      ['#', 'Name', 'Grade', 'Level', 'Contact1', 'Status', 'Route'],
-      ...students.map((s, i) => [i + 1, s.name, s.grade, s.level, s.parentContact1, s.status, s.route?.name || ''])
+      ['#','Student ID','Student Name','Grade','Class','Section','Level','Parent','Primary Contact','Secondary Contact','Route','Bus','Pickup Stop','Drop-off Stop','Pickup Method','Pickup Address','Drop-off Address','Status'],
+      ...students.map((s, i) => [i+1,s.studentCode||'',s.name,s.grade,s.className||'',s.section||'',s.level,s.parent?.name||'',s.parentContact1,s.parentContact2||'',s.route?.name||'',s.bus?.plateNumber||'',s.pickupStop?.name||'',s.dropoffStop?.name||'',s.isSelfPickup?s.selfPickupSession||'SELF_PICKUP':'BUS TRANSPORT',s.pickupAddress||'',s.dropoffAddress||'',s.isActive?s.status:'INACTIVE'])
     ]
     const csv = rows.map(r => r.map(csvCell).join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -205,7 +209,7 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
     doc.text('Student Roster — RideSafe', 14, 22)
     doc.setFontSize(10)
     doc.setTextColor(120)
-    doc.text(`Generated: ${new Date().toLocaleString()}  |  Total: ${students.length} students`, 14, 30)
+    doc.text(`Generated: ${formatRideSafeDateTime(new Date())}  |  Total: ${students.length} students`, 14, 30)
 
     autoTable(doc, {
       startY: 38,
@@ -222,6 +226,13 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
 
     doc.save(`students_${new Date().toISOString().split('T')[0]}.pdf`)
     showToast('PDF exported!', 'success')
+  }
+  const importStudents=async()=>{
+    if(!importFile)return showToast('Choose an Excel or CSV student file','error')
+    if(currentRole==='SUPER_ADMIN'&&!importOrganizationId)return showToast('Select a school before importing students','error')
+    const body=new FormData();body.append('file',importFile);body.append('organizationId',importOrganizationId);setImporting(true)
+    try{const response=await fetch('/api/students/import',{method:'POST',body}),result=await response.json();if(!response.ok)throw new Error(result.error||'Student import failed');showToast(`${result.created} students imported; ${result.skipped} rows skipped`);setImportFile(null);loadStudents()}
+    catch(error){showToast(error instanceof Error?error.message:'Student import failed','error')}finally{setImporting(false)}
   }
 
   const q = searchQuery.trim().toLowerCase()
@@ -272,6 +283,7 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
             <div style={{ fontSize:'0.85rem', color:'var(--text-muted)', marginTop:4 }}>{students.length}<TranslatedText text={" students enrolled"}/></div>
           </div>
           <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap' }}>
+            {['SUPER_ADMIN','SCHOOL_ADMIN'].includes(currentRole)&&<><a className="btn" href="/templates/students-import.xlsx" download><Download size={16}/><TranslatedText text=" Excel Template "/></a><a className="btn" href="/templates/students-import.csv" download><Download size={16}/><TranslatedText text=" CSV Template "/></a>{currentRole==='SUPER_ADMIN'&&<select className="select-field" aria-label={translateUi('School')} style={{width:180}} value={importOrganizationId} onChange={e=>setImportOrganizationId(e.target.value)}><option value=""><TranslatedText text="Select school"/></option>{organizations.map(org=><option key={org.id} value={org.id}>{org.name}</option>)}</select>}<label className="btn bulk-file"><Upload size={16}/><span><TranslatedText text={importFile?.name||'Choose import file'}/></span><input type="file" accept=".xlsx,.csv" onChange={e=>setImportFile(e.target.files?.[0]||null)}/></label><button className="btn btn-primary" disabled={importing||!importFile} onClick={()=>void importStudents()}><Upload size={16}/><TranslatedText text={importing?'Importing…':'Import'}/></button></>}
             <button className="btn" style={{ background:'rgba(255,255,255,0.06)', border:'1px solid var(--surface-border)', display:'flex', alignItems:'center', gap:6 }}
               onClick={exportCSV}>
               <Download size={16}/><TranslatedText text={" Export CSV "}/></button>

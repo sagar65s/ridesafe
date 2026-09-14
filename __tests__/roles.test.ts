@@ -17,14 +17,15 @@ describe('five-role access control', () => {
 
   test('transport coordinator has daily operations but no platform management', () => {
     expect(canAccessAdminTab('ADMIN', 'LIVETRIPS')).toBe(true)
-    expect(canAccessAdminTab('ADMIN', 'STUDENTS')).toBe(false)
+    expect(canAccessAdminTab('ADMIN', 'FLEET')).toBe(true)
+    expect(canAccessAdminTab('ADMIN', 'STUDENTS')).toBe(true)
     expect(canAccessAdminTab('ADMIN', 'ORGANIZATIONS')).toBe(false)
     expect(canAccessAdminTab('ADMIN', 'USERS')).toBe(false)
     expect(canAccessAdminTab('ADMIN', 'SETTINGS')).toBe(false)
   })
 
   test('super admin platform modules remain reachable', () => {
-    for (const tab of ['ORGANIZATIONS', 'SUPERUSERS', 'CALENDAR', 'AUDIT', 'SETTINGS']) {
+    for (const tab of ['ORGANIZATIONS', 'SUPERUSERS', 'CALENDAR', 'AUDIT', 'USERS', 'FLEET']) {
       expect(ADMIN_TAB_ACCESS.SUPER_ADMIN).toContain(tab)
     }
   })

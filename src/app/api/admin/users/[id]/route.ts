@@ -86,50 +86,51 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     if (password) {
-      if (password.length < 12) {
-        return NextResponse.json({ error: 'Password must be at least 12 characters' }, { status: 400 })
+      if (typeof password !== 'string' || password.length < 8 || Buffer.byteLength(password, 'utf8') > 72) {
+        return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
       }
       updates.password = await bcrypt.hash(password, 12)
     }
 
     if (isActive !== undefined) updates.isActive = Boolean(isActive)
-    if (personnelType !== undefined) {
+    const targetRole = role ?? existing.role
+    const targetOrganizationId = organizationId !== undefined ? (organizationId || null) : existing.organizationId
+    const isDriverAccount = targetRole === 'DRIVER'
+    if (isDriverAccount && personnelType !== undefined) {
       if (personnelType && !['DRIVER', 'MAINTAINER'].includes(personnelType)) return NextResponse.json({ error: 'Invalid personnel type' }, { status: 400 })
       updates.personnelType = personnelType || null
     }
-    if (licenseNumber !== undefined) updates.licenseNumber = licenseNumber?.trim() || null
+    if (isDriverAccount && licenseNumber !== undefined) updates.licenseNumber = licenseNumber?.trim() || null
     for (const [field,value] of [['licenseExpiry',licenseExpiry],['onboardingDate',onboardingDate],['offboardingDate',offboardingDate]] as const) {
-      if (value !== undefined) {
+      if (isDriverAccount && value !== undefined) {
         const parsed = value ? new Date(value) : null
         if (parsed && Number.isNaN(parsed.getTime())) return NextResponse.json({ error:`Invalid ${field}` }, { status:400 })
         updates[field] = parsed
       }
     }
-    if (offboardingReason !== undefined) updates.offboardingReason = offboardingReason?.trim() || null
-    if (employmentStatus !== undefined) {
+    if (isDriverAccount && offboardingReason !== undefined) updates.offboardingReason = offboardingReason?.trim() || null
+    if (isDriverAccount && employmentStatus !== undefined) {
       const valid = ['ACTIVE', 'INACTIVE', 'ONBOARDING', 'OFFBOARDING', 'OFFBOARDED']
       if (!valid.includes(employmentStatus)) return NextResponse.json({ error: 'Invalid employment status' }, { status: 400 })
       updates.employmentStatus = employmentStatus
       if (employmentStatus === 'OFFBOARDED') updates.isActive = false
     }
 
-    const targetRole = role ?? existing.role
-    const targetOrganizationId = organizationId !== undefined ? (organizationId || null) : existing.organizationId
-    if (targetRole !== 'SUPER_ADMIN' && !targetOrganizationId) return NextResponse.json({ error:'A school assignment is required for this role' }, { status:400 })
-    if (targetRole === 'SUPER_ADMIN') updates.organizationId = null
+    if (!targetOrganizationId && !(existing.role === 'SUPER_ADMIN' && targetRole === 'SUPER_ADMIN' && existing.organizationId === null)) return NextResponse.json({ error:'A school assignment is required for this role' }, { status:400 })
 
     if (id === auth.id && (isActive === false || employmentStatus === 'OFFBOARDED' || (role !== undefined && role !== existing.role))) return NextResponse.json({ error: 'You cannot deactivate or change your own role' }, { status: 400 })
-    if (targetRole !== existing.role || targetOrganizationId !== existing.organizationId || personnelType !== undefined && personnelType !== existing.personnelType) {
+    const personnelChanged = isDriverAccount && personnelType !== undefined && personnelType !== existing.personnelType
+    if (targetRole !== existing.role || targetOrganizationId !== existing.organizationId || personnelChanged) {
       const [buses, children, activeTrips] = await Promise.all([
         prisma.bus.count({ where: { ...crewWhere(id) } }),
         prisma.student.count({ where: { parentId: id } }),
-        prisma.trip.count({ where: { ...crewWhere(id), status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } } }),
+        prisma.trip.count({ where: { ...crewWhere(id), status: { in: ['DRIVER_STARTED_ROUTE','BUS_EN_ROUTE'] } } }),
       ])
       if (buses || children || activeTrips) return NextResponse.json({ error: 'Reassign linked buses, students and active trips before changing the school or role' }, { status: 409 })
     }
 
     const shouldOffboard = existing.role === 'DRIVER' && (employmentStatus === 'OFFBOARDED' || isActive === false)
-    if (shouldOffboard && await prisma.trip.count({ where: { ...crewWhere(id), status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } } })) return NextResponse.json({ error: 'Complete or cancel active trips before offboarding this driver' }, { status: 409 })
+    if (shouldOffboard && await prisma.trip.count({ where: { ...crewWhere(id), status: { in: ['DRIVER_STARTED_ROUTE','BUS_EN_ROUTE'] } } })) return NextResponse.json({ error: 'Complete or cancel active trips before offboarding this driver' }, { status: 409 })
     const user = await prisma.$transaction(async tx => {
       if (shouldOffboard) {
         const assignedBuses = await tx.bus.findMany({ where: { ...crewWhere(id) }, select: { id: true, routeId: true } })
@@ -179,7 +180,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: 'Only a Super Admin can deactivate this account' }, { status: 403 })
     }
 
-    if (existing.role === 'DRIVER' && await prisma.trip.count({ where: { ...crewWhere(id), status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } } })) return NextResponse.json({ error: 'Complete or cancel active trips before offboarding this driver' }, { status: 409 })
+    if (existing.role === 'DRIVER' && await prisma.trip.count({ where: { ...crewWhere(id), status: { in: ['DRIVER_STARTED_ROUTE','BUS_EN_ROUTE'] } } })) return NextResponse.json({ error: 'Complete or cancel active trips before offboarding this driver' }, { status: 409 })
 
     await prisma.$transaction(async tx => {
       if (existing.role === 'DRIVER') {

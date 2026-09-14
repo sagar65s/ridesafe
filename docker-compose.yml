@@ -63,6 +63,19 @@ services:
       ridesafe:
         condition: service_healthy
 
+  calendar-worker:
+    image: ridesafe-local:latest
+    profiles: [reminders]
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      APP_URL: http://ridesafe:3000
+    command: ["node", "scripts/calendar-worker.mjs"]
+    depends_on:
+      ridesafe:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   redis_data:

@@ -34,8 +34,6 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const permissionSession = await getUserFromSession()
-  if (permissionSession?.role === 'ADMIN') return NextResponse.json({ error: 'School Admin access required' }, { status: 403 })
     try {
         const auth = await getUserFromSession()
         if (!auth || !['ADMIN', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(auth.role)) {
@@ -50,6 +48,7 @@ export async function POST(request: Request) {
 
         const actor = await getCurrentUser()
         if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        if (auth.role !== 'SUPER_ADMIN' && organizationId && organizationId !== actor?.organizationId) return NextResponse.json({error:'Cannot manage another school'},{status:403})
         const resolvedOrganizationId = auth.role === 'SUPER_ADMIN' ? (organizationId || null) : actor.organizationId
         if (!resolvedOrganizationId) return NextResponse.json({ error: 'School assignment is required' }, { status: 400 })
         const organization = await prisma.organization.findUnique({ where: { id: resolvedOrganizationId }, select: { isActive: true } })

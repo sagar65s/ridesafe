@@ -1,0 +1,3 @@
+Date,Session,Route,Bus,Driver,Student,Student ID,Grade,Status,Time,Stop,Source,Recorded by,Changed from,Changed by,Reason,Day note
+26/08/2026,MORNING,Morning Route A,BUS-001,John Driver,Dave Student,STU-001,Grade 5,Picked Up,07:15,Stop 1,IMPORT,School Admin,,,,
+26/08/2026,PM,Morning Route A,BUS-001,John Driver,Dave Student,STU-001,Grade 5,Dropped Off,15:45,Stop 1,ADMIN_CORRECTION,School Admin,Picked Up,School Admin,Parent confirmed,

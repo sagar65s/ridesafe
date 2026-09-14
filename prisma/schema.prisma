@@ -28,6 +28,7 @@ model Organization {
   calendarImports AcademicCalendarImport[]
   transportIssues TransportIssue[]
   auditLogs       AuditLog[]
+  messages        Message[]
 }
 
 model User {
@@ -56,25 +57,30 @@ model User {
   offboardingReason  String?
   employmentStatus   String?       @default("ACTIVE") // ACTIVE, INACTIVE, ONBOARDING, OFFBOARDING, OFFBOARDED
 
-  maintainedBuses Bus[] @relation("MaintainerBus")
-  maintainedTrips Trip[] @relation("MaintainerTrips")
-  pushSubscriptions PushSubscription[]
-  parentStudents    Student[]                 @relation("ParentStudents")
-  trips             Trip[]                    @relation("DriverTrips")
-  emergencies       EmergencyAlert[]          @relation("DriverEmergencies")
-  buses             Bus[]                     @relation("DriverBus")
-  notifications     Notification[]
-  sentMessages      Message[]                 @relation("SentMessages")
-  receivedMessages  Message[]                 @relation("ReceivedMessages")
-  trackingSessions  TrackingSession[]
-  payments          Payment[]                 @relation("ParentPayments")
-  rideRatings       RideRating[]              @relation("ParentRatings")
-  lostFoundReports  LostFoundItem[]           @relation("LostFoundReports")
-  driverShifts      DriverShift[]             @relation("DriverShifts")
-  assignmentHistory DriverAssignmentHistory[] @relation("DriverAssignmentHistory")
-  submittedIssues   TransportIssue[]          @relation("IssueReporter")
-  auditLogs         AuditLog[]                @relation("AuditActor")
-  calendarImports   AcademicCalendarImport[]  @relation("CalendarImporter")
+  maintainedBuses             Bus[]                     @relation("MaintainerBus")
+  maintainedTrips             Trip[]                    @relation("MaintainerTrips")
+  pushSubscriptions           PushSubscription[]
+  parentStudents              Student[]                 @relation("ParentStudents")
+  trips                       Trip[]                    @relation("DriverTrips")
+  emergencies                 EmergencyAlert[]          @relation("DriverEmergencies")
+  buses                       Bus[]                     @relation("DriverBus")
+  notifications               Notification[]
+  sentMessages                Message[]                 @relation("SentMessages")
+  receivedMessages            Message[]                 @relation("ReceivedMessages")
+  messageThreads              Message[]                 @relation("MessageThreadUser")
+  hiddenTripHistory           TripHistoryDeletion[]
+  hiddenMessages              MessageDeletion[]
+  trackingSessions            TrackingSession[]
+  payments                    Payment[]                 @relation("ParentPayments")
+  rideRatings                 RideRating[]              @relation("ParentRatings")
+  lostFoundReports            LostFoundItem[]           @relation("LostFoundReports")
+  driverShifts                DriverShift[]             @relation("DriverShifts")
+  assignmentHistory           DriverAssignmentHistory[] @relation("DriverAssignmentHistory")
+  submittedIssues             TransportIssue[]          @relation("IssueReporter")
+  auditLogs                   AuditLog[]                @relation("AuditActor")
+  calendarImports             AcademicCalendarImport[]  @relation("CalendarImporter")
+  attendanceRequests          AttendanceRequest[]       @relation("AttendanceRequestParent")
+  confirmedAttendanceRequests AttendanceRequest[]       @relation("AttendanceRequestConfirmer")
 }
 
 model Student {
@@ -101,18 +107,19 @@ model Student {
   dropoffAddress     String?
   isActive           Boolean       @default(true)
 
-  parentId        String?
-  parent          User?            @relation("ParentStudents", fields: [parentId], references: [id])
-  routeId         String?
-  route           Route?           @relation(fields: [routeId], references: [id])
-  busId           String?
-  bus             Bus?             @relation(fields: [busId], references: [id])
-  pickupStopId    String?
-  pickupStop      Stop?            @relation("PickupStop", fields: [pickupStopId], references: [id])
-  dropoffStopId   String?
-  dropoffStop     Stop?            @relation("DropoffStop", fields: [dropoffStopId], references: [id])
-  attendances     Attendance[]
-  transportIssues TransportIssue[]
+  parentId           String?
+  parent             User?               @relation("ParentStudents", fields: [parentId], references: [id])
+  routeId            String?
+  route              Route?              @relation(fields: [routeId], references: [id])
+  busId              String?
+  bus                Bus?                @relation(fields: [busId], references: [id])
+  pickupStopId       String?
+  pickupStop         Stop?               @relation("PickupStop", fields: [pickupStopId], references: [id])
+  dropoffStopId      String?
+  dropoffStop        Stop?               @relation("DropoffStop", fields: [dropoffStopId], references: [id])
+  attendances        Attendance[]
+  attendanceRequests AttendanceRequest[]
+  transportIssues    TransportIssue[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -128,19 +135,42 @@ model SystemSetting {
 
 model Attendance {
   recordedById String?
-  dedupeKey String? @unique
-  id        String   @id @default(cuid())
-  tripId    String
-  studentId String
-  stopId    String?
-  action    String
-  latitude  Float?
-  longitude Float?
-  timestamp DateTime @default(now())
+  dedupeKey    String?  @unique
+  id           String   @id @default(cuid())
+  tripId       String
+  studentId    String
+  stopId       String?
+  action       String
+  latitude     Float?
+  longitude    Float?
+  gpsOverride  Boolean  @default(false)
+  gpsDistanceM Int?
+  timestamp    DateTime @default(now())
 
   trip    Trip    @relation(fields: [tripId], references: [id])
   student Student @relation(fields: [studentId], references: [id])
   stop    Stop?   @relation(fields: [stopId], references: [id])
+}
+
+model AttendanceRequest {
+  id            String    @id @default(cuid())
+  tripId        String
+  studentId     String
+  parentId      String
+  action        String    @default("PICKED_UP")
+  status        String    @default("PENDING")
+  requestedAt   DateTime  @default(now())
+  confirmedAt   DateTime?
+  confirmedById String?
+
+  trip        Trip    @relation(fields: [tripId], references: [id])
+  student     Student @relation(fields: [studentId], references: [id])
+  parent      User    @relation("AttendanceRequestParent", fields: [parentId], references: [id])
+  confirmedBy User?   @relation("AttendanceRequestConfirmer", fields: [confirmedById], references: [id])
+
+  @@unique([tripId, studentId, action])
+  @@index([parentId, status])
+  @@index([tripId, status])
 }
 
 model EmergencyAlert {
@@ -167,9 +197,9 @@ model Bus {
   organization       Organization? @relation(fields: [organizationId], references: [id])
 
   maintainerId String?
-  maintainer User? @relation("MaintainerBus", fields: [maintainerId], references: [id])
-  driverId String?
-  driver   User?   @relation("DriverBus", fields: [driverId], references: [id])
+  maintainer   User?   @relation("MaintainerBus", fields: [maintainerId], references: [id])
+  driverId     String?
+  driver       User?   @relation("DriverBus", fields: [driverId], references: [id])
 
   routeId String?
   route   Route?  @relation("RouteBuses", fields: [routeId], references: [id])
@@ -224,27 +254,44 @@ model Stop {
 }
 
 model Trip {
-  maintainerId String?
-  maintainer User? @relation("MaintainerTrips", fields: [maintainerId], references: [id])
-  id           String   @id @default(cuid())
-  routeId      String
-  driverId     String
-  busId        String?
-  status       String   @default("TRIP_CREATED")
-  date         DateTime @default(now())
-  delayMinutes Int      @default(0)
-  delayReason  String?
+  maintainerId     String?
+  maintainer       User?    @relation("MaintainerTrips", fields: [maintainerId], references: [id])
+  id               String   @id @default(cuid())
+  routeId          String
+  driverId         String
+  busId            String?
+  status           String   @default("TRIP_CREATED")
+  date             DateTime @default(now())
+  delayMinutes     Int      @default(0)
+  delayReason      String?
+  serviceType      String   @default("MORNING") // MORNING | PM | AFTER_SCHOOL
+  currentStopOrder Int      @default(0)
 
-  route       Route        @relation(fields: [routeId], references: [id])
-  driver      User         @relation("DriverTrips", fields: [driverId], references: [id])
-  bus         Bus?         @relation(fields: [busId], references: [id])
-  attendances Attendance[]
-  ratings     RideRating[]
+  route              Route               @relation(fields: [routeId], references: [id])
+  driver             User                @relation("DriverTrips", fields: [driverId], references: [id])
+  bus                Bus?                @relation(fields: [busId], references: [id])
+  attendances        Attendance[]
+  attendanceRequests AttendanceRequest[]
+  ratings            RideRating[]
+  historyDeletions   TripHistoryDeletion[]
+}
+
+model TripHistoryDeletion {
+  id        String   @id @default(cuid())
+  tripId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, userId])
+  @@index([userId, createdAt])
 }
 
 model Notification {
-  metadata String?
-  dedupeKey String? @unique
+  metadata  String?
+  dedupeKey String?  @unique
   id        String   @id @default(cuid())
   userId    String
   title     String
@@ -257,33 +304,53 @@ model Notification {
 }
 
 model Announcement {
-  deletedAt DateTime?
-  id             String   @id @default(cuid())
+  deletedAt      DateTime?
+  id             String    @id @default(cuid())
   title          String
   body           String
-  targetRole     String   @default("ALL")
-  type           String   @default("INFO")
-  sentCount      Int      @default(0)
+  targetRole     String    @default("ALL")
+  type           String    @default("INFO")
+  sentCount      Int       @default(0)
   createdBy      String?
   organizationId String?
   tripId         String?
   busId          String?
   routeId        String?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime  @default(now())
 }
 
 model Message {
-  senderDeletedAt DateTime?
+  senderDeletedAt    DateTime?
   recipientDeletedAt DateTime?
-  id          String   @id @default(cuid())
-  senderId    String
-  recipientId String
-  content     String
-  read        Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id                 String    @id @default(cuid())
+  senderId           String
+  recipientId        String
+  content            String
+  read               Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  organizationId     String?
+  threadUserId       String?
 
-  sender    User @relation("SentMessages", fields: [senderId], references: [id])
-  recipient User @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  sender       User          @relation("SentMessages", fields: [senderId], references: [id])
+  recipient    User          @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  threadUser   User?         @relation("MessageThreadUser", fields: [threadUserId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  deletions    MessageDeletion[]
+
+  @@index([organizationId, threadUserId, createdAt])
+}
+
+model MessageDeletion {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId, createdAt])
 }
 
 model TrackingSession {
@@ -304,6 +371,7 @@ model Payment {
   id             String    @id @default(cuid())
   parentId       String
   bukkuInvoiceId String?
+  checkoutUrl    String?
   amount         Float
   status         String    @default("PENDING")
   dueDate        DateTime?
@@ -472,12 +540,13 @@ model AuditLog {
 }
 
 model PushSubscription {
-  id String @id @default(cuid())
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  endpoint String @unique
-  p256dh String
-  auth String
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
   createdAt DateTime @default(now())
+
   @@index([userId])
 }

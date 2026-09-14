@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getUserFromSession } from '@/lib/auth'
 import { writeAuditLog } from '@/lib/audit'
-import { crewWhere } from '@/lib/transport'
+import { ACTIVE_TRIP_STATUSES, crewWhere, studentUsesBus } from '@/lib/transport'
 import { pushNotification } from '@/lib/notification-delivery'
 
 const TYPES = ['BUS_STARTED', 'BUS_DELAYED', 'ROUTE_DELAY', 'TRAFFIC', 'BREAKDOWN', 'EMERGENCY', 'OTHER']
@@ -20,10 +20,11 @@ export async function POST(request: NextRequest) {
   const { tripId, type, message } = await request.json().catch(() => ({}))
   if (!TYPES.includes(type)) return NextResponse.json({ error: 'Invalid broadcast type' }, { status: 400 })
   if (!message?.trim() || message.trim().length > 500) return NextResponse.json({ error: 'Message is required and must be under 500 characters' }, { status: 400 })
-  const trip = await prisma.trip.findFirst({ where: { id: tripId, ...crewWhere(session.id), status: { notIn: ['TRIP_COMPLETED', 'CANCELLED'] } }, include: { route: { select: { organizationId: true } }, bus: { select: { id: true } } } })
+  const trip = await prisma.trip.findFirst({ where: { id: tripId, ...crewWhere(session.id), status: { in: ACTIVE_TRIP_STATUSES } }, include: { route: { select: { organizationId: true } }, bus: { select: { id: true } } } })
   if (!trip) return NextResponse.json({ error: 'Active assigned trip not found' }, { status: 404 })
 
-  const students = await prisma.student.findMany({ where: { routeId: trip.routeId, isActive: true, isSelfPickup: false, parentId: { not: null }, busId: trip.busId }, select: { parentId: true } })
+  const assignedStudents = await prisma.student.findMany({ where: { routeId: trip.routeId, isActive: true, parentId: { not: null }, busId: trip.busId }, select: { parentId: true, isSelfPickup:true, selfPickupSession:true } })
+  const students = assignedStudents.filter(student=>studentUsesBus(student,trip.serviceType as 'MORNING'|'PM'|'AFTER_SCHOOL'))
   const parentIds = [...new Set(students.map(student => student.parentId).filter((id): id is string => Boolean(id)))]
   const management = await prisma.user.findMany({ where: { organizationId: trip.route.organizationId || '__none__', role: { in: ['SCHOOL_ADMIN', 'ADMIN'] }, isActive: true }, select: { id: true } })
   const recipients = [...new Set([...parentIds, ...management.map(user => user.id)])]

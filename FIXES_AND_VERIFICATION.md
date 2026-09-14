@@ -1,3 +1,9 @@
+# Latest original-theme update
+
+See UPDATE-NOTES.md for the current feature changes and reminder setup. Fresh standalone production build, Prisma validation, TypeScript and lint passed; 126 tests in 19 suites passed. The latest implementation also includes the live-map-driven 1–5 minute automatic parent horn, sequential stop progress, audited GPS exceptions, crew-only live map access, dual parent attendance confirmation, rebuilt Driver/Parent sidebars and highlighted calendar events. Docker engine, a real PostgreSQL/Redis deployment, Vercel and physical phone/provider delivery are not available in this workspace; Docker uses the same successful `npm run build` stage and applies the included additive migrations at startup. The earlier checks below describe previous releases and are retained as history.
+
+---
+
 # Complete-package repair — 10 September 2026
 
 The latest Docker log resolved the earlier CSV/shared modules but exposed more absent files: transport.ts, transport-copy.ts, ui.json, and notification-delivery.ts. This release includes the entire source tree, rather than another partial patch. The user's local checkout was not directly inspected, so the reason those files were absent there is not proven.
@@ -46,7 +52,7 @@ This workspace had no provisioned PostgreSQL/Redis server or production credenti
 
 No real bus/GPS hardware, parent's phone, Web Push account configuration, Billplz, Bukku or email provider was available. Their external delivery and physical-device behavior have not been certified. The source contains their integrations and setup steps; it does not contain live credentials.
 
-Custom background horn audio is limited by mobile browsers. Only the active, audio-enabled parent page schedules the three custom horn sounds. Push notifications use the device's normal notification behavior. ETAs are estimates, not an exact five-minute guarantee or proof that the driver physically stopped.
+Custom background horn audio is limited by mobile browsers. The active Parent page auto-arms audio after its first normal interaction and schedules three custom horn sounds only while live ETA remains within 1–5 minutes. Push notifications use the device's notification sound and three-pulse vibration. ETAs are estimates, not proof that the driver physically stopped.
 
 ## Deployment acceptance sequence
 
