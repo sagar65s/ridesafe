@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RideSafe — offline</title>
+<style>
+  :root { --bg:#08080A; --panel:#141417; --line:#26262C; --ink:#fff; --ink2:#A6A6B2; --signal:#FFD60A; }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; min-height:100dvh; background:var(--bg); color:var(--ink);
+    font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
+    display:grid; place-items:center; padding:24px; text-align:center;
+  }
+  .card { max-width:380px; display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .mark {
+    width:56px; height:56px; border-radius:16px; background:var(--signal);
+    display:grid; place-items:center; font-size:28px;
+  }
+  h1 { margin:0; font-size:22px; font-weight:700; letter-spacing:-0.02em; }
+  p { margin:0; color:var(--ink2); font-size:15px; line-height:1.6; }
+  .note {
+    margin-top:4px; padding:13px 15px; border-radius:11px;
+    background:var(--panel); border:1px solid var(--line);
+    font-size:13.5px; color:var(--ink2); text-align:left;
+  }
+  .note b { color:var(--ink); font-weight:600; }
+  button {
+    margin-top:4px; font:inherit; font-weight:700; font-size:14.5px;
+    padding:12px 24px; border-radius:10px; border:none; cursor:pointer;
+    background:var(--signal); color:#08080A;
+  }
+  button:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+  .status { font-size:12.5px; color:#6E6E7A; min-height:1.2em; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="mark" aria-hidden="true">🚌</div>
+    <h1>No connection</h1>
+    <p>RideSafe can&rsquo;t reach the server right now. This usually clears up on its own once you&rsquo;re back in coverage.</p>
+    <div class="note">
+      <b>Drivers:</b> any check-ins you recorded are saved on this device and will upload by themselves as soon as the signal returns. You don&rsquo;t need to do anything.
+    </div>
+    <button id="retry" type="button">Try again</button>
+    <div class="status" id="status" role="status"></div>
+  </div>
+<script>
+  var status = document.getElementById('status');
+  document.getElementById('retry').addEventListener('click', function () {
+    status.textContent = 'Checking…';
+    location.reload();
+  });
+  window.addEventListener('online', function () {
+    status.textContent = 'Back online — reconnecting…';
+    location.reload();
+  });
+  if (!navigator.onLine) status.textContent = 'Still offline.';
+</script>
+</body>
+</html>

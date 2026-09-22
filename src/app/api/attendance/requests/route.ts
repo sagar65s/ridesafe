@@ -7,6 +7,7 @@ import {
   studentUsesBus,
 } from "@/lib/transport";
 import { pushNotification } from "@/lib/notification-delivery";
+import {crewAttendanceFilter} from '@/lib/attendance-import-source'
 
 export const dynamic = "force-dynamic";
 const ACTIONS = ["PICKED_UP", "DROPPED_OFF"] as const;
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
       );
     }
     const existingAttendance = await prisma.attendance.findFirst({
-      where: { tripId: trip.id, studentId: student.id, action },
+      where: { tripId: trip.id, studentId: student.id, action, ...crewAttendanceFilter },
       select: { id: true, timestamp: true },
     });
     const now = new Date();

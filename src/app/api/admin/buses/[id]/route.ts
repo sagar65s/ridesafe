@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const actor = await getCurrentUser()
     if (!actor || !canAccessOrganization(actor, existing.organizationId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const { plateNumber, busNumber, registrationNumber, capacity, status, gpsStatus, driverId, maintainerId, routeId, wialonUnitId, katsanaVehicleId } = await req.json()
+    const { plateNumber, busNumber, registrationNumber, capacity, status, gpsStatus, driverId, maintainerId, routeId, katsanaVehicleId } = await req.json()
     const updates: Record<string, unknown> = {}
 
     if (plateNumber !== undefined) {
@@ -50,7 +50,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (driverId !== undefined) updates.driverId = driverId || null
     if (maintainerId !== undefined) updates.maintainerId = maintainerId || null
     if (routeId !== undefined) updates.routeId = routeId || null
-    if (wialonUnitId !== undefined) updates.wialonUnitId = wialonUnitId || null
     if (katsanaVehicleId !== undefined) updates.katsanaVehicleId = katsanaVehicleId || null
 
     if (driverId) {

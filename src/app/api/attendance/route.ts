@@ -2,6 +2,8 @@ import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { getUserFromSession } from "@/lib/auth";
 import { canAccessOrganization, getCurrentUser } from "@/lib/authorization";
+import {ARCHIVE_MIGRATION_ERROR,isArchiveTableMissing} from '@/lib/attendance-archive'
+import {isImportedAttendance,crewAttendanceFilter} from '@/lib/attendance-import-source'
 import {
   nextAttendanceAction,
   distanceKm,
@@ -43,7 +45,7 @@ export async function GET(request: NextRequest) {
     const requestedOrganizationId =
       searchParams.get("organizationId") || undefined;
     if (actor.role === "SUPER_ADMIN" && !requestedOrganizationId)
-      return NextResponse.json({ trips: [], date: dateParam });
+      return NextResponse.json({ trips: [], archived: [], date: dateParam });
     const organizationId =
       actor.role === "SUPER_ADMIN"
         ? requestedOrganizationId
@@ -55,7 +57,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 });
     }
 
-    const trips = await prisma.trip.findMany({
+    const selectedRoute = routeId ? await prisma.route.findFirst({where:{id:routeId,organizationId},select:{name:true}}) : null;
+    if(routeId&&!selectedRoute)return NextResponse.json({error:"Route not found in this school"},{status:404});
+    let archiveAvailable=true;
+    const [trips,archived] = await Promise.all([prisma.trip.findMany({
       where: {
         date: { gte: dayStart, lt: dayEnd },
         ...(routeId ? { routeId } : {}),
@@ -69,14 +74,22 @@ export async function GET(request: NextRequest) {
         attendances: {
           orderBy: { timestamp: "asc" },
           include: {
-            student: { select: { id: true, name: true, grade: true } },
+          student: { select: { id: true, name: true, grade: true, studentCode: true } },
           },
         },
         attendanceRequests: {
           select: { studentId: true, action: true, status: true, requestedAt: true },
         },
       },
-    });
+    }),prisma.attendanceImportRecord.findMany({
+      where:{organizationId,date:{gte:dayStart,lt:dayEnd},...(selectedRoute?{routeName:{equals:selectedRoute.name,mode:'insensitive' as const}}:{})},
+      orderBy:{createdAt:'desc'},take:5000,
+      select:{id:true,date:true,session:true,status:true,studentName:true,studentCode:true,matchedStudentId:true,routeName:true,busLabel:true,time:true,sourceFile:true},
+    }).catch(error=>{
+      if(!isArchiveTableMissing(error))throw error;
+      archiveAvailable=false;
+      return [];
+    })]);
 
     const routeIds = [...new Set(trips.map((t) => t.routeId))];
     const rosterByRoute = new Map<
@@ -85,6 +98,7 @@ export async function GET(request: NextRequest) {
         id: string;
         name: string;
         grade: string;
+        studentCode: string | null;
         busId: string | null;
         isSelfPickup: boolean;
         selfPickupSession: string | null;
@@ -97,6 +111,7 @@ export async function GET(request: NextRequest) {
           id: true,
           name: true,
           grade: true,
+          studentCode: true,
           routeId: true,
           busId: true,
           isSelfPickup: true,
@@ -110,6 +125,7 @@ export async function GET(request: NextRequest) {
           id: s.id,
           name: s.name,
           grade: s.grade,
+          studentCode: s.studentCode,
           busId: s.busId,
           isSelfPickup: s.isSelfPickup,
           selfPickupSession: s.selfPickupSession,
@@ -120,7 +136,10 @@ export async function GET(request: NextRequest) {
     const result = trips.map((t) => {
       // Latest attendance record per student (in case of duplicate taps)
       const latestByStudent = new Map<string, (typeof t.attendances)[number]>();
-      for (const a of t.attendances) latestByStudent.set(a.studentId, a);
+      for (const a of t.attendances) {
+        const previous=latestByStudent.get(a.studentId)
+        if(!previous||isImportedAttendance(previous)||!isImportedAttendance(a))latestByStudent.set(a.studentId,a)
+      }
 
       const roster = (rosterByRoute.get(t.routeId) || [])
         .filter(
@@ -137,11 +156,13 @@ export async function GET(request: NextRequest) {
           const parentDropoff = t.attendanceRequests.find((r) => r.studentId === s.id && r.action === "DROPPED_OFF");
           return {
             studentId: s.id,
+            studentCode: s.studentCode,
             name: s.name,
             grade: s.grade,
             status: a?.action || "NOT_MARKED",
             attendanceId: a?.id || null,
             timestamp: a?.timestamp || null,
+            source:a?isImportedAttendance(a)?'SCHOOL_IMPORT':'CREW_VERIFIED':'NOT_MARKED',
             parentPickupStatus: parentPickup?.status || "NOT_SUBMITTED",
             parentDropoffStatus: parentDropoff?.status || "NOT_SUBMITTED",
           };
@@ -151,11 +172,13 @@ export async function GET(request: NextRequest) {
         if (!roster.some((s) => s.studentId === studentId))
           roster.push({
             studentId,
+            studentCode: a.student.studentCode,
             name: a.student.name,
             grade: a.student.grade,
             status: a.action,
             attendanceId: a.id,
             timestamp: a.timestamp,
+            source:isImportedAttendance(a)?'SCHOOL_IMPORT':'CREW_VERIFIED',
             parentPickupStatus: t.attendanceRequests.find((r) => r.studentId === studentId && r.action === "PICKED_UP")?.status || "NOT_SUBMITTED",
             parentDropoffStatus: t.attendanceRequests.find((r) => r.studentId === studentId && r.action === "DROPPED_OFF")?.status || "NOT_SUBMITTED",
           });
@@ -164,6 +187,7 @@ export async function GET(request: NextRequest) {
       return {
         tripId: t.id,
         date: t.date,
+        serviceType: t.serviceType,
         status: t.status,
         routeId: t.route.id,
         routeName: t.route.name,
@@ -173,7 +197,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ trips: result, date: dateParam });
+    return NextResponse.json({ trips: result, archived, archiveAvailable,archiveError:archiveAvailable?null:ARCHIVE_MIGRATION_ERROR,date: dateParam },{headers:{'Cache-Control':'no-store'}});
   } catch (error) {
     console.error("Attendance GET Error:", error);
     return NextResponse.json(
@@ -237,7 +261,7 @@ export async function POST(request: NextRequest) {
       if (!["DRIVER_STARTED_ROUTE", "BUS_EN_ROUTE"].includes(trip.status))
         throw new AttendanceError("This trip is closed");
       const history = await tx.attendance.findMany({
-        where: { tripId: trip.id, studentId: student.id },
+        where: { tripId: trip.id, studentId: student.id, ...crewAttendanceFilter },
         orderBy: { timestamp: "asc" },
       });
       const previous = history.find((item) => item.action === data.action);

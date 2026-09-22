@@ -1,21 +1,36 @@
 {
-    "name": "RideSafe",
-    "short_name": "RideSafe",
-    "description": "Premium application for managing school bus pickups",
-    "start_url": "/",
-    "display": "standalone",
-    "background_color": "#111827",
-    "theme_color": "#FFD100",
-    "icons": [
-        {
-            "src": "/ridesafe-mark.svg",
-            "sizes": "any",
-            "type": "image/svg+xml"
-        },
-        {
-            "src": "/ridesafe-mark.svg",
-            "sizes": "any",
-            "type": "image/svg+xml"
-        }
-    ]
+  "id": "/",
+  "name": "RideSafe — School Transport",
+  "short_name": "RideSafe",
+  "description": "Live bus tracking, student boarding and drop-off confirmation, and instant alerts for parents, drivers and school administrators.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#08080A",
+  "theme_color": "#08080A",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["education", "navigation", "utilities"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Track the bus",
+      "short_name": "Track",
+      "description": "Open live tracking for your child's bus",
+      "url": "/parent",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Start trip",
+      "short_name": "Drive",
+      "description": "Open the driver app to start or continue a trip",
+      "url": "/driver",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
 }

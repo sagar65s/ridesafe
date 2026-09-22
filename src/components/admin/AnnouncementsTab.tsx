@@ -4,6 +4,7 @@ import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatRideSafeDateTime } from '@/lib/date-format'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 interface Announcement {
   id: string; title: string; body: string; targetRole: string; type: string
@@ -19,6 +20,8 @@ export default function AnnouncementsTab() {
   const [toast, setToast] = useState('')
   const [past, setPast] = useState<Announcement[]>([])
   const [loadingPast, setLoadingPast] = useState(true)
+  const [pendingDeleteId,setPendingDeleteId]=useState<string|null>(null)
+  const [deleting,setDeleting]=useState(false)
 
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 4000) }
 
@@ -44,6 +47,14 @@ export default function AnnouncementsTab() {
       } else showToast('' + data.error)
     } catch { showToast('Network error') }
     finally { setSending(false) }
+  }
+
+  const remove=async()=>{
+    if(!pendingDeleteId)return
+    setDeleting(true)
+    try{const response=await fetch('/api/announcements',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:pendingDeleteId})});const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.error||'Delete failed');setPast(items=>items.filter(item=>item.id!==pendingDeleteId));setPendingDeleteId(null);showToast('Announcement deleted')}
+    catch(error){showToast(error instanceof Error?error.message:'Delete failed')}
+    finally{setDeleting(false)}
   }
 
   const roles = [
@@ -133,7 +144,7 @@ export default function AnnouncementsTab() {
               return (
                 <div key={a.id} style={{ padding: '0.9rem 1.1rem', background: 'rgba(255,255,255,0.02)', borderRadius: 10, border: '1px solid var(--surface-border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                    <div style={{ fontWeight: 600 }} data-no-translate>{a.title}</div><button className="btn btn-danger" onClick={async()=>{ const r=await fetch('/api/announcements',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:a.id})}); if(r.ok)setPast(v=>v.filter(item=>item.id!==a.id)); else alert((await r.json()).error || 'Delete failed') }}><TranslatedText text={"Delete"}/></button>
+                    <div style={{ fontWeight: 600 }} data-no-translate>{a.title}</div><button className="btn btn-danger" onClick={()=>setPendingDeleteId(a.id)}><TranslatedText text={"Delete"}/></button>
                     <span className="badge" style={{ background: `${typeColor}22`, color: typeColor, fontSize: '0.68rem', flexShrink: 0 }}><TranslatedText text={a.type}/></span>
                   </div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: 4 }}>{a.body}</div>
@@ -145,6 +156,7 @@ export default function AnnouncementsTab() {
           </div>
         )}
       </div>
+      <ConfirmDialog open={Boolean(pendingDeleteId)} title="Delete announcement?" description="This announcement will be removed from the school's announcement history." confirmLabel="Delete announcement" busy={deleting} onCancel={()=>{if(!deleting)setPendingDeleteId(null)}} onConfirm={()=>void remove()}/>
     </motion.div>
   )
 }

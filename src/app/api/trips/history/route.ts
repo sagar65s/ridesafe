@@ -4,6 +4,7 @@ import { getUserFromSession } from '@/lib/auth'
 import { resolveUserOrganizationId } from '@/lib/authorization'
 import type { Prisma } from '@prisma/client'
 import { studentUsesBus } from '@/lib/transport'
+import {isImportedAttendance,crewAttendanceFilter} from '@/lib/attendance-import-source'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,8 +49,8 @@ export async function GET(req: NextRequest) {
           driver: { select: { name: true } },
           bus: { select: { busNumber: true, plateNumber: true } },
           attendances: {
-            ...(user.role === 'PARENT' ? { where: { studentId: { in: parentStudentIds } } } : {}),
-            select: { action: true, timestamp: true, student: { select: { id: true, name: true } } },
+            ...(user.role === 'PARENT' ? { where: { studentId: { in: parentStudentIds },...crewAttendanceFilter } } : {}),
+            select: { action: true, timestamp: true,dedupeKey:true, student: { select: { id: true, name: true } } },
           },
           attendanceRequests: {
             ...(user.role === 'PARENT' ? { where: { studentId: { in: parentStudentIds } } } : {}),
@@ -62,6 +63,8 @@ export async function GET(req: NextRequest) {
     ])
 
     const formatted = trips.map(t => {
+      const crew=t.attendances.filter(item=>!isImportedAttendance(item))
+      const imported=t.attendances.filter(isImportedAttendance)
       const relevantStudents = t.route.students.filter(student => student.busId === t.busId && studentUsesBus(student, t.serviceType as 'MORNING'|'PM'|'AFTER_SCHOOL') && (user.role !== 'PARENT' || parentStudentIds.includes(student.id)))
       const parentConfirmations = relevantStudents.flatMap(student => (['PICKED_UP','DROPPED_OFF'] as const).map(action => {
         const request = t.attendanceRequests.find(item => item.studentId === student.id && item.action === action)
@@ -73,11 +76,13 @@ export async function GET(req: NextRequest) {
       organization: t.route.organization,
       busNumber: t.bus?.busNumber || t.bus?.plateNumber || null,
       delayMinutes: t.delayMinutes, delayReason: t.delayReason,
-      attendanceCount: t.attendances.length,
-      pickedUp: t.attendances.filter(a => a.action === 'PICKED_UP').length,
-      droppedOff: t.attendances.filter(a => a.action === 'DROPPED_OFF').length,
-      absent: t.attendances.filter(a => a.action === 'ABSENT').length,
-      attendance: t.attendances.map(a => ({ studentId: a.student.id, studentName: a.student.name, action: a.action, timestamp: a.timestamp })),
+      attendanceCount: crew.length,
+      pickedUp: crew.filter(a => a.action === 'PICKED_UP').length,
+      droppedOff: crew.filter(a => a.action === 'DROPPED_OFF').length,
+      absent: crew.filter(a => a.action === 'ABSENT').length,
+      attendance: crew.map(a => ({ studentId: a.student.id, studentName: a.student.name, action: a.action, timestamp: a.timestamp })),
+      importedAttendanceCount: imported.length,
+      importedAttendance: imported.map(a=>({studentId:a.student.id,studentName:a.student.name,action:a.action,timestamp:a.timestamp})),
       parentConfirmations,
       avgRating: t.ratings.length > 0 ? (t.ratings.reduce((a, r) => a + r.rating, 0) / t.ratings.length).toFixed(1) : null,
     })})

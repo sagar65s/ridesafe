@@ -2,6 +2,7 @@
 import { useTranslation as useLocaleText } from "@/i18n/provider";
 import { TranslatedText } from "@/i18n/provider";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   Bell,
@@ -21,11 +22,13 @@ import {
   ExternalLink,
   LayoutDashboard,
   ClipboardCheck,
+  UserRound,
 } from "lucide-react";
 import { useTranslation } from "@/i18n/provider";
 import {
   api,
   Child,
+  Person,
   Notice,
   Tracking,
   useAccount,
@@ -36,9 +39,11 @@ import {
   NoticeBar,
   formatDate,
 } from "@/components/transport/shared";
+import ParentProfile from "@/components/transport/ParentProfile";
 import { transportMessage } from "@/lib/transport-copy";
 import CalendarCard from "@/components/CalendarCard";
 import ParentCalendar from "@/components/transport/ParentCalendar";
+import ConfirmDialog from "@/components/ConfirmDialog";
 const BusMap = dynamic(() => import("@/components/BusMap"), { ssr: false });
 const tabs = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -50,6 +55,7 @@ const tabs = [
   { id: "payments", label: "Payments", icon: CreditCard },
   { id: "alerts", label: "Alerts", icon: Bell },
   { id: "history", label: "History", icon: History },
+  { id: "profile", label: "Profile", icon: UserRound },
 ];
 type Message = {
   id: string;
@@ -99,6 +105,10 @@ export default function ParentDashboard() {
   const me = useAccount("PARENT"),
     { tx, locale } = useTranslation(),
     horn = useHorn();
+  const [profile, setProfile] = useState<Person | null>(null);
+  useEffect(() => { if (me) setProfile(me); }, [me]);
+  const router = useRouter();
+  useEffect(()=>{if(me && !me.profileCompleted)router.replace('/parent/onboarding')},[me,router]);
   const activity=useUnreadActivity();
   const [tab, setTab] = useState("dashboard"),
     [children, setChildren] = useState<Child[]>([]),
@@ -135,6 +145,7 @@ export default function ParentDashboard() {
     [pushEnabled, setPushEnabled] = useState(false);
   const [issue, setIssue] = useState({ subject: "", description: "" }),
     [arrival, setArrival] = useState("");
+  const [pendingDelete,setPendingDelete]=useState<{type:'NOTIFICATION'|'MESSAGE'|'HISTORY';id:string}|null>(null)
   const loading = useRef(false);
   const load = useCallback(async () => {
     if (!me || loading.current) return;
@@ -283,7 +294,7 @@ export default function ParentDashboard() {
       setPushEnabled(true);
     });
   return (
-    <Workspace me={me} title={translateUi("Parent workspace")}>
+    <Workspace me={profile || me} title={translateUi("Parent workspace")}>
       <NoticeBar message={error} retry={load} />
       <div className="portal-layout parent-portal">
         <nav
@@ -401,6 +412,7 @@ export default function ParentDashboard() {
               </div>
             </>
           )}
+          {tab === "profile" && (profile || me) && <ParentProfile account={(profile || me)!} onSaved={setProfile}/>} 
           {tab === "calendar" && <ParentCalendar />}
           {tab === "tracking" && (
             <div className="journey-grid">
@@ -782,7 +794,7 @@ export default function ParentDashboard() {
                       {tx("Mark read")}
                     </button>
                   )}
-                  <button className="icon-button" aria-label={tx("Delete")} onClick={() => { if (confirm(tx("Delete this item?"))) void run(async()=>{await api('/api/notifications',{id:n.id},'DELETE');setNotices(items=>items.filter(item=>item.id!==n.id))}) }}><Trash2 size={15}/></button>
+                  <button className="icon-button" aria-label={tx("Delete")} onClick={() => setPendingDelete({type:'NOTIFICATION',id:n.id})}><Trash2 size={15}/></button>
                 </article>
               ))}
             </section>
@@ -794,7 +806,7 @@ export default function ParentDashboard() {
               <div className="message-list">
                 {messages.map((m) => (
                   <div
-                    className={`message-bubble ${m.sender.id === me?.id ? "mine" : ""}`}
+                    className={`message-bubble ${m.sender.id === me?.id ? "mine" : !m.read ? "chat-new-message" : ""}`}
                     key={m.id}
                   >
                     <strong data-no-translate>{m.sender.name}</strong><small>{m.sender.role === 'SCHOOL_ADMIN' ? tx('School Admin reply') : m.sender.role === 'ADMIN' ? tx('Admin reply') : tx('You')}</small>
@@ -804,13 +816,7 @@ export default function ParentDashboard() {
                     <button
                       className="icon-button"
                       aria-label={tx("Delete")}
-                      onClick={() => {
-                        if (confirm(tx("Delete this item?")))
-                          void run(async () => {
-                            await api("/api/messages", { id: m.id }, "DELETE");
-                            setMessages(messages.filter((x) => x.id !== m.id));
-                          });
-                      }}
+                      onClick={() => setPendingDelete({type:'MESSAGE',id:m.id})}
                     >
                       <Trash2 size={15} />
                     </button>
@@ -983,7 +989,7 @@ export default function ParentDashboard() {
               {history.map((trip) => (
                 <article className="history-entry" key={trip.id}>
                   <h3 data-no-translate>{trip.routeName}</h3>
-                  <button className="history-delete" onClick={()=>void run(async()=>{await api('/api/trips/history',{id:trip.id},'DELETE');setHistory(items=>items.filter(item=>item.id!==trip.id))})}><Trash2 size={15}/>{tx('Delete from history')}</button>
+                  <button className="history-delete" onClick={()=>setPendingDelete({type:'HISTORY',id:trip.id})}><Trash2 size={15}/>{tx('Delete from history')}</button>
                   {trip.attendance.map((a, index) => (
                     <div className="attendance-history" key={index}>
                       <strong data-no-translate>{a.studentName}</strong>
@@ -1005,6 +1011,7 @@ export default function ParentDashboard() {
           )}
         </div>
       </div>
+      <ConfirmDialog open={Boolean(pendingDelete)} title={pendingDelete?.type==='MESSAGE'?'Delete message?':pendingDelete?.type==='NOTIFICATION'?'Delete notification?':'Remove trip from history?'} description={pendingDelete?.type==='HISTORY'?"This hides the trip from your history view; the school's transport record is preserved.":'This item will be permanently removed from your account view.'} confirmLabel={pendingDelete?.type==='HISTORY'?'Remove from history':'Delete'} busy={busy} onCancel={()=>{if(!busy)setPendingDelete(null)}} onConfirm={()=>{if(!pendingDelete)return;void run(async()=>{if(pendingDelete.type==='MESSAGE'){await api('/api/messages',{id:pendingDelete.id},'DELETE');setMessages(items=>items.filter(item=>item.id!==pendingDelete.id))}else if(pendingDelete.type==='NOTIFICATION'){await api('/api/notifications',{id:pendingDelete.id},'DELETE');setNotices(items=>items.filter(item=>item.id!==pendingDelete.id))}else{await api('/api/trips/history',{id:pendingDelete.id},'DELETE');setHistory(items=>items.filter(item=>item.id!==pendingDelete.id))}setPendingDelete(null)})}}/>
     </Workspace>
   );
 }

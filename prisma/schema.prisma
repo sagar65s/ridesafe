@@ -32,30 +32,37 @@ model Organization {
 }
 
 model User {
-  id                 String        @id @default(cuid())
-  name               String
-  email              String        @unique
-  password           String
-  role               String
-  phone              String?
-  organizationId     String?
-  organization       Organization? @relation(fields: [organizationId], references: [id])
-  lastLatitude       Float?
-  lastLongitude      Float?
-  lastLocationUpdate DateTime?
-  currentSpeedKmH    Float?        @default(30.0)
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-  deviceId           String?
-  locale             String?       @default("en")
-  isActive           Boolean       @default(true)
-  personnelType      String? // DRIVER or MAINTAINER (both use the DRIVER role)
-  licenseNumber      String?
-  licenseExpiry      DateTime?
-  onboardingDate     DateTime?
-  offboardingDate    DateTime?
-  offboardingReason  String?
-  employmentStatus   String?       @default("ACTIVE") // ACTIVE, INACTIVE, ONBOARDING, OFFBOARDING, OFFBOARDED
+  id                    String        @id @default(cuid())
+  name                  String
+  email                 String        @unique
+  password              String
+  role                  String
+  accessProfile         String? // SANDBOX uses the proven SUPER_ADMIN permission path internally
+  phone                 String?
+  address               String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  relationship          String?
+  photoUrl              String?
+  profileCompleted      Boolean       @default(false)
+  organizationId        String?
+  organization          Organization? @relation(fields: [organizationId], references: [id])
+  lastLatitude          Float?
+  lastLongitude         Float?
+  lastLocationUpdate    DateTime?
+  currentSpeedKmH       Float?        @default(30.0)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  deviceId              String?
+  locale                String?       @default("en")
+  isActive              Boolean       @default(true)
+  personnelType         String? // DRIVER or MAINTAINER (both use the DRIVER role)
+  licenseNumber         String?
+  licenseExpiry         DateTime?
+  onboardingDate        DateTime?
+  offboardingDate       DateTime?
+  offboardingReason     String?
+  employmentStatus      String?       @default("ACTIVE") // ACTIVE, INACTIVE, ONBOARDING, OFFBOARDING, OFFBOARDED
 
   maintainedBuses             Bus[]                     @relation("MaintainerBus")
   maintainedTrips             Trip[]                    @relation("MaintainerTrips")
@@ -152,6 +159,29 @@ model Attendance {
   stop    Stop?   @relation(fields: [stopId], references: [id])
 }
 
+// Uploaded historical rows without a recorded trip are kept separate from
+// crew-confirmed attendance; source names remain snapshots, not assignments.
+model AttendanceImportRecord {
+  id               String   @id @default(cuid())
+  organizationId   String
+  sourceKey        String
+  date             DateTime
+  session          String
+  status           String
+  studentName      String
+  studentCode      String?
+  matchedStudentId String?
+  routeName        String?
+  busLabel         String?
+  time             String?
+  sourceFile       String
+  importedById     String
+  createdAt        DateTime @default(now())
+
+  @@unique([organizationId, sourceKey])
+  @@index([organizationId, date])
+}
+
 model AttendanceRequest {
   id            String    @id @default(cuid())
   tripId        String
@@ -205,7 +235,6 @@ model Bus {
   route   Route?  @relation("RouteBuses", fields: [routeId], references: [id])
 
   qrToken          String?
-  wialonUnitId     String? // Wialon hardware tracker unit ID
   katsanaVehicleId String? // Katsana fleet tracker vehicle ID
 
   createdAt DateTime @default(now())
@@ -267,9 +296,9 @@ model Trip {
   serviceType      String   @default("MORNING") // MORNING | PM | AFTER_SCHOOL
   currentStopOrder Int      @default(0)
 
-  route              Route               @relation(fields: [routeId], references: [id])
-  driver             User                @relation("DriverTrips", fields: [driverId], references: [id])
-  bus                Bus?                @relation(fields: [busId], references: [id])
+  route              Route                 @relation(fields: [routeId], references: [id])
+  driver             User                  @relation("DriverTrips", fields: [driverId], references: [id])
+  bus                Bus?                  @relation(fields: [busId], references: [id])
   attendances        Attendance[]
   attendanceRequests AttendanceRequest[]
   ratings            RideRating[]
@@ -331,10 +360,10 @@ model Message {
   organizationId     String?
   threadUserId       String?
 
-  sender       User          @relation("SentMessages", fields: [senderId], references: [id])
-  recipient    User          @relation("ReceivedMessages", fields: [recipientId], references: [id])
-  threadUser   User?         @relation("MessageThreadUser", fields: [threadUserId], references: [id])
-  organization Organization? @relation(fields: [organizationId], references: [id])
+  sender       User              @relation("SentMessages", fields: [senderId], references: [id])
+  recipient    User              @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  threadUser   User?             @relation("MessageThreadUser", fields: [threadUserId], references: [id])
+  organization Organization?     @relation(fields: [organizationId], references: [id])
   deletions    MessageDeletion[]
 
   @@index([organizationId, threadUserId, createdAt])

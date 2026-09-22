@@ -1,20 +1,18 @@
 /**
  * TrackingService — GPS location orchestration.
  *
- * 3-source priority chain:
- *   1. Wialon  — dedicated GPS hardware tracker (most accurate)
- *   2. Katsana — Malaysian fleet GPS hardware tracker (second hardware option)
- *   3. Mobile  — driver's phone GPS broadcast (always available as fallback)
+ * Provider chain:
+ *   1. Katsana — the configured fleet GPS provider
+ *   2. Mobile  — driver's phone GPS broadcast fallback
  *
  * Architecture: Client App → RideSafe Backend → GPS Provider
- * Neither Wialon nor Katsana are called directly from the browser.
+ * Katsana is never called directly from the browser.
  */
 
-import { getWialonAdapter }  from '@/lib/wialon'
 import { getKatsanaAdapter } from '@/lib/adapters/katsana'
 import prisma from '../prisma'
 
-export type TrackingSource = 'WIALON' | 'KATSANA' | 'MOBILE'
+export type TrackingSource = 'KATSANA' | 'MOBILE'
 
 export interface LiveLocation {
   lat:       number
@@ -34,36 +32,11 @@ export class TrackingService {
     const bus = await prisma.bus.findUnique({
       where: { id: busId },
       select: {
-        wialonUnitId:     true,
         katsanaVehicleId: true,
-      } as any,
-    }) as any
+      },
+    })
 
-    // ── 1. Wialon ────────────────────────────────────────────────────────────
-    if (bus?.wialonUnitId) {
-      try {
-        const wialon = getWialonAdapter()
-        if (!wialon.isAuthenticated()) await wialon.authenticate()
-
-        const pos = await wialon.getUnitPosition(bus.wialonUnitId)
-        if (pos && Date.now() - pos.timestamp * 1000 <= 90000 && Date.now() - pos.timestamp * 1000 >= -30000) {
-          return {
-            lat:       pos.lat,
-            lng:       pos.lng,
-            speed_kmh: pos.speed,
-            heading:   pos.heading,
-            altitude:  pos.altitude,
-            ignition:  pos.ignition,
-            timestamp: new Date(pos.timestamp * 1000).toISOString(),
-            source:    'WIALON',
-          }
-        }
-      } catch (err) {
-        console.warn('[TrackingService] Wialon unavailable for bus', busId, (err as Error).message)
-      }
-    }
-
-    // ── 2. Katsana ───────────────────────────────────────────────────────────
+    // ── 1. Katsana ───────────────────────────────────────────────────────────
     if (bus?.katsanaVehicleId) {
       try {
         const katsana = getKatsanaAdapter()
@@ -87,7 +60,7 @@ export class TrackingService {
       }
     }
 
-    // ── 3. Mobile GPS fallback ───────────────────────────────────────────────
+    // ── 2. Mobile GPS fallback ───────────────────────────────────────────────
 
 
     const driver = await prisma.user.findUnique({

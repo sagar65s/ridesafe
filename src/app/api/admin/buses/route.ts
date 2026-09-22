@@ -40,7 +40,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { plateNumber, busNumber, registrationNumber, capacity, status, gpsStatus, driverId, maintainerId, routeId, wialonUnitId, katsanaVehicleId, organizationId } = await request.json()
+        const { plateNumber, busNumber, registrationNumber, capacity, status, gpsStatus, driverId, maintainerId, routeId, katsanaVehicleId, organizationId } = await request.json()
 
         if (!plateNumber || !capacity) {
             return NextResponse.json({ error: 'Plate number and capacity are required' }, { status: 400 })
@@ -81,11 +81,10 @@ export async function POST(request: Request) {
                 registrationNumber: registrationNumber?.trim() || null,
                 capacity: capacityValue,
                 status: status || 'ACTIVE',
-                gpsStatus: gpsStatus || ((wialonUnitId || katsanaVehicleId) ? 'CONFIGURED' : 'NOT_CONFIGURED'),
+                gpsStatus: gpsStatus || (katsanaVehicleId ? 'CONFIGURED' : 'NOT_CONFIGURED'),
                 driverId: driverId || null,
                 maintainerId: maintainerId || null,
                 routeId: routeId || null,
-                wialonUnitId: wialonUnitId || null,
                 katsanaVehicleId: katsanaVehicleId || null,
                 organizationId: resolvedOrganizationId,
             },

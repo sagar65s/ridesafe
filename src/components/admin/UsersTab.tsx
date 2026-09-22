@@ -5,12 +5,13 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle, AlertTriangle, UserPlus, Bus, AlertCircle, Pencil, Trash2 } from 'lucide-react'
 import { formatRideSafeDate } from '@/lib/date-format'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 interface User { id: string; name: string; email: string; role: string; phone?: string; buses?: { plateNumber: string }[]; organizationId?: string; isActive:boolean; personnelType?:string; licenseNumber?:string; licenseExpiry?:string; onboardingDate?:string; offboardingDate?:string; offboardingReason?:string; employmentStatus?:string; assignmentHistory?:{id:string;action:string;reason?:string;effectiveAt:string;bus?:{plateNumber:string};route?:{name:string}}[] }
 interface Org { id: string; name: string }
 
 const ROLE_COLORS: Record<string, string> = {
-  ADMIN: 'badge-danger', SUPER_ADMIN: 'badge-danger', SCHOOL_ADMIN: 'badge-warning',
+  ADMIN: 'badge-danger', SUPER_ADMIN: 'badge-danger', SANDBOX: 'badge-info', SCHOOL_ADMIN: 'badge-warning',
   DRIVER: 'badge-info', PARENT: 'badge-success'
 }
 
@@ -47,7 +48,7 @@ function Field({ label, error, children }: { label: string; error?: string; chil
   )
 }
 
-export default function UsersTab({ superAdminView = false, searchQuery = '' }: { superAdminView?: boolean; searchQuery?: string }) {
+export default function UsersTab({ superAdminView = false, searchQuery = '', currentRole = '' }: { superAdminView?: boolean; searchQuery?: string; currentRole?: string }) {
  const {tx:translateUi}=useLocaleText()
 
   const [users, setUsers] = useState<User[]>([])
@@ -68,6 +69,9 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
   const [orgs, setOrgs] = useState<Org[]>([])
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [pendingDeactivate,setPendingDeactivate]=useState<User|null>(null)
+  const creatableRoles = currentRole === 'SANDBOX' ? ['SCHOOL_ADMIN','ADMIN','DRIVER','PARENT'] : superAdminView ? ['SANDBOX','SUPER_ADMIN','SCHOOL_ADMIN','ADMIN','DRIVER','PARENT'] : ['ADMIN','DRIVER','PARENT']
+  const canManageUser = (user:User) => currentRole !== 'SANDBOX' || !['SUPER_ADMIN','SANDBOX'].includes(user.role)
 
   const loadUsers = () => {
     Promise.all([
@@ -97,7 +101,7 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
 
   const handleSave = async () => {
     const errs = validateForm(form, !!editingUser)
-    if (!form.organizationId && !(editingUser?.role === 'SUPER_ADMIN' && !editingUser.organizationId)) errs.organizationId = 'Select a school'
+    if (!form.organizationId && !['SUPER_ADMIN','SANDBOX'].includes(form.role)) errs.organizationId = 'Select a school'
     setFormErrors(errs)
     if (Object.keys(errs).length > 0) return
 
@@ -136,12 +140,12 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
   }
 
   const handleDelete = async (u: User) => {
-    if (!confirm(`Deactivate "${u.name}"? Historical transport records will be preserved.`)) return
     setDeletingId(u.id)
     try {
       const res = await fetch(`/api/admin/users/${u.id}`, { method: 'DELETE' })
       if (res.ok) {
         showToast('User deactivated; history preserved')
+        setPendingDeactivate(null)
         loadUsers()
       } else {
         const err = await res.json()
@@ -230,7 +234,7 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
         <div style={{ marginBottom: '1.25rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <select className="select-field" value={filterRole} onChange={e => setFilterRole(e.target.value)} style={{ width: 'auto', minWidth: 160 }}>
             <option value="ALL"><TranslatedText text={"All Roles"}/></option>
-            {['ADMIN', 'DRIVER', 'PARENT', 'SCHOOL_ADMIN'].map(r => <option key={r} value={r}><TranslatedText text={r}/></option>)}
+            {(superAdminView ? ['SANDBOX','SUPER_ADMIN','SCHOOL_ADMIN','ADMIN','DRIVER','PARENT'] : ['SCHOOL_ADMIN','ADMIN','DRIVER','PARENT']).map(r => <option key={r} value={r}><TranslatedText text={r.replaceAll('_',' ')}/></option>)}
           </select>
           {superAdminView && orgs.length > 0 && (
             <select className="select-field" value={filterOrg} onChange={e => setFilterOrg(e.target.value)} style={{ width: 'auto', minWidth: 180 }}>
@@ -243,9 +247,12 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
 
         {/* Role stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(100px,1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
-          {[['Admins', 'ADMIN', 'var(--danger)'], ['Drivers', 'DRIVER', 'var(--info)'], ['Parents', 'PARENT', 'var(--success)']].map(([label, role, color]) => (
+          {[
+            ['Sandbox','SANDBOX','var(--info)'],['Super Admins','SUPER_ADMIN','var(--danger)'],['School Admins','SCHOOL_ADMIN','var(--warning)'],
+            ['Admins','ADMIN','var(--danger)'],['Drivers','DRIVER','var(--info)'],['Parents','PARENT','var(--success)']
+          ].map(([label, role, color]) => (
             <div key={label} className="glass-panel" style={{ padding: '0.75rem 1rem', textAlign: 'center', borderLeft: `3px solid ${color}` }}>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: color as string }}>{users.filter(u => u.role.includes(role as string)).length}</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 800, color: color as string }}>{users.filter(u => u.role === role).length}</div>
               <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2, textTransform: 'uppercase' }}><TranslatedText text={label}/></div>
             </div>
           ))}
@@ -284,16 +291,16 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
                 {u.role === 'DRIVER' && <span className="badge badge-info"><TranslatedText text={u.personnelType || 'DRIVER'}/> · <TranslatedText text={u.employmentStatus || 'ACTIVE'}/></span>}
                 {u.role === 'DRIVER' && u.assignmentHistory?.[0] && <span className="badge badge-pending" title={u.assignmentHistory[0].reason || ''}><TranslatedText text={"Last: "}/><TranslatedText text={u.assignmentHistory[0].action}/> · {formatRideSafeDate(u.assignmentHistory[0].effectiveAt)}</span>}
                 <span className={`badge ${u.isActive ? (ROLE_COLORS[u.role] || 'badge-pending') : 'badge-pending'}`}><TranslatedText text={u.role.replaceAll('_', ' ')}/> · <TranslatedText text={u.isActive ? 'ACTIVE' : 'INACTIVE'}/></span>
-                <motion.button whileTap={{ scale: 0.92 }} onClick={() => openEditModal(u)}
+                {canManageUser(u)&&<motion.button whileTap={{ scale: 0.92 }} onClick={() => openEditModal(u)}
                   title={translateUi("Edit user")}
                   style={{ background: 'none', border: '1px solid var(--surface-border)', borderRadius: 8, padding: '4px 7px', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}>
                   <Pencil size={13} />
-                </motion.button>
-                <motion.button whileTap={{ scale: 0.92 }} onClick={() => handleDelete(u)}
+                </motion.button>}
+                {canManageUser(u)&&<motion.button whileTap={{ scale: 0.92 }} onClick={() => setPendingDeactivate(u)}
                   title={translateUi("Deactivate user")} disabled={deletingId === u.id || !u.isActive}
                   style={{ background: 'none', border: '1px solid rgba(255,69,58,0.3)', borderRadius: 8, padding: '4px 7px', cursor: 'pointer', color: 'var(--danger)', display: 'flex' }}>
                   <Trash2 size={13} />
-                </motion.button>
+                </motion.button>}
               </div>
             </motion.div>
           ))}
@@ -323,11 +330,7 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
 
                 <Field label="Role *">
                   <select className="select-field" value={form.role} onChange={e => setForm(p => ({ ...p, role: e.target.value }))}>
-                    <option value="DRIVER"><TranslatedText text={"Driver / Maintainer"}/></option>
-                    <option value="PARENT"><TranslatedText text={"Parent"}/></option>
-                    <option value="ADMIN"><TranslatedText text={"Admin"}/></option>
-                    {superAdminView && <option value="SCHOOL_ADMIN"><TranslatedText text={"School Admin"}/></option>}
-                    {superAdminView && <option value="SUPER_ADMIN"><TranslatedText text={"Super Admin"}/></option>}
+                    {creatableRoles.map(role=><option key={role} value={role}><TranslatedText text={role==='DRIVER'?'Driver / Maintainer':role==='SANDBOX'?'Sandbox Account':role.replaceAll('_',' ')}/></option>)}
                   </select>
                 </Field>
                 <label style={{display:'flex',alignItems:'center',gap:8,fontSize:13}}><input type="checkbox" checked={form.isActive} onChange={e=>setForm(p=>({...p,isActive:e.target.checked}))}/><TranslatedText text={" Account active"}/></label>
@@ -342,7 +345,7 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
                   <div style={{gridColumn:'1/-1'}}><Field label="Offboarding Reason"><textarea className="input-field" rows={2} maxLength={500} value={form.offboardingReason} onChange={e=>setForm(p=>({...p,offboardingReason:e.target.value}))}/></Field></div>
                 </>}
 
-                {<Field label="Organisation *" error={formErrors.organizationId}>
+                {!['SUPER_ADMIN','SANDBOX'].includes(form.role) && <Field label="Organisation *" error={formErrors.organizationId}>
                   <select className="select-field" value={form.organizationId} onChange={e => setForm(p => ({ ...p, organizationId: e.target.value }))}>
                     <option value=""><TranslatedText text={'Select a school'}/></option>
                     {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
@@ -422,6 +425,7 @@ export default function UsersTab({ superAdminView = false, searchQuery = '' }: {
           </motion.div>
         )}
       </AnimatePresence>
+      <ConfirmDialog open={Boolean(pendingDeactivate)} title="Deactivate user?" description="The account will be disabled while historical transport records remain available." confirmLabel="Deactivate user" busy={Boolean(deletingId)} onCancel={()=>{if(!deletingId)setPendingDeactivate(null)}} onConfirm={()=>{if(pendingDeactivate)void handleDelete(pendingDeactivate)}}/>
     </motion.div>
   )
 }

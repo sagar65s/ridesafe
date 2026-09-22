@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   description: 'Real-time transport management, attendance, and parent notifications — all in one place.',
   manifest: '/manifest.json',
   icons: {
-    icon: [{ url: '/ridesafe-mark.svg', type: 'image/svg+xml' }],
-    apple: '/ridesafe-mark.svg',
+    icon: [{ url: '/icon-192.png', type: 'image/png' }],
+    apple: '/apple-icon.png',
   },
 }
 

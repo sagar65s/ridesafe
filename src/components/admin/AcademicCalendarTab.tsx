@@ -15,10 +15,12 @@ import {
   Upload,
   FileSpreadsheet,
   Download,
+  RotateCcw,
 } from "lucide-react";
 import { formatRideSafeDate } from "@/lib/date-format";
 import {csvCell} from '@/lib/csv'
 import AcademicYearCalendar from "@/components/transport/AcademicYearCalendar";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface AcademicEvent {
   organizationId: string | null;
@@ -52,6 +54,7 @@ export default function AcademicCalendarTab({
   currentRole: string;
 }) {
   const { tx: translateUi } = useLocaleText();
+  const canSelectSchool = currentRole === "SUPER_ADMIN" || currentRole === "SANDBOX";
 
   const [events, setEvents] = useState<AcademicEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +79,12 @@ export default function AcademicCalendarTab({
   );
   const [importOrganizationId, setImportOrganizationId] = useState("");
   const [importing, setImporting] = useState(false);
+  const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetText, setResetText] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const [selectionReady, setSelectionReady] = useState(false);
 
   const showToast = (m: string, type: "success" | "error" = "success") => {
     setToast(m);
@@ -84,14 +93,14 @@ export default function AcademicCalendarTab({
   };
 
   const fetchEvents = useCallback(async () => {
-    if (currentRole === "SUPER_ADMIN" && !importOrganizationId) {
+    if (canSelectSchool && !importOrganizationId) {
       setEvents([]);
       setLoading(false);
       return;
     }
     try {
       const query =
-        currentRole === "SUPER_ADMIN"
+        canSelectSchool
           ? `?organizationId=${encodeURIComponent(importOrganizationId)}`
           : "";
       const res = await fetch(`/api/calendar${query}`);
@@ -102,29 +111,42 @@ export default function AcademicCalendarTab({
     } finally {
       setLoading(false);
     }
-  }, [currentRole, importOrganizationId]);
+  }, [canSelectSchool, importOrganizationId]);
 
+  useEffect(() => {
+    if (canSelectSchool) setImportOrganizationId(window.localStorage.getItem("ridesafe.global.organizationId") || window.localStorage.getItem("ridesafe.superAdmin.organizationId") || "");
+    setSelectionReady(true);
+  }, [canSelectSchool]);
+  useEffect(() => {
+    if (!selectionReady || !canSelectSchool) return;
+    if (importOrganizationId) window.localStorage.setItem("ridesafe.global.organizationId", importOrganizationId);
+    else window.localStorage.removeItem("ridesafe.global.organizationId");
+  }, [canSelectSchool, importOrganizationId, selectionReady]);
   useEffect(() => {
     fetch("/api/admin/organizations")
       .then((r) => (r.ok ? r.json() : { organizations: [] }))
-      .then((data) => setOrganizations(data.organizations || []))
+      .then((data) => {
+        const list = data.organizations || [];
+        setOrganizations(list);
+        if (canSelectSchool) setImportOrganizationId(value => value && list.some((org: Organization) => org.id === value) ? value : "");
+      })
       .catch(() => {});
-  }, []);
+  }, [canSelectSchool]);
   useEffect(() => {
     void fetchEvents();
-    if (currentRole === "SUPER_ADMIN" && !importOrganizationId) {
+    if (canSelectSchool && !importOrganizationId) {
       Promise.resolve().then(() => setImports([]));
       return;
     }
     const query =
-      currentRole === "SUPER_ADMIN"
+      canSelectSchool
         ? `?organizationId=${encodeURIComponent(importOrganizationId)}`
         : "";
     fetch(`/api/calendar/import${query}`)
       .then((r) => (r.ok ? r.json() : { imports: [] }))
       .then((data) => setImports(data.imports || []))
       .catch(() => setImports([]));
-  }, [currentRole, importOrganizationId, fetchEvents]);
+  }, [canSelectSchool, importOrganizationId, fetchEvents]);
 
   const handleImport = async () => {
     if (!importFile || !academicYear.trim())
@@ -132,7 +154,7 @@ export default function AcademicCalendarTab({
         "Choose an Excel or CSV file and enter the academic year",
         "error",
       );
-    if (currentRole === "SUPER_ADMIN" && !importOrganizationId)
+    if (canSelectSchool && !importOrganizationId)
       return showToast(
         "Select a school before importing the calendar",
         "error",
@@ -158,7 +180,7 @@ export default function AcademicCalendarTab({
       if (input) input.value = "";
       await fetchEvents();
       const query =
-        currentRole === "SUPER_ADMIN"
+        canSelectSchool
           ? `?organizationId=${encodeURIComponent(importOrganizationId)}`
           : "";
       const refreshed = await fetch(`/api/calendar/import${query}`).then((r) =>
@@ -184,7 +206,7 @@ export default function AcademicCalendarTab({
       showToast("Title and Start Date are required", "error");
       return;
     }
-    if (currentRole === "SUPER_ADMIN" && !importOrganizationId)
+    if (canSelectSchool && !importOrganizationId)
       return showToast("Select a school before adding an event", "error");
 
     const method = editingId ? "PATCH" : "POST";
@@ -226,20 +248,34 @@ export default function AcademicCalendarTab({
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this event?")) return;
-
+  const deleteEvent = async () => {
+    if (!deleteEventId) return;
+    setDeleting(true);
     try {
-      const res = await fetch(`/api/calendar/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/calendar/${deleteEventId}`, { method: "DELETE" });
       if (res.ok) {
         showToast("Event deleted", "success");
-        fetchEvents();
+        setDeleteEventId(null);
+        await fetchEvents();
       } else {
-        showToast("Failed to delete", "error");
+        showToast((await res.json().catch(() => ({}))).error || "Failed to delete", "error");
       }
     } catch {
       showToast("Network error", "error");
-    }
+    } finally { setDeleting(false); }
+  };
+
+  const selectedOrganization = organizations.find((org) => org.id === importOrganizationId);
+  const resetCalendar = async () => {
+    if (!selectedOrganization) return;
+    setResetting(true);
+    try {
+      const response = await fetch("/api/admin/data-reset", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scope: "ACADEMIC_CALENDAR", organizationId: importOrganizationId, confirmation: resetText }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Calendar reset failed");
+      setResetOpen(false); setResetText(""); setImports([]); showToast("Selected school calendar reset successfully"); await fetchEvents();
+    } catch (error) { showToast(error instanceof Error ? error.message : "Calendar reset failed", "error"); }
+    finally { setResetting(false); }
   };
 
   const handleEdit = (event: AcademicEvent) => {
@@ -363,7 +399,7 @@ export default function AcademicCalendarTab({
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
             className="btn btn-primary"
-            disabled={currentRole === "SUPER_ADMIN" && !importOrganizationId}
+            disabled={canSelectSchool && !importOrganizationId}
             onClick={() => {
               setEditingId(null);
               setForm({
@@ -382,6 +418,7 @@ export default function AcademicCalendarTab({
             <TranslatedText text={" Add Event "} />
           </motion.button>
           <button className="btn" disabled={!events.length} onClick={exportCalendar}><Download size={18}/><TranslatedText text=" Export Calendar "/></button>
+          {canSelectSchool && <button className="btn btn-danger" disabled={!selectedOrganization} onClick={() => { setResetText(""); setResetOpen(true); }}><RotateCcw size={18}/><TranslatedText text="Reset school calendar"/></button>}
         </div>
 
         <div
@@ -470,20 +507,20 @@ export default function AcademicCalendarTab({
               </label>
               <select
                 className="select-field"
-                disabled={currentRole !== "SUPER_ADMIN"}
+                disabled={!canSelectSchool}
                 value={importOrganizationId}
                 onChange={(e) => setImportOrganizationId(e.target.value)}
               >
                 <option value="">
                   <TranslatedText
                     text={
-                      currentRole === "SUPER_ADMIN"
+                      canSelectSchool
                         ? "Select school"
                         : "Your school"
                     }
                   />
                 </option>
-                {currentRole === "SUPER_ADMIN" &&
+                {canSelectSchool &&
                   organizations.map((org) => (
                     <option key={org.id} value={org.id}>
                       {org.name}
@@ -621,7 +658,7 @@ export default function AcademicCalendarTab({
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "0.5rem" }}>
-                  {(currentRole === "SUPER_ADMIN" || event.organizationId) && (
+                  {(canSelectSchool || event.organizationId) && (
                     <>
                       <button
                         onClick={() => handleEdit(event)}
@@ -637,7 +674,7 @@ export default function AcademicCalendarTab({
                         <Edit2 size={18} />
                       </button>
                       <button
-                        onClick={() => handleDelete(event.id)}
+                        onClick={() => setDeleteEventId(event.id)}
                         style={{
                           background: "none",
                           border: "none",
@@ -858,6 +895,8 @@ export default function AcademicCalendarTab({
           </motion.div>
         )}
       </AnimatePresence>
+      <ConfirmDialog open={Boolean(deleteEventId)} title="Delete academic event?" description="This event will be permanently removed from the selected school's calendar." confirmLabel="Delete event" busy={deleting} onCancel={() => { if (!deleting) setDeleteEventId(null); }} onConfirm={() => void deleteEvent()} />
+      <ConfirmDialog open={resetOpen} title="Reset school academic calendar?" description="This permanently removes every academic event and calendar import record for the selected school. Other schools are not affected." confirmLabel="Reset calendar" busy={resetting} expectedText={selectedOrganization?.name} typedText={resetText} onTypedTextChange={setResetText} onCancel={() => { if (!resetting) { setResetOpen(false); setResetText(""); } }} onConfirm={() => void resetCalendar()} />
     </motion.div>
   );
 }

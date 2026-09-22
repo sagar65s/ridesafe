@@ -14,6 +14,12 @@ export type Person = {
   role: string;
   organization?: { name: string };
   personnelType?: string;
+  profileCompleted?: boolean;
+  address?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  relationship?: string;
+  photoUrl?: string | null;
 };
 export type Stop = {
   id: string;
@@ -134,7 +140,7 @@ export function useUnreadActivity(){
   const load=useCallback(()=>api('/api/notifications').then(data=>setTypes((data.notifications||[]).filter((item:Notice)=>!item.read).map((item:Notice)=>item.type))).catch(()=>{}),[])
   useEffect(()=>{void load();const timer=window.setInterval(load,10000);return()=>window.clearInterval(timer)},[load])
   const has=useCallback((section:string)=>types.some(type=>activityMatches(section,type)),[types])
-  const clear=useCallback(async(section:string)=>{const selected=types.filter(type=>activityMatches(section,type));if(!selected.length)return;await api('/api/notifications',{markAll:true,types:[...new Set(selected)]},'PATCH').catch(()=>{});setTypes(items=>items.filter(type=>!selected.includes(type)))},[types])
+  const clear=useCallback(async(section:string)=>{const selected=types.filter(type=>activityMatches(section,type));if(!selected.length)return;if(section==='messages')return;await api('/api/notifications',{markAll:true,types:[...new Set(selected)]},'PATCH').catch(()=>{});setTypes(items=>items.filter(type=>!selected.includes(type)))},[types])
   return {has,clear,reload:load}
 }
 export function Workspace({
@@ -184,7 +190,10 @@ export function Workspace({
         <div className="transport-heading">
           <div>
             <p className="eyebrow">{tx(title)}</p>
-            <h1 data-no-translate>{me?.name || "RideSafe"}</h1>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              {me?.photoUrl&&<span role="img" aria-label={tx('Profile photo')} style={{width:48,height:48,borderRadius:'50%',backgroundImage:`url(${me.photoUrl})`,backgroundSize:'cover',backgroundPosition:'center',border:'2px solid #FFD60A',flexShrink:0}}/>}
+              <h1 data-no-translate>{me?.name || "RideSafe"}</h1>
+            </div>
           </div>
           <span className="date-label">
             {formatRideSafeDate(new Date())}

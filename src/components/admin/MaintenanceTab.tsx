@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Wrench, CircleDashed, ShieldAlert, Search, Settings, Trash2 } from 'lucide-react'
 import { formatRideSafeDate } from '@/lib/date-format'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 interface MaintenanceLog {
   id: string; busId: string; type: string; description: string; scheduledDate: string
@@ -27,6 +28,8 @@ export default function MaintenanceTab({ currentRole }: { currentRole: string })
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ busId: '', type: 'INSPECTION', description: '', scheduledDate: '', cost: '' })
   const [toast, setToast] = useState('')
+  const [pendingDeleteId,setPendingDeleteId]=useState<string|null>(null)
+  const [deleting,setDeleting]=useState(false)
 
   const showToast = (m: string) => { setToast(m); setTimeout(() => setToast(''), 3000) }
 
@@ -56,10 +59,11 @@ export default function MaintenanceTab({ currentRole }: { currentRole: string })
   }
 
   const remove = async (id: string) => {
-    if (!window.confirm(translateUi('Delete this maintenance log?'))) return
+    setDeleting(true)
     const response = await fetch('/api/maintenance', { method:'DELETE', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id}) })
-    if (response.ok) { setLogs(items => items.filter(item => item.id !== id)); showToast('Maintenance log deleted') }
+    if (response.ok) { setLogs(items => items.filter(item => item.id !== id));setPendingDeleteId(null);showToast('Maintenance log deleted') }
     else showToast((await response.json()).error || 'Delete failed')
+    setDeleting(false)
   }
 
   if (loading) return <div className="glass-panel" style={{ padding: '2rem' }}>{[1,2,3].map(i => <div key={i} className="skeleton" style={{ height: 50, marginBottom: 12, borderRadius: 10 }} />)}</div>
@@ -108,7 +112,7 @@ export default function MaintenanceTab({ currentRole }: { currentRole: string })
                   <motion.button whileTap={{ scale:0.9 }} className="btn" onClick={() => updateStatus(log.id, 'COMPLETED')}
                     style={{ padding:'0.4rem 0.7rem', fontSize:'0.75rem', background:'rgba(16,185,129,0.1)', color:'var(--success)', border:'1px solid var(--success)' }}><TranslatedText text={" Complete "}/></motion.button>
                 )}
-                <button className="btn btn-danger" aria-label={translateUi('Delete')} onClick={() => void remove(log.id)} style={{padding:'0.42rem'}}><Trash2 size={15}/></button>
+                <button className="btn btn-danger" aria-label={translateUi('Delete')} onClick={() => setPendingDeleteId(log.id)} style={{padding:'0.42rem'}}><Trash2 size={15}/></button>
               </div>
             </motion.div>
           ))}
@@ -141,6 +145,7 @@ export default function MaintenanceTab({ currentRole }: { currentRole: string })
           </motion.div>
         )}
       </AnimatePresence>
+      <ConfirmDialog open={Boolean(pendingDeleteId)} title="Delete maintenance log?" description="This maintenance record will be permanently removed." confirmLabel="Delete log" busy={deleting} onCancel={()=>{if(!deleting)setPendingDeleteId(null)}} onConfirm={()=>{if(pendingDeleteId)void remove(pendingDeleteId)}}/>
     </motion.div>
   )
 }

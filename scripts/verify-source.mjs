@@ -12,7 +12,14 @@ if (!existsSync(manifestPath)) {
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
 const strict = process.argv.includes('--strict')
 const errors = []
-const entries = Object.entries(manifest.files).filter(([name]) => strict || manifest.buildFiles.includes(name))
+// The production environment template is release documentation, not an input to
+// the application build. Keep checking it in strict release verification, while
+// allowing a user who has already copied/renamed it to `.env.production` to
+// rebuild the application safely.
+const releaseOnlyFiles = new Set(['.env.production.example'])
+const entries = Object.entries(manifest.files).filter(
+  ([name]) => strict || (manifest.buildFiles.includes(name) && !releaseOnlyFiles.has(name)),
+)
 for (const [name, expected] of entries) {
   const path = resolve(root, name)
   if (relative(root, path).startsWith('..') || name.includes('\\')) { errors.push(`Invalid manifest path: ${name}`); continue }

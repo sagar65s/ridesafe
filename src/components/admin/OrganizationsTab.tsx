@@ -19,6 +19,7 @@ import {
   ToggleRight,
 } from "lucide-react";
 import { formatRideSafeDate } from "@/lib/date-format";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface Org {
   id: string;
@@ -48,6 +49,7 @@ export default function OrganizationsTab({
   const [deleting, setDeleting] = useState<string | null>(null);
   const [toast, setToast] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [pendingDeactivate,setPendingDeactivate]=useState<Org|null>(null);
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast(msg);
@@ -166,12 +168,6 @@ export default function OrganizationsTab({
   };
 
   const handleDelete = async (org: Org) => {
-    if (
-      !confirm(
-        `Deactivate "${org.name}"? All historical data will be preserved.`,
-      )
-    )
-      return;
     setDeleting(org.id);
     try {
       const res = await fetch("/api/admin/organizations", {
@@ -181,6 +177,7 @@ export default function OrganizationsTab({
       });
       if (res.ok) {
         showToast("Organisation deactivated; history preserved");
+        setPendingDeactivate(null);
         load();
       } else {
         const e = await res.json();
@@ -441,7 +438,7 @@ export default function OrganizationsTab({
                   </motion.button>
                   <motion.button
                     whileTap={{ scale: 0.92 }}
-                    onClick={() => handleDelete(org)}
+                    onClick={() => setPendingDeactivate(org)}
                     title={translateUi("Deactivate organisation")}
                     disabled={deleting === org.id}
                     style={{
@@ -697,6 +694,7 @@ export default function OrganizationsTab({
           </motion.div>
         )}
       </AnimatePresence>
+      <ConfirmDialog open={Boolean(pendingDeactivate)} title="Deactivate organisation?" description="The organisation will be disabled. All users and historical transport data will be preserved." confirmLabel="Deactivate" busy={Boolean(deleting)} onCancel={()=>{if(!deleting)setPendingDeactivate(null)}} onConfirm={()=>{if(pendingDeactivate)void handleDelete(pendingDeactivate)}}/>
     </motion.div>
   );
 }

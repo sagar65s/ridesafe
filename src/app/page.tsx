@@ -53,12 +53,12 @@ export default function LoginPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Login failed')
       const role = data.user.role
-      if (role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'SCHOOL_ADMIN') {
+      if (role === 'ADMIN' || role === 'SUPER_ADMIN' || role === 'SANDBOX' || role === 'SCHOOL_ADMIN') {
         router.push('/admin')
       } else if (role === 'DRIVER') {
         router.push('/driver')
       } else if (role === 'PARENT') {
-        router.push('/parent')
+        router.push(data.user.profileCompleted ? '/parent' : '/parent/onboarding')
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')

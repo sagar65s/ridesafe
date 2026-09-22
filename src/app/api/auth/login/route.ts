@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 import { signToken } from '@/lib/auth'
 import { cookies } from 'next/headers'
 import { loginSchema, validateBody } from '@/lib/validation'
-import { isUserRole } from '@/lib/roles'
+import { isUserRole, toEffectiveRole } from '@/lib/roles'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,12 +50,14 @@ export async function POST(req: NextRequest) {
       path: '/'
     })
 
+    const effectiveRole = toEffectiveRole(user.role, user.accessProfile)
     return NextResponse.json({
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: effectiveRole,
+        profileCompleted: user.role !== 'PARENT' || user.profileCompleted,
       }
     })
   } catch (error) {

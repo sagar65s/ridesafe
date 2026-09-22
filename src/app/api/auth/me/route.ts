@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromSession, clearSession } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { toEffectiveRole } from '@/lib/roles'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,7 +38,10 @@ export async function GET() {
   const user = await prisma.user.findUnique({
     where: { id: session.id },
     select: {
-      id: true, name: true, email: true, role: true, phone: true,
+      id: true, name: true, email: true, role: true, accessProfile: true, phone: true,
+      address: true, emergencyContactName: true, emergencyContactPhone: true,
+      relationship: true, profileCompleted: true,
+      photoUrl: true,
       organizationId: true, locale: true, isActive: true, personnelType: true,
       licenseNumber: true, licenseExpiry: true, onboardingDate: true,
       offboardingDate: true, offboardingReason: true, employmentStatus: true,
@@ -47,5 +51,5 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
-  return NextResponse.json({ user })
+  return NextResponse.json({ user: { ...user, role: toEffectiveRole(user.role, user.accessProfile) } })
 }

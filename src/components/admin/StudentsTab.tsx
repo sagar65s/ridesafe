@@ -8,6 +8,7 @@ import { CheckCircle, AlertTriangle, UserPlus, Bus, Check, X, Download, Upload, 
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { formatRideSafeDateTime } from '@/lib/date-format'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 interface Student {
   id: string; name: string; grade: string; level: string;
@@ -66,6 +67,7 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
   const [buses, setBuses] = useState<FleetBus[]>([])
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [currentRole, setCurrentRole] = useState('')
+  const canSelectSchool = currentRole === 'SUPER_ADMIN' || currentRole === 'SANDBOX'
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState(defaultForm)
@@ -75,9 +77,11 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
   const [toastType, setToastType] = useState<'success'|'error'>('success')
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [pendingDelete,setPendingDelete]=useState<Student|null>(null)
   const [importFile,setImportFile]=useState<File|null>(null)
   const [importOrganizationId,setImportOrganizationId]=useState('')
   const [importing,setImporting]=useState(false)
+  const [importIssues,setImportIssues]=useState<{row:number;error:string}[]>([])
 
   const loadStudents = () => {
     Promise.all([
@@ -127,7 +131,7 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
 
   const handleSave = async () => {
     const errs = validateStudentForm(form)
-    if (currentRole === 'SUPER_ADMIN' && !form.organizationId) errs.organizationId = 'Select a school'
+    if (canSelectSchool && !form.organizationId) errs.organizationId = 'Select a school'
     setFormErrors(errs)
     if (Object.keys(errs).length > 0) return
     setSaving(true)
@@ -176,14 +180,13 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
   }
 
   const handleDelete = async (s: Student) => {
-    if (!confirm(`Deactivate "${s.name}"? Existing attendance and trip history will be preserved.`)) return
     setDeletingId(s.id)
     try {
       const res = await fetch(`/api/students/${s.id}`, { method: 'DELETE' })
       if (res.ok) {
-        showToast('Student deactivated; history preserved', 'success'); loadStudents()
+        showToast('Student permanently deleted', 'success');setPendingDelete(null);loadStudents()
       } else {
-        const e = await res.json(); showToast(e.error || 'Failed to deactivate student', 'error')
+        const e = await res.json(); showToast(e.error || 'Failed to delete student', 'error')
       }
     } catch { showToast('Network error', 'error') } finally {
       setDeletingId(null)
@@ -229,9 +232,9 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
   }
   const importStudents=async()=>{
     if(!importFile)return showToast('Choose an Excel or CSV student file','error')
-    if(currentRole==='SUPER_ADMIN'&&!importOrganizationId)return showToast('Select a school before importing students','error')
+    if(canSelectSchool&&!importOrganizationId)return showToast('Select a school before importing students','error')
     const body=new FormData();body.append('file',importFile);body.append('organizationId',importOrganizationId);setImporting(true)
-    try{const response=await fetch('/api/students/import',{method:'POST',body}),result=await response.json();if(!response.ok)throw new Error(result.error||'Student import failed');showToast(`${result.created} students imported; ${result.skipped} rows skipped`);setImportFile(null);loadStudents()}
+    try{const response=await fetch('/api/students/import',{method:'POST',body}),result=await response.json();if(!response.ok)throw new Error(result.error||'Student import failed');setImportIssues([...(result.errors||[]),...(result.warnings||[])]);showToast(`${result.created} students added; ${result.updated||0} updated; ${result.skipped} rows skipped; ${(result.warnings||[]).length} assignment warnings`,result.created||result.updated?'success':'error');setImportFile(null);loadStudents()}
     catch(error){showToast(error instanceof Error?error.message:'Student import failed','error')}finally{setImporting(false)}
   }
 
@@ -283,7 +286,7 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
             <div style={{ fontSize:'0.85rem', color:'var(--text-muted)', marginTop:4 }}>{students.length}<TranslatedText text={" students enrolled"}/></div>
           </div>
           <div style={{ display:'flex', gap:'0.75rem', flexWrap:'wrap' }}>
-            {['SUPER_ADMIN','SCHOOL_ADMIN'].includes(currentRole)&&<><a className="btn" href="/templates/students-import.xlsx" download><Download size={16}/><TranslatedText text=" Excel Template "/></a><a className="btn" href="/templates/students-import.csv" download><Download size={16}/><TranslatedText text=" CSV Template "/></a>{currentRole==='SUPER_ADMIN'&&<select className="select-field" aria-label={translateUi('School')} style={{width:180}} value={importOrganizationId} onChange={e=>setImportOrganizationId(e.target.value)}><option value=""><TranslatedText text="Select school"/></option>{organizations.map(org=><option key={org.id} value={org.id}>{org.name}</option>)}</select>}<label className="btn bulk-file"><Upload size={16}/><span><TranslatedText text={importFile?.name||'Choose import file'}/></span><input type="file" accept=".xlsx,.csv" onChange={e=>setImportFile(e.target.files?.[0]||null)}/></label><button className="btn btn-primary" disabled={importing||!importFile} onClick={()=>void importStudents()}><Upload size={16}/><TranslatedText text={importing?'Importing…':'Import'}/></button></>}
+            {['SUPER_ADMIN','SANDBOX','SCHOOL_ADMIN'].includes(currentRole)&&<><a className="btn" href="/templates/students-import.xlsx" download><Download size={16}/><TranslatedText text=" Excel Template "/></a><a className="btn" href="/templates/students-import.csv" download><Download size={16}/><TranslatedText text=" CSV Template "/></a>{canSelectSchool&&<select className="select-field" aria-label={translateUi('School')} style={{width:180}} value={importOrganizationId} onChange={e=>setImportOrganizationId(e.target.value)}><option value=""><TranslatedText text="Select school"/></option>{organizations.map(org=><option key={org.id} value={org.id}>{org.name}</option>)}</select>}<label className="btn bulk-file"><Upload size={16}/><span><TranslatedText text={importFile?.name||'Choose import file'}/></span><input type="file" accept=".xlsx,.csv" onChange={e=>setImportFile(e.target.files?.[0]||null)}/></label><button className="btn btn-primary" disabled={importing||!importFile||(canSelectSchool&&!importOrganizationId)} onClick={()=>void importStudents()}><Upload size={16}/><TranslatedText text={importing?'Importing…':'Import'}/></button></>}
             <button className="btn" style={{ background:'rgba(255,255,255,0.06)', border:'1px solid var(--surface-border)', display:'flex', alignItems:'center', gap:6 }}
               onClick={exportCSV}>
               <Download size={16}/><TranslatedText text={" Export CSV "}/></button>
@@ -295,6 +298,8 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
               <Plus size={16}/><TranslatedText text={" Add Student "}/></motion.button>
           </div>
         </div>
+
+        {importIssues.length>0&&<div className="import-issues" role="status"><strong>{translateUi('Rows needing attention')}</strong><ul>{importIssues.map(item=><li key={item.row}>{translateUi('Row')} {item.row}: {translateUi(item.error)}</li>)}</ul></div>}
 
         {/* Students list */}
         <div style={{ display:'grid', gap:'0.75rem' }}>
@@ -340,7 +345,7 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
                   style={{ background:'none', border:'1px solid var(--surface-border)', borderRadius:8, padding:'4px 7px', cursor:'pointer', color:'var(--text-muted)', display:'flex' }}>
                   <Pencil size={13} />
                 </motion.button>
-                <motion.button whileTap={{ scale:0.92 }} onClick={() => handleDelete(s)}
+                <motion.button whileTap={{ scale:0.92 }} onClick={() => setPendingDelete(s)}
                   title={translateUi("Deactivate student")} disabled={deletingId === s.id || !s.isActive}
                   style={{ background:'none', border:'1px solid rgba(255,69,58,0.3)', borderRadius:8, padding:'4px 7px', cursor:'pointer', color:'var(--danger)', display:'flex' }}>
                   <Trash2 size={13} />
@@ -368,7 +373,7 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
               </div>
 
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem' }}>
-                {currentRole === 'SUPER_ADMIN' && (
+                {canSelectSchool && (
                   <div className="input-group" style={{ gridColumn:'1/-1' }}>
                     <label className="input-label"><TranslatedText text={"School *"}/></label>
                     <select className="select-field" value={form.organizationId} onChange={e => setForm(p => ({...p, organizationId:e.target.value, routeId:'', busId:'', parentId:'', pickupStopId:'', dropoffStopId:''}))}>
@@ -501,6 +506,7 @@ export default function StudentsTab({ searchQuery = '' }: { searchQuery?: string
           </motion.div>
         )}
       </AnimatePresence>
+      <ConfirmDialog open={Boolean(pendingDelete)} title="Permanently delete student?" description="This cannot be undone. Students with attendance, parent confirmations, or transport issue history cannot be deleted." confirmLabel="Delete student" busy={Boolean(deletingId)} onCancel={()=>{if(!deletingId)setPendingDelete(null)}} onConfirm={()=>{if(pendingDelete)void handleDelete(pendingDelete)}}/>
     </motion.div>
   )
 }

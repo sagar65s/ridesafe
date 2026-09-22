@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma'
 import { getUserFromSession } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
 import { canAccessOrganization, getCurrentUser } from '@/lib/authorization'
-import { canCreateRole, isUserRole } from '@/lib/roles'
+import { canCreateRole, isUserRole, toEffectiveRole, toStoredRole } from '@/lib/roles'
 import { crewWhere } from '@/lib/transport'
 import { writeAuditLog } from '@/lib/audit'
 
@@ -23,7 +23,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
     const actor = await getCurrentUser()
     if (!actor || !canAccessOrganization(actor, existing.organizationId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    if (auth.role !== 'SUPER_ADMIN' && ['SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(existing.role)) {
+    const actorAccount = auth.role === 'SUPER_ADMIN' ? await prisma.user.findUnique({ where: { id: auth.id }, select: { role: true, accessProfile: true } }) : null
+    const actorRole = toEffectiveRole(actorAccount?.role || auth.role, actorAccount?.accessProfile)
+    const existingEffectiveRole = toEffectiveRole(existing.role, existing.accessProfile)
+    if (actorRole === 'SANDBOX' && ['SUPER_ADMIN', 'SANDBOX'].includes(existingEffectiveRole)) return NextResponse.json({ error: 'Sandbox accounts cannot manage global accounts' }, { status: 403 })
+    if (actorRole !== 'SUPER_ADMIN' && actorRole !== 'SANDBOX' && ['SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(existing.role)) {
       return NextResponse.json({ error: 'Only a Super Admin can manage School Admin accounts' }, { status: 403 })
     }
 
@@ -66,10 +70,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (!isUserRole(role)) {
         return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
       }
-      if (!canCreateRole(auth.role, role)) {
+      if (!isUserRole(actorRole) || !canCreateRole(actorRole, role)) {
         return NextResponse.json({ error: 'You cannot assign this role' }, { status: 403 })
       }
-      updates.role = role
+      updates.role = toStoredRole(role)
+      updates.accessProfile = role === 'SANDBOX' ? 'SANDBOX' : null
     }
 
     if (organizationId !== undefined) {
@@ -93,8 +98,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     if (isActive !== undefined) updates.isActive = Boolean(isActive)
-    const targetRole = role ?? existing.role
-    const targetOrganizationId = organizationId !== undefined ? (organizationId || null) : existing.organizationId
+    const targetRole = role ?? existingEffectiveRole
+    const globalRole = targetRole === 'SUPER_ADMIN' || targetRole === 'SANDBOX'
+    const targetOrganizationId = globalRole ? null : organizationId !== undefined ? (organizationId || null) : existing.organizationId
+    if (globalRole) updates.organizationId = null
     const isDriverAccount = targetRole === 'DRIVER'
     if (isDriverAccount && personnelType !== undefined) {
       if (personnelType && !['DRIVER', 'MAINTAINER'].includes(personnelType)) return NextResponse.json({ error: 'Invalid personnel type' }, { status: 400 })
@@ -116,11 +123,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (employmentStatus === 'OFFBOARDED') updates.isActive = false
     }
 
-    if (!targetOrganizationId && !(existing.role === 'SUPER_ADMIN' && targetRole === 'SUPER_ADMIN' && existing.organizationId === null)) return NextResponse.json({ error:'A school assignment is required for this role' }, { status:400 })
+    if (!targetOrganizationId && !globalRole) return NextResponse.json({ error:'A school assignment is required for this role' }, { status:400 })
 
-    if (id === auth.id && (isActive === false || employmentStatus === 'OFFBOARDED' || (role !== undefined && role !== existing.role))) return NextResponse.json({ error: 'You cannot deactivate or change your own role' }, { status: 400 })
+    if (id === auth.id && (isActive === false || employmentStatus === 'OFFBOARDED' || (role !== undefined && role !== existingEffectiveRole))) return NextResponse.json({ error: 'You cannot deactivate or change your own role' }, { status: 400 })
     const personnelChanged = isDriverAccount && personnelType !== undefined && personnelType !== existing.personnelType
-    if (targetRole !== existing.role || targetOrganizationId !== existing.organizationId || personnelChanged) {
+    if (targetRole !== existingEffectiveRole || targetOrganizationId !== existing.organizationId || personnelChanged) {
       const [buses, children, activeTrips] = await Promise.all([
         prisma.bus.count({ where: { ...crewWhere(id) } }),
         prisma.student.count({ where: { parentId: id } }),
@@ -143,7 +150,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return tx.user.update({
         where: { id }, data: updates,
         select: {
-          id: true, name: true, email: true, role: true, phone: true, organizationId: true,
+          id: true, name: true, email: true, role: true, accessProfile: true, phone: true, organizationId: true,
           isActive: true, personnelType: true, licenseNumber: true, licenseExpiry: true,
           onboardingDate: true, offboardingDate: true, offboardingReason: true, employmentStatus: true,
         },
@@ -151,7 +158,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     })
     await writeAuditLog({ actorId: auth.id, organizationId: user.organizationId, action: shouldOffboard ? 'OFFBOARD' : 'UPDATE', entityType: 'USER', entityId: user.id, details: { role: user.role, isActive: user.isActive, employmentStatus: user.employmentStatus } })
 
-    return NextResponse.json({ user })
+    return NextResponse.json({ user: { ...user, role: toEffectiveRole(user.role, user.accessProfile) } })
   } catch (error) {
     console.error('User update error:', error)
     return NextResponse.json({ error: 'Failed to update user' }, { status: 500 })
@@ -176,7 +183,11 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
     const actor = await getCurrentUser()
     if (!actor || !canAccessOrganization(actor, existing.organizationId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    if (auth.role !== 'SUPER_ADMIN' && ['SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(existing.role)) {
+    const actorAccount = auth.role === 'SUPER_ADMIN' ? await prisma.user.findUnique({ where: { id: auth.id }, select: { role: true, accessProfile: true } }) : null
+    const actorRole = toEffectiveRole(actorAccount?.role || auth.role, actorAccount?.accessProfile)
+    const existingEffectiveRole = toEffectiveRole(existing.role, existing.accessProfile)
+    if (actorRole === 'SANDBOX' && ['SUPER_ADMIN', 'SANDBOX'].includes(existingEffectiveRole)) return NextResponse.json({ error: 'Sandbox accounts cannot deactivate global accounts' }, { status: 403 })
+    if (actorRole !== 'SUPER_ADMIN' && actorRole !== 'SANDBOX' && ['SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(existing.role)) {
       return NextResponse.json({ error: 'Only a Super Admin can deactivate this account' }, { status: 403 })
     }
 

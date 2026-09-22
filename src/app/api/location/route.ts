@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: validation.error }, { status: 400 });
   const trip = await prisma.trip.findFirst({
     where: {
-      ...crewWhere(actor.id),
+      driverId: actor.id,
       status: { in: ACTIVE_TRIP_STATUSES },
       route: { organizationId: actor.organizationId || "__none__" },
     },
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
   });
   if (!trip)
     return NextResponse.json(
-      { error: "Start your assigned trip before sharing GPS" },
+      { error: "Only the assigned driver can share the bus GPS during an active trip" },
       { status: 409 },
     );
   const { latitude, longitude } = validation.data,

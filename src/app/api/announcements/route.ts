@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
+import type { Prisma } from '@prisma/client'
 import prisma from '@/lib/prisma'
 import {pushNotification} from '@/lib/notification-delivery'
-import {randomUUID} from 'node:crypto'
 import { getUserFromSession } from '@/lib/auth'
 import { resolveUserOrganizationId } from '@/lib/authorization'
+import { writeAuditLog } from '@/lib/audit'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,36 +46,32 @@ export async function POST(req: Request) {
     if (targetRole && !validRoles.includes(targetRole)) return NextResponse.json({ error: 'Invalid target role' }, { status: 400 })
     if (type && !validTypes.includes(type)) return NextResponse.json({ error: 'Invalid notification type' }, { status: 400 })
     const organizationId = await resolveUserOrganizationId(user.id)
+    if (user.role !== 'SUPER_ADMIN' && !organizationId) return NextResponse.json({ error: 'Organization assignment required' }, { status: 403 })
 
     // Find target users
-    const where: { role?: string; organizationId?: string } = {}
+    const where: Prisma.UserWhereInput = { isActive: true }
     if (targetRole && targetRole !== 'ALL') where.role = targetRole
-    if (user.role !== 'SUPER_ADMIN') where.organizationId = organizationId || '__none__'
+    if (user.role !== 'SUPER_ADMIN') where.AND = [{ OR: [
+      { organizationId: organizationId! },
+      { role: 'PARENT', parentStudents: { some: { organizationId: organizationId! } } },
+    ] }]
 
-    const users = await prisma.user.findMany({ where: { ...where, isActive: true }, select: { id: true } })
-
-    const broadcastKey = randomUUID()
-    // Batch create notifications
-    const result = await prisma.notification.createMany({
-      data: users.map(u => ({
-        userId: u.id, dedupeKey: `announcement:${broadcastKey}:${u.id}`,
-        title: title.trim(),
-        body: body.trim(),
-        type: type || 'INFO',
-      }))
+    const users = await prisma.user.findMany({ where, select: { id: true } })
+    const recipients = users.filter(recipient => recipient.id !== user.id)
+    const result = await prisma.$transaction(async tx => {
+      const announcement = await tx.announcement.create({ data: {
+        title: title.trim(), body: body.trim(), targetRole: targetRole || 'ALL', type: type || 'INFO',
+        sentCount: recipients.length, createdBy: user.id, organizationId: user.role === 'SUPER_ADMIN' ? null : organizationId,
+      } })
+      if (recipients.length) await tx.notification.createMany({ data: recipients.map(recipient => ({
+        userId: recipient.id, dedupeKey: `announcement:${announcement.id}:${recipient.id}`,
+        title: title.trim(), body: body.trim(), type: type || 'INFO',
+      })) })
+      return { announcement, notifications: recipients.length ? await tx.notification.findMany({ where: { dedupeKey: { startsWith: `announcement:${announcement.id}:` } } }) : [] }
     })
-
-    // Record the broadcast itself so it can be listed later
-    const announcement = await prisma.announcement.create({
-      data: {
-        title: title.trim(), body: body.trim(),
-        targetRole: targetRole || 'ALL', type: type || 'INFO',
-        sentCount: result.count, createdBy: user.id, organizationId: user.role === 'SUPER_ADMIN' ? null : organizationId,
-      }
-    })
-
-    await Promise.allSettled((await prisma.notification.findMany({where:{dedupeKey:{startsWith:`announcement:${broadcastKey}:`}}})).map(pushNotification))
-    return NextResponse.json({ sent: result.count, targetRole: targetRole || 'ALL', announcement })
+    await Promise.allSettled(result.notifications.map(pushNotification))
+    await writeAuditLog({ actorId: user.id, organizationId: result.announcement.organizationId, action: 'BROADCAST', entityType: 'ANNOUNCEMENT', entityId: result.announcement.id, details: { targetRole: targetRole || 'ALL', sentCount: recipients.length } })
+    return NextResponse.json({ sent: recipients.length, targetRole: targetRole || 'ALL', announcement: result.announcement })
   } catch (e) {
     console.error(e)
     const msg = 'Internal server error'

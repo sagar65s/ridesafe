@@ -12,6 +12,11 @@ services:
       retries: 5
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    logging: &default-logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   redis:
     image: redis:7-alpine
@@ -24,6 +29,7 @@ services:
       retries: 5
     volumes:
       - redis_data:/data
+    logging: *default-logging
 
   ridesafe:
     image: ridesafe-local:latest
@@ -34,7 +40,7 @@ services:
     container_name: ridesafe-app
     restart: always
     ports:
-      - "3500:3000"
+      - "127.0.0.1:3500:3000"
     env_file:
       - .env.production
     depends_on:
@@ -48,6 +54,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+    logging: *default-logging
 
   # Optional hardware polling; enable with --profile tracking.
   tracking-worker:
@@ -62,6 +69,7 @@ services:
     depends_on:
       ridesafe:
         condition: service_healthy
+    logging: *default-logging
 
   calendar-worker:
     image: ridesafe-local:latest
@@ -75,6 +83,7 @@ services:
     depends_on:
       ridesafe:
         condition: service_healthy
+    logging: *default-logging
 
 volumes:
   postgres_data:

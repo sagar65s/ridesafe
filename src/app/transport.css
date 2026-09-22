@@ -915,6 +915,36 @@
   border-left-color: #ffd60a;
   background: #ffd60a14;
 }
+
+/* Shared admin modules inside the driver/parent portal inherit the charcoal
+   palette. The earlier light-theme compatibility rule must not win here. */
+.transport-shell {
+  --surface:#141417;
+  --surface-2:#1c1c21;
+  --surface-border:#3a3a43;
+  --text-main:#f0f0f5;
+  --text-muted:#a6a6b2;
+  --text-dim:#6e6e7a;
+  --primary:#ffd60a;
+  --success:#2fd16b;
+  color:#f0f0f5;
+}
+.transport-shell .glass-panel,
+.transport-shell .modal-box {background:#141417;border-color:#3a3a43;color:#f0f0f5}
+.transport-shell .glass-panel h2,
+.transport-shell .glass-panel h3,
+.transport-shell .modal-box h3 {color:#f0f0f5}
+.transport-shell .chat-layout,
+.transport-shell .chat-contacts,
+.transport-shell .chat-thread {background:#141417;border-color:#3a3a43;color:#f0f0f5}
+.transport-shell .chat-contacts > button {color:#f0f0f5;border-color:#3a3a43}
+.transport-shell .chat-contacts > button:hover {background:#26262d}
+.transport-shell .historical-attendance {border-left:3px solid #ffd60a}
+.historical-attendance h3 {display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.historical-attendance p {color:var(--text-muted);font-size:.85rem;margin-bottom:12px}
+.historical-attendance-rows {display:grid;gap:8px}
+.historical-attendance-rows article {display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center;padding:10px;border:1px solid var(--surface-border);border-radius:10px;background:var(--surface-2)}
+.historical-attendance-rows small {color:var(--text-muted)}
 .driver-portal .crew-shortcuts a {
   display: flex;
   align-items: center;

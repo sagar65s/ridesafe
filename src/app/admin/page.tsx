@@ -22,6 +22,7 @@ import OrganizationsTab from "@/components/admin/OrganizationsTab";
 import AuditLogsTab from "@/components/admin/AuditLogsTab";
 import TransportIssuesTab from "@/components/admin/TransportIssuesTab";
 import NotificationsPanel from '@/components/transport/NotificationsPanel'
+import AccountSettingsTab from '@/components/admin/AccountSettingsTab'
 import { LanguageSwitcher, useTranslation } from "@/i18n/provider";
 import { canAccessAdminTab } from "@/lib/roles";
 import {
@@ -45,6 +46,7 @@ import {
   ClipboardCheck,
   MessageSquareWarning,
   ScrollText,
+  Settings,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { formatRideSafeDate } from "@/lib/date-format";
@@ -175,7 +177,7 @@ export default function AdminDashboard() {
       items: group.items.filter(
         (item) =>
           canAccessAdminTab(currentUserRole, item.id) &&
-          !(currentUserRole === "SUPER_ADMIN" && item.id === "USERS"),
+          !(["SUPER_ADMIN", "SANDBOX"].includes(currentUserRole) && item.id === "USERS"),
       ),
     }))
     .filter((group) => group.items.length > 0);
@@ -196,11 +198,13 @@ export default function AdminDashboard() {
     ORGANIZATIONS: t("admin.organizations"),
     ISSUES: "Transport Issues",
     AUDIT: "Audit Logs",
+    SETTINGS: "Settings",
   };
   const SUPER_ADMIN_ITEMS: { id: string; icon: LucideIcon; label: string }[] = [
     { id: "ORGANIZATIONS", icon: Building2, label: t("admin.organizations") },
     { id: "SUPERUSERS", icon: ShieldCheck, label: t("admin.allUsers") },
-  ];
+    { id: "SETTINGS", icon: Settings, label: "Settings" },
+  ].filter(item=>canAccessAdminTab(currentUserRole,item.id));
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
@@ -217,7 +221,7 @@ export default function AdminDashboard() {
       })
       .then((data) => {
         const role = data.user?.role || "";
-        if (!["SUPER_ADMIN", "SCHOOL_ADMIN", "ADMIN"].includes(role)) {
+        if (!["SANDBOX", "SUPER_ADMIN", "SCHOOL_ADMIN", "ADMIN"].includes(role)) {
           router.replace(
             role === "DRIVER" ? "/driver" : role === "PARENT" ? "/parent" : "/",
           );
@@ -239,7 +243,7 @@ export default function AdminDashboard() {
           fetch("/api/admin/routes").then((r) =>
             r.ok ? r.json() : { routes: [] },
           ),
-          role === "SUPER_ADMIN"
+          ["SUPER_ADMIN", "SANDBOX"].includes(role)
             ? fetch("/api/admin/organizations").then((r) =>
                 r.ok ? r.json() : { organizations: [] },
               )
@@ -368,7 +372,7 @@ export default function AdminDashboard() {
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const navigationSearchEntries: SearchEntry[] = [
     ...SIDEBAR_GROUPS.flatMap((group) => group.items),
-    ...(currentUserRole === "SUPER_ADMIN" ? SUPER_ADMIN_ITEMS : []),
+    ...(["SUPER_ADMIN", "SANDBOX"].includes(currentUserRole) ? SUPER_ADMIN_ITEMS : []),
   ].map((item) => ({
     id: `nav-${item.id}`,
     label: item.label,
@@ -418,7 +422,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* SUPER_ADMIN section */}
-      {currentUserRole === "SUPER_ADMIN" && (
+      {["SUPER_ADMIN", "SANDBOX"].includes(currentUserRole) && (
         <div style={{ marginBottom: 8 }}>
           <div
             style={{
@@ -431,7 +435,7 @@ export default function AdminDashboard() {
               opacity: 0.85,
             }}
           >
-            <TranslatedText text={" Super Admin "} />
+            <TranslatedText text={currentUserRole==='SANDBOX' ? " Sandbox Workspace " : " Super Admin "} />
           </div>
           {SUPER_ADMIN_ITEMS.map((item) => (
             <SidebarItem
@@ -850,6 +854,7 @@ export default function AdminDashboard() {
               {activeTab === "USERS" && (
                 <UsersTab
                   superAdminView={currentUserRole === "SUPER_ADMIN"}
+                  currentRole={currentUserRole}
                   searchQuery={searchQuery}
                 />
               )}
@@ -873,10 +878,11 @@ export default function AdminDashboard() {
                 <OrganizationsTab searchQuery={searchQuery} />
               )}
               {activeTab === "SUPERUSERS" && (
-                <UsersTab superAdminView searchQuery={searchQuery} />
+                <UsersTab superAdminView currentRole={currentUserRole} searchQuery={searchQuery} />
               )}
               {activeTab === "ISSUES" && <TransportIssuesTab />}
               {activeTab === "AUDIT" && <AuditLogsTab />}
+              {activeTab === "SETTINGS" && <AccountSettingsTab currentRole={currentUserRole} />}
             </motion.div>
           </AnimatePresence>
         </div>

@@ -3,8 +3,9 @@ import { TranslatedText } from '@/i18n/provider'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Pencil, Trash2, X } from 'lucide-react'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
-const defaultBusForm = { busNumber:'', plateNumber: '', registrationNumber:'', capacity: '30', status:'ACTIVE', gpsStatus:'NOT_CONFIGURED', driverId: '', maintainerId: '', routeId: '', wialonUnitId: '', katsanaVehicleId: '', organizationId:'' }
+const defaultBusForm = { busNumber:'', plateNumber: '', registrationNumber:'', capacity: '30', status:'ACTIVE', gpsStatus:'NOT_CONFIGURED', driverId: '', maintainerId: '', routeId: '', katsanaVehicleId: '', organizationId:'' }
 const defaultRouteForm = { name: '', morningTime: '7:30 AM', afternoonTime: '3:00 PM', organizationId:'', isActive:true }
 
 export default function FleetTab({ searchQuery = '' }: { searchQuery?: string }) {
@@ -15,6 +16,7 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
     const [drivers, setDrivers] = useState<any[]>([])
     const [organizations, setOrganizations] = useState<any[]>([])
     const [currentRole, setCurrentRole] = useState('')
+    const canSelectSchool = currentRole === 'SUPER_ADMIN' || currentRole === 'SANDBOX'
     const [loading, setLoading] = useState(true)
     const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null)
     const [routeStops, setRouteStops] = useState<any[]>([])
@@ -26,6 +28,8 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
     const [editingRouteId, setEditingRouteId] = useState<string | null>(null)
     const [deletingBusId, setDeletingBusId] = useState<string | null>(null)
     const [deletingRouteId, setDeletingRouteId] = useState<string | null>(null)
+    const [pendingDelete,setPendingDelete]=useState<{kind:'STOP'|'BUS'|'ROUTE';item:any}|null>(null)
+    const [operationError,setOperationError]=useState('')
 
     const [busForm, setBusForm] = useState(defaultBusForm)
     const [routeForm, setRouteForm] = useState(defaultRouteForm)
@@ -81,12 +85,11 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
 
     const handleDeleteStop = async (stopId: string) => {
         if (!selectedRouteId) return
-        if (!confirm('Remove this stop?')) return
         try {
             const res = await fetch(`/api/stops/${stopId}`, { method: 'DELETE' })
-            if (res.ok) loadStops(selectedRouteId)
-            else { const err = await res.json(); alert(err.error || 'Failed to remove stop') }
-        } catch (e) { console.error(e) }
+            if (res.ok) {setPendingDelete(null);setOperationError('');loadStops(selectedRouteId)}
+            else { const err = await res.json();setOperationError(err.error || 'Failed to remove stop') }
+        } catch (e) { console.error(e);setOperationError('Unable to remove stop') }
     }
 
     const openAddBusModal = () => { setEditingBusId(null); setBusForm(defaultBusForm); setShowBusModal(true) }
@@ -96,7 +99,7 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
         setBusForm({
             busNumber:b.busNumber || '', plateNumber: b.plateNumber, registrationNumber:b.registrationNumber || '', capacity: String(b.capacity), status:b.status || 'ACTIVE', gpsStatus:b.gpsStatus || 'NOT_CONFIGURED',
             driverId: b.driverId || b.driver?.id || '', maintainerId: b.maintainerId || '', routeId: b.routeId || b.route?.id || '',
-            wialonUnitId: b.wialonUnitId || '', katsanaVehicleId: b.katsanaVehicleId || '', organizationId:b.organizationId || b.organization?.id || ''
+            katsanaVehicleId: b.katsanaVehicleId || '', organizationId:b.organizationId || b.organization?.id || ''
         })
         setShowBusModal(true)
     }
@@ -110,7 +113,7 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
         if (isNaN(cap) || cap < 1 || cap > 200) {
             alert('Capacity must be a number between 1 and 200'); return
         }
-        if (currentRole === 'SUPER_ADMIN' && !busForm.organizationId) { alert('Select a school for this bus'); return }
+        if (canSelectSchool && !busForm.organizationId) { alert('Select a school for this bus'); return }
         try {
             const payload = {
                 plateNumber: busForm.plateNumber.toUpperCase().trim(),
@@ -121,7 +124,6 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
                 gpsStatus: busForm.gpsStatus,
                 driverId: busForm.driverId || null, maintainerId: busForm.maintainerId || null,
                 routeId: busForm.routeId || null,
-                wialonUnitId: busForm.wialonUnitId.trim() || null,
                 katsanaVehicleId: busForm.katsanaVehicleId.trim() || null,
                 organizationId: busForm.organizationId || null,
             }
@@ -141,13 +143,12 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
     }
 
     const handleDeleteBus = async (b: any) => {
-        if (!confirm(`Deactivate bus "${b.plateNumber}"? Trip and maintenance history will be preserved.`)) return
         setDeletingBusId(b.id)
         try {
             const res = await fetch(`/api/admin/buses/${b.id}`, { method: 'DELETE' })
-            if (res.ok) loadData()
-            else { const err = await res.json(); alert(err.error || 'Failed to deactivate bus') }
-        } catch (e) { console.error(e) } finally { setDeletingBusId(null) }
+            if (res.ok) {setPendingDelete(null);setOperationError('');loadData()}
+            else { const err = await res.json();setOperationError(err.error || 'Failed to deactivate bus') }
+        } catch (e) { console.error(e);setOperationError('Unable to deactivate bus') } finally { setDeletingBusId(null) }
     }
 
     const openAddRouteModal = () => { setEditingRouteId(null); setRouteForm(defaultRouteForm); setShowRouteModal(true) }
@@ -163,7 +164,7 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
         if (!routeForm.name.trim() || routeForm.name.trim().length < 2) {
             alert('Route name must be at least 2 characters'); return
         }
-        if (currentRole === 'SUPER_ADMIN' && !routeForm.organizationId) { alert('Select a school for this route'); return }
+        if (canSelectSchool && !routeForm.organizationId) { alert('Select a school for this route'); return }
         try {
             const payload = { name: routeForm.name, morningTime: routeForm.morningTime, afternoonTime: routeForm.afternoonTime, organizationId:routeForm.organizationId || null, isActive:routeForm.isActive }
             const res = editingRouteId
@@ -182,15 +183,14 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
     }
 
     const handleDeleteRoute = async (r: any) => {
-        if (!confirm(`Deactivate route "${r.name}"? Existing trip history will be preserved.`)) return
         setDeletingRouteId(r.id)
         try {
             const res = await fetch(`/api/admin/routes/${r.id}`, { method: 'DELETE' })
             if (res.ok) {
                 if (selectedRouteId === r.id) setSelectedRouteId(null)
-                loadData()
-            } else { const err = await res.json(); alert(err.error || 'Failed to deactivate route') }
-        } catch (e) { console.error(e) } finally { setDeletingRouteId(null) }
+                setPendingDelete(null);setOperationError('');loadData()
+            } else { const err = await res.json();setOperationError(err.error || 'Failed to deactivate route') }
+        } catch (e) { console.error(e);setOperationError('Unable to deactivate route') } finally { setDeletingRouteId(null) }
     }
 
     const q = searchQuery.trim().toLowerCase()
@@ -201,6 +201,7 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
 
     return (
         <div className="fleet-grid" style={{ display: 'grid', gap: '2rem' }}>
+            {operationError&&<div className="import-issues" role="alert" style={{gridColumn:'1/-1'}}><TranslatedText text={operationError}/></div>}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-panel" style={{ padding: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                     <h3 style={{ margin: 0 }}><TranslatedText text={"Fleet (Buses)"}/></h3>
@@ -218,7 +219,7 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
                                         style={{ background: 'none', border: '1px solid var(--surface-border)', borderRadius: 8, padding: '4px 7px', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}>
                                         <Pencil size={13} />
                                     </button>
-                                    <button onClick={() => handleDeleteBus(b)} title={translateUi("Deactivate bus")} disabled={deletingBusId === b.id || b.status === 'INACTIVE'}
+                                    <button onClick={() => setPendingDelete({kind:'BUS',item:b})} title={translateUi("Deactivate bus")} disabled={deletingBusId === b.id || b.status === 'INACTIVE'}
                                         style={{ background: 'none', border: '1px solid rgba(255,69,58,0.3)', borderRadius: 8, padding: '4px 7px', cursor: 'pointer', color: 'var(--danger)', display: 'flex' }}>
                                         <Trash2 size={13} />
                                     </button>
@@ -247,7 +248,7 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
                                         style={{ background: 'none', border: '1px solid var(--surface-border)', borderRadius: 8, padding: '4px 7px', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}>
                                         <Pencil size={13} />
                                     </button>
-                                    <button onClick={() => handleDeleteRoute(r)} title={translateUi("Deactivate route")} disabled={deletingRouteId === r.id || r.isActive === false}
+                                    <button onClick={() => setPendingDelete({kind:'ROUTE',item:r})} title={translateUi("Deactivate route")} disabled={deletingRouteId === r.id || r.isActive === false}
                                         style={{ background: 'none', border: '1px solid rgba(255,69,58,0.3)', borderRadius: 8, padding: '4px 7px', cursor: 'pointer', color: 'var(--danger)', display: 'flex' }}>
                                         <Trash2 size={13} />
                                     </button>
@@ -269,7 +270,7 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
                                                 <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 'bold' }}>{idx + 1}</div>
                                                 <div style={{ flex: 1 }}>{s.name}</div>
                                                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>[{s.latitude}, {s.longitude}]</div>
-                                                <button onClick={() => handleDeleteStop(s.id)} title={translateUi("Remove stop")}
+                                                <button onClick={() => setPendingDelete({kind:'STOP',item:s})} title={translateUi("Remove stop")}
                                                     style={{ background: 'none', border: '1px solid rgba(255,69,58,0.3)', borderRadius: 8, padding: '3px 6px', cursor: 'pointer', color: 'var(--danger)', display: 'flex' }}>
                                                     <Trash2 size={12} />
                                                 </button>
@@ -300,7 +301,7 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
                                 </button>
                             </div>
                             <form onSubmit={handleAddBus} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                {currentRole === 'SUPER_ADMIN' && <div className="input-group" style={{ marginBottom:0 }}><label className="input-label"><TranslatedText text={"School *"}/></label><select className="select-field" value={busForm.organizationId} onChange={e=>setBusForm({...busForm,organizationId:e.target.value,driverId:'',maintainerId:'',routeId:''})}><option value=""><TranslatedText text={"Select school"}/></option>{organizations.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></div>}
+                                {canSelectSchool && <div className="input-group" style={{ marginBottom:0 }}><label className="input-label"><TranslatedText text={"School *"}/></label><select className="select-field" value={busForm.organizationId} onChange={e=>setBusForm({...busForm,organizationId:e.target.value,driverId:'',maintainerId:'',routeId:''})}><option value=""><TranslatedText text={"Select school"}/></option>{organizations.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></div>}
                                 <div className="input-group" style={{ marginBottom: 0 }}>
                                     <label className="input-label"><TranslatedText text={"Bus Number"}/></label>
                                     <input type="text" className="input-field" placeholder={translateUi("e.g. BUS-12")} value={busForm.busNumber} onChange={e => setBusForm({...busForm, busNumber:e.target.value})} />
@@ -345,12 +346,6 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
                                 {/* GPS Tracker IDs */}
                                 <div style={{ borderTop: '1px solid var(--surface-border)', paddingTop: '1rem', marginTop: '0.5rem' }}>
                                     <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '0.75rem' }}><TranslatedText text={" GPS Tracker IDs (optional — leave blank if not using) "}/></div>
-                                    <div className="input-group" style={{ marginBottom: '0.75rem' }}>
-                                        <label className="input-label"><TranslatedText text={"🛰️ Wialon Unit ID"}/></label>
-                                        <input type="text" className="input-field" placeholder="e.g. 123456789"
-                                            value={busForm.wialonUnitId}
-                                            onChange={e => setBusForm({...busForm, wialonUnitId: e.target.value})} />
-                                    </div>
                                     <div className="input-group" style={{ marginBottom: 0 }}>
                                         <label className="input-label"><TranslatedText text={"📡 Katsana Vehicle ID"}/></label>
                                         <input type="text" className="input-field" placeholder="e.g. 78901"
@@ -381,7 +376,7 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
                                 </button>
                             </div>
                             <form onSubmit={handleAddRoute} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                {currentRole === 'SUPER_ADMIN' && <div className="input-group" style={{marginBottom:0}}><label className="input-label"><TranslatedText text={"School *"}/></label><select className="select-field" value={routeForm.organizationId} onChange={e=>setRouteForm({...routeForm,organizationId:e.target.value})}><option value=""><TranslatedText text={"Select school"}/></option>{organizations.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></div>}
+                                {canSelectSchool && <div className="input-group" style={{marginBottom:0}}><label className="input-label"><TranslatedText text={"School *"}/></label><select className="select-field" value={routeForm.organizationId} onChange={e=>setRouteForm({...routeForm,organizationId:e.target.value})}><option value=""><TranslatedText text={"Select school"}/></option>{organizations.map(o=><option key={o.id} value={o.id}>{o.name}</option>)}</select></div>}
                                 <div className="input-group" style={{ marginBottom: 0 }}>
                                     <label className="input-label"><TranslatedText text={"Route Name"}/></label>
                                     <input type="text" required className="input-field" placeholder={translateUi("e.g. Route C")} value={routeForm.name} onChange={e => setRouteForm({...routeForm, name: e.target.value})} />
@@ -404,7 +399,7 @@ export default function FleetTab({ searchQuery = '' }: { searchQuery?: string })
                     </div>
                 )}
             </AnimatePresence>
+            <ConfirmDialog open={Boolean(pendingDelete)} title={pendingDelete?.kind==='STOP'?'Remove route stop?':pendingDelete?.kind==='BUS'?'Deactivate bus?':'Deactivate route?'} description={pendingDelete?.kind==='STOP'?'The stop is removed only when it has no student, trip, or attendance references.':pendingDelete?.kind==='BUS'?'The bus is disabled while trip and maintenance history remains preserved.':'The route is disabled while existing trip history remains preserved.'} confirmLabel={pendingDelete?.kind==='STOP'?'Remove stop':'Deactivate'} busy={Boolean(deletingBusId||deletingRouteId)} onCancel={()=>{if(!deletingBusId&&!deletingRouteId)setPendingDelete(null)}} onConfirm={()=>{if(!pendingDelete)return;if(pendingDelete.kind==='STOP')void handleDeleteStop(pendingDelete.item.id);else if(pendingDelete.kind==='BUS')void handleDeleteBus(pendingDelete.item);else void handleDeleteRoute(pendingDelete.item)}}/>
         </div>
     )
 }
-

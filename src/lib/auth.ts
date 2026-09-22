@@ -37,10 +37,12 @@ export async function getUserFromSession() {
   const { default: prisma } = await import('@/lib/prisma')
   const user = await prisma.user.findUnique({
     where: { id: session.id },
-    select: { id: true, role: true, isActive: true, organization: { select: { isActive: true } } },
+    select: { id: true, role: true, accessProfile: true, isActive: true, organization: { select: { isActive: true } } },
   })
   if (!user || !isUserRole(user.role) || !user.isActive || user.role !== 'SUPER_ADMIN' && user.organization?.isActive === false) return null
-  return { id: user.id, role: user.role }
+  // SANDBOX is intentionally represented by the mature SUPER_ADMIN permission
+  // path internally. The UI exposes it as a distinct sixth account type.
+  return { id: user.id, role: user.accessProfile === 'SANDBOX' || user.role === 'SANDBOX' ? 'SUPER_ADMIN' : user.role }
 }
 
 export async function clearSession() {

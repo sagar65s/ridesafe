@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getUserFromSession } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
-import { canCreateRole, isUserRole } from '@/lib/roles'
+import { canCreateRole, isUserRole, toEffectiveRole, toStoredRole } from '@/lib/roles'
 import { writeAuditLog } from '@/lib/audit'
 
 export const dynamic = 'force-dynamic'
@@ -22,6 +22,7 @@ export async function GET(request: Request) {
                 name: true,
                 email: true,
                 role: true,
+                accessProfile: true,
                 phone: true,
                 organizationId: true,
                 createdAt: true,
@@ -39,7 +40,7 @@ export async function GET(request: Request) {
             orderBy: { createdAt: 'desc' }
         })
 
-        return NextResponse.json({ users })
+        return NextResponse.json({ users: users.map(user => ({ ...user, role: toEffectiveRole(user.role, user.accessProfile) })) })
     } catch (error) {
         console.error('User list error:', error)
         return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
@@ -88,7 +89,12 @@ export async function POST(request: Request) {
         }
 
         // Validate organizationId if provided
-        const actor = await prisma.user.findUnique({ where: { id: auth.id }, select: { organizationId: true } })
+        const actor = await prisma.user.findUnique({ where: { id: auth.id }, select: { organizationId: true, role: true, accessProfile: true } })
+        const actorRole = toEffectiveRole(actor?.role || auth.role, actor?.accessProfile)
+        if (!isUserRole(actorRole) || !canCreateRole(actorRole, role)) {
+            return NextResponse.json({ error: 'You cannot create this role' }, { status: 403 })
+        }
+        const globalRole = role === 'SUPER_ADMIN' || role === 'SANDBOX'
         let resolvedOrgId: string | null = auth.role === 'SUPER_ADMIN' ? null : actor?.organizationId || null
         if (organizationId) {
             if (auth.role !== 'SUPER_ADMIN' && organizationId !== actor?.organizationId) {
@@ -98,10 +104,10 @@ export async function POST(request: Request) {
             if (!org?.isActive) {
                 return NextResponse.json({ error: 'Organisation not found or inactive' }, { status: 400 })
             }
-            resolvedOrgId = organizationId
+            resolvedOrgId = globalRole ? null : organizationId
         }
 
-        if (!resolvedOrgId) {
+        if (!resolvedOrgId && !globalRole) {
             return NextResponse.json({ error: 'A school assignment is required for this role' }, { status: 400 })
         }
         if (role === 'DRIVER' && personnelType && !['DRIVER', 'MAINTAINER'].includes(personnelType)) {
@@ -119,7 +125,8 @@ export async function POST(request: Request) {
                 name: name.trim(),
                 email: email.toLowerCase().trim(),
                 password: passwordHash,
-                role,
+                role: toStoredRole(role),
+                accessProfile: role === 'SANDBOX' ? 'SANDBOX' : null,
                 phone: phone?.trim() || null,
                 organizationId: resolvedOrgId,
                 isActive: isActive !== false,
@@ -134,6 +141,7 @@ export async function POST(request: Request) {
                 name: true,
                 email: true,
                 role: true,
+                accessProfile: true,
                 phone: true,
                 organizationId: true,
                 isActive: true, personnelType: true, licenseNumber: true, licenseExpiry: true,
@@ -146,7 +154,7 @@ export async function POST(request: Request) {
         }
         await writeAuditLog({ actorId: auth.id, organizationId: user.organizationId, action: 'CREATE', entityType: 'USER', entityId: user.id, details: { role: user.role, email: user.email } })
 
-        return NextResponse.json({ user })
+        return NextResponse.json({ user: { ...user, role: toEffectiveRole(user.role, user.accessProfile) } })
     } catch (error) {
         console.error('User create error:', error)
         return NextResponse.json({ error: 'Failed to create user' }, { status: 500 })

@@ -63,7 +63,8 @@ export async function POST(request: NextRequest) {
         const assignedCrewBus = user.role === 'DRIVER' ? await prisma.bus.findFirst({ where: { ...crewWhere(user.id), status: 'ACTIVE', ...(data.busId ? { id: data.busId } : {}) } }) : null
         if (user.role === 'DRIVER' && !assignedCrewBus) return NextResponse.json({ error: 'An assigned active bus and crew assignment are required' }, { status: 400 })
         if (assignedCrewBus) { data.busId = assignedCrewBus.id; data.routeId = assignedCrewBus.routeId }
-        const driverId = assignedCrewBus?.driverId || (assignedCrewBus?.maintainerId === user.id ? user.id : data.driverId)
+        if (assignedCrewBus && !assignedCrewBus.driverId) return NextResponse.json({error:'Assign an active driver to this bus before starting a trip; the maintainer cannot supply the driver’s GPS'},{status:409})
+        const driverId = assignedCrewBus?.driverId || data.driverId
         if (!driverId || !data.routeId) {
             return NextResponse.json({ error: 'Missing driverId or routeId' }, { status: 400 })
         }

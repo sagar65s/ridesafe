@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import {crewAttendanceFilter} from '@/lib/attendance-import-source'
 import { getUserFromSession } from "@/lib/auth";
 import { canAccessOrganization, getCurrentUser } from "@/lib/authorization";
 import { studentUsesBus } from "@/lib/transport";
@@ -153,7 +154,7 @@ export async function PATCH(
           ),
         );
         const attendances = await tx.attendance.findMany({
-          where: { tripId: trip.id },
+          where: { tripId: trip.id, ...crewAttendanceFilter },
           select: { studentId: true, action: true },
         });
         const incomplete = students.filter((student) => {

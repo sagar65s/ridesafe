@@ -152,10 +152,19 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const actor = await getCurrentUser()
     if (!actor || !canAccessOrganization(actor, existing.organizationId)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    if (existing.busId && await prisma.trip.count({where:{busId:existing.busId,status:{in:['DRIVER_STARTED_ROUTE','BUS_EN_ROUTE']}}})) return NextResponse.json({error:'Complete the active trip before deactivating this student'},{status:409})
-    const student = await prisma.student.update({ where: { id }, data: { isActive: false, status: 'INACTIVE' } })
-    await writeAuditLog({ actorId: user.id, organizationId: student.organizationId, action: 'DEACTIVATE', entityType: 'STUDENT', entityId: student.id })
-    return NextResponse.json({ success: true, deactivated: true })
+    if (existing.busId && await prisma.trip.count({where:{busId:existing.busId,status:{in:['DRIVER_STARTED_ROUTE','BUS_EN_ROUTE']}}})) return NextResponse.json({error:'Complete the active trip before deleting this student'},{status:409})
+    // Preserve immutable attendance, parent confirmations and transport issue
+    // evidence. A hard delete is allowed only when nothing else references the
+    // student; never silently cascade into other people's historical records.
+    const [attendance, requests, issues] = await Promise.all([
+      prisma.attendance.count({where:{studentId:id}}),
+      prisma.attendanceRequest.count({where:{studentId:id}}),
+      prisma.transportIssue.count({where:{studentId:id}}),
+    ])
+    if (attendance || requests || issues) return NextResponse.json({error:'This student has attendance, parent confirmations or transport issues. Permanent deletion would also erase those records; deletion is blocked to preserve the history.'},{status:409})
+    await prisma.student.delete({where:{id}})
+    await writeAuditLog({ actorId: user.id, organizationId: existing.organizationId, action: 'DELETE', entityType: 'STUDENT', entityId: id, details: {studentCode:existing.studentCode} })
+    return NextResponse.json({ success: true, deleted: true })
   } catch (error) {
     console.error('Error deleting student:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

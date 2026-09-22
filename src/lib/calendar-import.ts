@@ -1,5 +1,6 @@
 import { Workbook } from 'exceljs'
 import { Readable } from 'node:stream'
+import { excelJsCompatibleXlsx } from '@/lib/xlsx-compat'
 
 export const EVENT_TYPES = ['HOLIDAY', 'FESTIVAL', 'WORKING_DAY', 'SPECIAL_HOLIDAY', 'EXAM', 'EVENT', 'TERM_START', 'TERM_END', 'ASSEMBLY']
 // Inspect the ZIP directory before expanding an XLSX. Compressed size alone is insufficient.
@@ -23,7 +24,7 @@ export async function parseCalendarFile(file: File, organizationId: string | nul
   const bytes = Buffer.from(await file.arrayBuffer())
   if (/\.xlsx$/i.test(file.name)) {
     validateWorkbookArchive(bytes)
-    await workbook.xlsx.load(bytes as unknown as Parameters<typeof workbook.xlsx.load>[0])
+    await workbook.xlsx.load(await excelJsCompatibleXlsx(bytes) as unknown as Parameters<typeof workbook.xlsx.load>[0])
   } else if (/\.csv$/i.test(file.name)) {
     await workbook.csv.read(Readable.from(bytes.toString('utf8').replace(/^\uFEFF/, '')), { map: value => value })
   } else throw new Error('Use Excel (.xlsx) or CSV (.csv)')

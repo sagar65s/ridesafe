@@ -25,8 +25,24 @@ test('Super Admin creates school-assigned user with an eight-character password'
  expect((await createUser(request(account))).status).toBe(200)
  expect(prisma.user.create).toHaveBeenCalledWith(expect.objectContaining({data:expect.objectContaining({organizationId:'school-a',role:'PARENT'})}))
 })
-test.each(['PARENT','SUPER_ADMIN'])('new %s requires an organization even for Super Admin actor',async role=>{
+test('new PARENT requires an organization even for Super Admin actor',async()=>{
+ const role='PARENT'
  expect((await createUser(request({...account,role,organizationId:''}))).status).toBe(400)
+ expect(prisma.user.create).not.toHaveBeenCalled()
+})
+test.each(['SUPER_ADMIN','SANDBOX'])('new global %s account does not require a school',async role=>{
+ expect((await createUser(request({...account,email:`${role.toLowerCase()}@example.com`,role,organizationId:''}))).status).toBe(200)
+ expect(prisma.user.create).toHaveBeenCalledWith(expect.objectContaining({data:expect.objectContaining({role:'SUPER_ADMIN',organizationId:null,accessProfile:role==='SANDBOX'?'SANDBOX':null})}))
+})
+test.each(['SCHOOL_ADMIN','ADMIN','DRIVER','PARENT'])('Sandbox can create school-scoped %s accounts',async role=>{
+ mock(getUserFromSession).mockResolvedValue({id:'sandbox',role:'SUPER_ADMIN'})
+ mock(prisma.user.findUnique).mockImplementation(({where})=>Promise.resolve(where.email?null:{organizationId:'school-a',role:'SUPER_ADMIN',accessProfile:'SANDBOX'}))
+ expect((await createUser(request({...account,email:`${role.toLowerCase()}@example.com`,role}))).status).toBe(200)
+})
+test.each(['SUPER_ADMIN','SANDBOX'])('Sandbox cannot create global %s accounts',async role=>{
+ mock(getUserFromSession).mockResolvedValue({id:'sandbox',role:'SUPER_ADMIN'})
+ mock(prisma.user.findUnique).mockImplementation(({where})=>Promise.resolve(where.email?null:{organizationId:null,role:'SUPER_ADMIN',accessProfile:'SANDBOX'}))
+ expect((await createUser(request({...account,email:`blocked-${role.toLowerCase()}@example.com`,role,organizationId:''}))).status).toBe(403)
  expect(prisma.user.create).not.toHaveBeenCalled()
 })
 test('seven-character password is rejected by the actual user endpoint',async()=>{

@@ -25,8 +25,14 @@ function visibilityWhere(user:Actor,organizationId:string|null):Prisma.MessageWh
 export async function GET(){
   try{
     const user=await getUserFromSession();if(!user)return NextResponse.json({error:'Unauthorized'},{status:401})
-    const messages=await prisma.message.findMany({where:visibilityWhere(user,await resolveUserOrganizationId(user.id)),orderBy:{createdAt:'asc'},include:{sender:{select:{id:true,name:true,role:true}},recipient:{select:{id:true,name:true,role:true}},threadUser:{select:{id:true,name:true,role:true}},organization:{select:{id:true,name:true}}}})
-    return NextResponse.json({messages})
+    const [messages,deliveryReceipts]=await Promise.all([
+      prisma.message.findMany({where:visibilityWhere(user,await resolveUserOrganizationId(user.id)),orderBy:{createdAt:'asc'},include:{sender:{select:{id:true,name:true,role:true}},recipient:{select:{id:true,name:true,role:true}},threadUser:{select:{id:true,name:true,role:true}},organization:{select:{id:true,name:true}}}}),
+      prisma.notification.findMany({where:{userId:user.id,type:'MESSAGE',dedupeKey:{startsWith:'message:'}},select:{dedupeKey:true,read:true}}),
+    ])
+    // A shared school chat has two staff recipients. Their unread state must
+    // belong to each user, not to a globally shared Message.read flag.
+    const receipts=new Map(deliveryReceipts.map(item=>[item.dedupeKey?.split(':')[1],item.read]))
+    return NextResponse.json({messages:messages.map(item=>({...item,read:item.senderId===user.id?true:receipts.get(item.id)??item.read}))})
   }catch(error){console.error('Messages GET Error:',error);return NextResponse.json({error:'Internal server error'},{status:500})}
 }
 
@@ -36,7 +42,11 @@ export async function PATCH(request:NextRequest){
     const {id}=await request.json().catch(()=>({}));if(typeof id!=='string')return NextResponse.json({error:'Message ID required'},{status:400})
     const message=await prisma.message.findUnique({where:{id},select:{id:true,senderId:true,recipientId:true,organizationId:true,threadUserId:true}})
     if(!message||!await canSeeMessage(user,message))return NextResponse.json({error:'Not found'},{status:404})
-    await prisma.message.update({where:{id},data:{read:true}});return NextResponse.json({success:true})
+    if(message.senderId!==user.id){
+      await prisma.notification.updateMany({where:{userId:user.id,type:'MESSAGE',dedupeKey:`message:${id}:${user.id}`},data:{read:true}})
+      if(!message.organizationId)await prisma.message.update({where:{id},data:{read:true}})
+    }
+    return NextResponse.json({success:true})
   }catch(error){console.error('Messages PATCH Error:',error);return NextResponse.json({error:'Internal server error'},{status:500})}
 }
 

@@ -45,6 +45,8 @@ export async function POST(req: NextRequest) {
     if (!user || !['SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(user.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+    const account = await prisma.user.findUnique({ where: { id: user.id }, select: { accessProfile: true } })
+    if (account?.accessProfile === 'SANDBOX') return NextResponse.json({ error: 'Sandbox accounts cannot change platform settings' }, { status: 403 })
     const organizationId = await resolveUserOrganizationId(user.id)
     if (user.role !== 'SUPER_ADMIN' && !organizationId) return NextResponse.json({ error: 'Organization assignment required' }, { status: 403 })
     const suffix = organizationId ? `:${organizationId}` : ''

@@ -13,10 +13,11 @@ interface EmergencyRecord { id: string; timestamp: string; latitude?: number; lo
 
 export default function OverviewTab({ currentUserRole }: { currentUserRole: string }) {
  const {tx:translateUi}=useLocaleText()
+    const globalDashboard = ['SUPER_ADMIN','SANDBOX'].includes(currentUserRole)
 
     const [students, setStudents] = useState<StudentRecord[]>([])
     const [trips, setTrips] = useState<TripRecord[]>([])
-    const [platformStats, setPlatformStats] = useState({ schools:0, buses:0, drivers:0, runningBuses:0 })
+    const [platformStats, setPlatformStats] = useState({ schools:0, users:0, buses:0, drivers:0, runningBuses:0 })
     const [pickupTimes, setPickupTimes] = useState('')
     const [schoolName, setSchoolName] = useState('')
     const [schoolLat, setSchoolLat] = useState('')
@@ -47,9 +48,9 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
                     fetch('/api/emergency'),
                     fetch('/api/trips'),
                     fetch('/api/admin/settings'),
-                    currentUserRole === 'SUPER_ADMIN' ? fetch('/api/admin/organizations') : Promise.resolve(null),
-                    currentUserRole === 'SUPER_ADMIN' ? fetch('/api/admin/buses') : Promise.resolve(null),
-                    currentUserRole === 'SUPER_ADMIN' ? fetch('/api/admin/users') : Promise.resolve(null),
+                    globalDashboard ? fetch('/api/admin/organizations') : Promise.resolve(null),
+                    globalDashboard ? fetch('/api/admin/buses') : Promise.resolve(null),
+                    globalDashboard ? fetch('/api/admin/users') : Promise.resolve(null),
                 ])
 
                 const studentsData = await studentsRes.json()
@@ -57,7 +58,7 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
                 const emergencyData = await emergencyRes.json()
                 const tripsData = await tripsRes.json()
                 const adminSettings = await adminSettingsRes.json()
-                if (currentUserRole === 'SUPER_ADMIN') {
+                if (globalDashboard) {
                     const [orgsRaw, busesRaw, usersRaw] = await Promise.all([
                         orgsRes?.json() || {}, busesRes?.json() || {}, usersRes?.json() || {},
                     ])
@@ -67,6 +68,7 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
                     const buses = busesData.buses || []
                     setPlatformStats({
                         schools: (orgsData.organizations || []).filter((org: {isActive?:boolean}) => org.isActive !== false).length,
+                        users: (usersData.users || []).filter((user: {isActive?:boolean}) => user.isActive !== false).length,
                         buses: buses.length,
                         drivers: (usersData.users || []).filter((user: {role:string;isActive?:boolean;employmentStatus?:string}) => user.role === 'DRIVER' && user.isActive !== false && user.employmentStatus !== 'OFFBOARDED').length,
                         runningBuses: new Set((tripsData.trips || []).filter((trip: {status:string;busId?:string}) => !['TRIP_COMPLETED','CANCELLED'].includes(trip.status)).map((trip: {busId?:string}) => trip.busId).filter(Boolean)).size,
@@ -220,8 +222,9 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
 
             {/* Quick Stats - Bento Grid */}
             <motion.div variants={containerVariants} initial="hidden" animate="visible" className="bento-grid" style={{ marginBottom: '2.5rem' }}>
-                {(currentUserRole === 'SUPER_ADMIN' ? [
+                {(globalDashboard ? [
                     { icon: <Settings size={24}/>, label: 'Total Schools', val: platformStats.schools, color: 'var(--primary)' },
+                    { icon: <Settings size={24}/>, label: 'Active Users', val: platformStats.users, color: 'var(--info)' },
                     { icon: <GraduationCap size={24}/>, label: 'Total Students', val: students.length, color: 'var(--primary)' },
                     { icon: <Bus size={24}/>, label: 'Total Buses', val: platformStats.buses, color: 'var(--info)' },
                     { icon: <CheckCircle size={24}/>, label: 'Active Drivers / Maintainers', val: platformStats.drivers, color: 'var(--success)' },
@@ -244,7 +247,7 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
             </motion.div>
 
             <motion.div variants={containerVariants} initial="hidden" animate="visible"
-                style={{ display: 'grid', gap: '2rem', gridTemplateColumns: currentUserRole === 'SUPER_ADMIN' ? '1fr 2fr' : '1fr' }}>
+                style={{ display: 'grid', gap: '2rem', gridTemplateColumns: globalDashboard ? '1fr 2fr' : '1fr' }}>
 
                 {/* Settings panel — admin/school-admin only (NOT super admin who has org-level view) */}
                 {currentUserRole === 'SCHOOL_ADMIN' && (
@@ -278,7 +281,7 @@ export default function OverviewTab({ currentUserRole }: { currentUserRole: stri
                 )}
 
                 {/* System-wide info panel for Super Admin */}
-                {currentUserRole === 'SUPER_ADMIN' && (
+                {globalDashboard && (
                     <motion.div variants={cardVariants} className="bento-card" style={{ padding: '2rem', alignSelf: 'start' }}>
                         <h3 style={{ marginTop: 0, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: 8 }}>
                             <Settings size={18} /><TranslatedText text={" System Overview "}/></h3>

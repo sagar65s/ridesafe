@@ -13,11 +13,12 @@ import { getUserFromSession } from '@/lib/auth'
 import { getCurrentUser } from '@/lib/authorization'
 import { POST } from '@/app/api/trips/route'
 const mock=(value:unknown)=>value as jest.Mock
+beforeEach(()=>jest.resetAllMocks())
 
-test('driver starts a service trip using active-status conflict checks',async()=>{
+test('maintainer starts an assigned service trip without being mistaken for the bus driver GPS source',async()=>{
   mock(getUserFromSession).mockResolvedValue({id:'maintainer',role:'DRIVER'})
   mock(getCurrentUser).mockResolvedValue({id:'maintainer',role:'DRIVER',organizationId:'school'})
-  const bus={id:'bus',driverId:null,maintainerId:'maintainer',routeId:'route',organizationId:'school',status:'ACTIVE'}
+  const bus={id:'bus',driverId:'driver',maintainerId:'maintainer',routeId:'route',organizationId:'school',status:'ACTIVE'}
   mock(prisma.bus.findFirst).mockResolvedValueOnce(bus).mockResolvedValueOnce({id:'bus'})
   mock(prisma.bus.findUnique).mockResolvedValue(bus)
   mock(prisma.user.findUnique).mockResolvedValue({role:'DRIVER',organizationId:'school',isActive:true,employmentStatus:'ACTIVE'})
@@ -29,5 +30,13 @@ test('driver starts a service trip using active-status conflict checks',async()=
   const response=await POST(new NextRequest('http://localhost/api/trips',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({busId:'bus',routeId:'route',serviceType:'PM'})}))
   expect(response.status).toBe(200)
   expect(prisma.trip.findFirst).toHaveBeenCalledWith(expect.objectContaining({where:expect.objectContaining({status:{in:['DRIVER_STARTED_ROUTE','BUS_EN_ROUTE']}})}))
-  expect(prisma.trip.create).toHaveBeenCalledWith({data:expect.objectContaining({driverId:'maintainer',maintainerId:'maintainer',serviceType:'PM',status:'DRIVER_STARTED_ROUTE'})})
+  expect(prisma.trip.create).toHaveBeenCalledWith({data:expect.objectContaining({driverId:'driver',maintainerId:'maintainer',serviceType:'PM',status:'DRIVER_STARTED_ROUTE'})})
+})
+
+test('a maintainer-only bus cannot start a trip with misleading driver location',async()=>{
+  mock(getUserFromSession).mockResolvedValue({id:'maintainer',role:'DRIVER'})
+  mock(prisma.bus.findFirst).mockResolvedValue({id:'bus',driverId:null,maintainerId:'maintainer',routeId:'route',status:'ACTIVE'})
+  const response=await POST(new NextRequest('http://localhost/api/trips',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({busId:'bus',serviceType:'MORNING'})}))
+  expect(response.status).toBe(409)
+  expect(prisma.trip.create).not.toHaveBeenCalled()
 })

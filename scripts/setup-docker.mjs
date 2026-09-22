@@ -15,7 +15,7 @@ const values = {
   POSTGRES_USER: 'ridesafe', POSTGRES_PASSWORD: password, POSTGRES_DB: 'ridesafe_db',
   DATABASE_URL: `postgresql://ridesafe:${password}@postgres:5432/ridesafe_db?schema=public`,
   REDIS_URL: 'redis://redis:6379', JWT_SECRET: secret(), APP_URL: 'http://localhost:3500',
-  TRACKING_WORKER_SECRET: secret(), RESEND_API_KEY: '', WIALON_TOKEN: '',
+  TRACKING_WORKER_SECRET: secret(), RESEND_API_KEY: '', KATSANA_CLIENT_ID: '', KATSANA_CLIENT_SECRET: '',
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: vapid.getPublicKey().toString('base64url'),
   VAPID_PRIVATE_KEY: vapid.getPrivateKey().toString('base64url'),
 }
